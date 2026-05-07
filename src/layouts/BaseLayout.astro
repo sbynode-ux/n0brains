@@ -5,9 +5,10 @@ export interface Props {
   title: string;
   description: string;
   canonicalURL?: string;
+  hideHeader?: boolean;
 }
 
-const { title, description, canonicalURL } = Astro.props;
+const { title, description, canonicalURL, hideHeader } = Astro.props;
 const url = canonicalURL ?? Astro.url;
 ---
 
@@ -37,16 +38,18 @@ const url = canonicalURL ?? Astro.url;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <header>
-      <div class="inner">
-        <a href="/" class="logo">&lt;<span>n0</span>brains /&gt;</a>
-        <nav>
-          <a href="/">home</a>
-          <a href="/about">about</a>
-          <a href="/rss.xml">rss</a>
-        </nav>
-      </div>
-    </header>
+    {!hideHeader && (
+      <header>
+        <div class="inner">
+          <a href="/" class="logo">&lt;<span>n0</span>brains /&gt;</a>
+          <nav>
+            <a href="/">home</a>
+            <a href="/about">about</a>
+            <a href="/rss.xml">rss</a>
+          </nav>
+        </div>
+      </header>
+    )}
 
     <main>
       <slot />

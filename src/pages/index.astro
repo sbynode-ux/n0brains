@@ -7,18 +7,31 @@ const order = ["agents-cant-find-the-file", "openai-symphony", "hello-world"];
 posts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 ---
 
-<BaseLayout title="n0brains" description="think less, ship more — a blog about building without overthinking.">
-  <section class="hero">
-    <p class="tagline">n0brains // build mode</p>
-    <h1>
-      think less<br />
-      <span class="highlight">ship more.</span>
-    </h1>
-    <p>
-      A blog about building things without overthinking them.
-      No grand theories. No analysis paralysis. Just shipping.
-    </p>
-  </section>
+<BaseLayout title="n0brains" description="think less, ship more — a blog about building without overthinking." hideHeader={true}>
+  <div class="homepage-hero" id="hero">
+    <div class="hero-inner">
+      <div class="hero-top">
+        <a href="/" class="logo">&lt;<span>n0</span>brains /&gt;</a>
+        <nav>
+          <a href="/">home</a>
+          <a href="/about">about</a>
+          <a href="/rss.xml">rss</a>
+        </nav>
+      </div>
+
+      <div class="hero-body" id="hero-body">
+        <p class="tagline">n0brains // build mode</p>
+        <h1 id="headline">
+          think less<br />
+          <span class="highlight">ship more.</span>
+        </h1>
+        <p class="hero-desc">
+          A blog about building things without overthinking them.
+          No grand theories. No analysis paralysis. Just shipping.
+        </p>
+      </div>
+    </div>
+  </div>
 
   <section>
     <div class="post-list">
@@ -34,3 +47,233 @@ posts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* ─── Hide the default BaseLayout header on homepage ─── */
+  .homepage-hero {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .homepage-hero .hero-inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .homepage-hero .hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .homepage-hero .hero-top .logo {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    letter-spacing: -0.5px;
+  }
+
+  .homepage-hero .hero-top .logo span {
+    color: var(--accent);
+  }
+
+  .homepage-hero .hero-top nav {
+    display: flex;
+    gap: 24px;
+  }
+
+  .homepage-hero .hero-top nav a {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    position: relative;
+  }
+
+  .homepage-hero .hero-top nav a::after {
+    content: "";
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+
+  .homepage-hero .hero-top nav a:hover::after {
+    width: 100%;
+  }
+
+  .homepage-hero .hero-top nav a:hover {
+    color: var(--text-heading);
+  }
+
+  /* ─── Hero body (the main headline + tagline + description) ─── */
+  .hero-body {
+    text-align: center;
+    padding: 64px 0 48px;
+    transition: all 0.4s ease;
+  }
+
+  .hero-body h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    line-height: 1.1;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+    transition: all 0.4s ease;
+  }
+
+  .hero-body h1 .highlight {
+    color: var(--accent);
+    text-shadow: 0 0 40px var(--accent-glow);
+    transition: all 0.4s ease;
+  }
+
+  .hero-body .tagline {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border-accent);
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 100px;
+    background: rgba(0, 255, 65, 0.03);
+    margin-bottom: 24px;
+    transition: all 0.4s ease;
+  }
+
+  .hero-body .hero-desc {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 520px;
+    margin: 0 auto;
+    transition: all 0.4s ease;
+  }
+
+  /* ─── Scrolled state ─── */
+  .homepage-hero.scrolled {
+    background: rgba(8, 8, 8, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .homepage-hero.scrolled .hero-top {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .homepage-hero.scrolled .hero-body {
+    padding: 4px 0;
+  }
+
+  .homepage-hero.scrolled .hero-body .tagline,
+  .homepage-hero.scrolled .hero-body .hero-desc {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .homepage-hero.scrolled .hero-body h1 {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    letter-spacing: 0;
+  }
+
+  .homepage-hero.scrolled .hero-body h1 .highlight {
+    text-shadow: none;
+  }
+
+  .homepage-hero.scrolled .hero-body h1 br {
+    display: none;
+  }
+
+  .homepage-hero.scrolled .hero-body {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    height: var(--header-height);
+    line-height: var(--header-height);
+    white-space: nowrap;
+  }
+
+  .homepage-hero.scrolled .hero-body h1 {
+    line-height: var(--header-height);
+    display: inline;
+  }
+
+  /* ─── Spacer to prevent content jump ─── */
+  .hero-spacer {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .homepage-hero .hero-inner {
+      padding: 0 16px;
+    }
+
+    .hero-body {
+      padding: 40px 0 32px;
+    }
+
+    .hero-body h1 {
+      font-size: 2rem;
+    }
+
+    .hero-body .hero-desc {
+      font-size: 1rem;
+    }
+
+    .homepage-hero.scrolled .hero-body h1 {
+      font-size: 0.95rem;
+    }
+
+    .homepage-hero .hero-top nav {
+      gap: 16px;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const hero = document.getElementById("hero");
+    let ticking = false;
+
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          // Collapse after scrolling past 120px
+          if (scrollY > 120) {
+            hero.classList.add("scrolled");
+          } else {
+            hero.classList.remove("scrolled");
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // Check initial state
+    onScroll();
+  })();
+</script>
