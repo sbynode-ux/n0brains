@@ -109,6 +109,40 @@ header .inner {
   font-weight: 700;
   color: var(--text-heading);
   letter-spacing: -0.5px;
+  transition: opacity 0.3s ease;
+}
+
+/* ─── Header hero text (homepage only, appears on scroll) ─── */
+.header-hero-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+header.scrolled .header-hero-text {
+  opacity: 1;
+}
+
+header.scrolled .logo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Overlay logo and hero text so they swap in place */
+.logo,
+.header-hero-text {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+header .inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
 }
 
 .logo span {

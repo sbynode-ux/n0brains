@@ -5,10 +5,10 @@ export interface Props {
   title: string;
   description: string;
   canonicalURL?: string;
-  hideHeader?: boolean;
+  homepage?: boolean;
 }
 
-const { title, description, canonicalURL, hideHeader } = Astro.props;
+const { title, description, canonicalURL, homepage } = Astro.props;
 const url = canonicalURL ?? Astro.url;
 ---
 
@@ -38,18 +38,17 @@ const url = canonicalURL ?? Astro.url;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    {!hideHeader && (
-      <header>
-        <div class="inner">
-          <a href="/" class="logo">&lt;<span>n0</span>brains /&gt;</a>
-          <nav>
-            <a href="/">home</a>
-            <a href="/about">about</a>
-            <a href="/rss.xml">rss</a>
-          </nav>
-        </div>
-      </header>
-    )}
+    <header id="site-header">
+      <div class="inner">
+        <a href="/" class="logo" id="header-logo">&lt;<span>n0</span>brains /&gt;</a>
+        {homepage && <span class="header-hero-text" id="header-hero-text">think less ship more.</span>}
+        <nav>
+          <a href="/">home</a>
+          <a href="/about">about</a>
+          <a href="/rss.xml">rss</a>
+        </nav>
+      </div>
+    </header>
 
     <main>
       <slot />
@@ -60,5 +59,39 @@ const url = canonicalURL ?? Astro.url;
         <p>© {new Date().getFullYear()} <a href="https://n0brains.com">n0brains.com</a> — think less, ship more.</p>
       </div>
     </footer>
+
+    {homepage && (
+      <script>
+        (() => {
+          const header = document.getElementById("site-header");
+          const hero = document.getElementById("hero");
+          let ticking = false;
+
+          const update = () => {
+            if (!hero) return;
+            const heroBottom = hero.getBoundingClientRect().bottom;
+            if (heroBottom < 60) {
+              header.classList.add("scrolled");
+            } else {
+              header.classList.remove("scrolled");
+            }
+          };
+
+          const onScroll = () => {
+            if (!ticking) {
+              window.requestAnimationFrame(() => {
+                update();
+                ticking = false;
+              });
+              ticking = true;
+            }
+          };
+
+          window.addEventListener("scroll", onScroll, { passive: true });
+          update();
+        })();
+      </script>
+    )}
   </body>
 </html>
+
