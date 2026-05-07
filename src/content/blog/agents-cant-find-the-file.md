@@ -2,6 +2,7 @@
 title: "AI coding agents spend 81% of their time looking for the right file"
 description: "A new study found that agents spend almost no time actually writing code. They're lost in the codebase."
 pubDate: 2026-05-07
+postNumber: 3
 ---
 
 Here's a number that stopped me: **56.8%** of AI coding agent actions are reading files. Another **24.2%** are grep searches. Actual code edits? **Less than 1%**.

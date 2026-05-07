@@ -2,6 +2,7 @@
 title: "hello, world"
 description: "The inaugural post. This site exists now. That's the whole point."
 pubDate: 2026-05-07
+postNumber: 1
 ---
 
 This is the first post on n0brains.com.
