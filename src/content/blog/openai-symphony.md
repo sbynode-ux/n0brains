@@ -2,7 +2,6 @@
 title: "OpenAI Symphony: When the bottleneck is human attention"
 description: "OpenAI open-sourced a spec that lets coding agents pull tickets and ship code without waiting for humans. The results are absurd."
 pubDate: 2026-05-07
-postNumber: 2
 ---
 
 On April 27, OpenAI released [Symphony](https://github.com/openai/symphony), an open-source specification that does something simple on paper and terrifying in practice: it lets AI coding agents pull tickets from Linear, write the code, open pull requests, and get them merged — without a human in the dispatch loop.
