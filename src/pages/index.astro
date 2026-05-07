@@ -23,7 +23,7 @@ posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
     <div class="post-list">
       {
         posts.map((post) => (
-          <a href={`/${post.id}/`} class="post-card">
+          <a href={`/blog/${post.id}/`} class="post-card">
             <div class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
             <h2>{post.data.title}</h2>
             <p>{post.data.description}</p>
