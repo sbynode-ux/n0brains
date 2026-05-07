@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={post.data.title} description={post.data.description} canonicalURL={`https://n0brains.com/${post.id}/`}>
+  <article>
+    <header class="post-header">
+      <div class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+      <h1>{post.data.title}</h1>
+      <p class="description">{post.data.description}</p>
+    </header>
+
+    <div class="content">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

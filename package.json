@@ -1,0 +1,17 @@
+{
+  "name": "n0brains-site",
+  "version": "1.0.0",
+  "description": "n0brains.com — think less, ship more",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.4",
+    "@astrojs/rss": "^4.0.18",
+    "@astrojs/sitemap": "^3.7.2",
+    "astro": "^6.3.0"
+  }
+}

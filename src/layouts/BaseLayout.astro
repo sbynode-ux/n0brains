@@ -1,0 +1,64 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+}
+
+const { title, description, canonicalURL } = Astro.props;
+const url = canonicalURL ?? Astro.url;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} — n0brains</title>
+    <meta name="description" content={description} />
+
+    <link rel="canonical" href={url} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="n0brains RSS" href="/rss.xml" />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:site_name" content="n0brains" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <style is:global>
+      /* inline critical above; this ensures it loads fast */
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="inner">
+        <a href="/" class="logo">&lt;<span>n0</span>brains /&gt;</a>
+        <nav>
+          <a href="/">home</a>
+          <a href="/about">about</a>
+          <a href="/rss.xml">rss</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <div class="inner">
+        <p>© {new Date().getFullYear()} <a href="https://n0brains.com">n0brains.com</a> — think less, ship more.</p>
+      </div>
+    </footer>
+  </body>
+</html>

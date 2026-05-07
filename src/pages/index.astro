@@ -1,0 +1,35 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("blog");
+posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout title="n0brains" description="think less, ship more — a blog about building without overthinking.">
+  <section class="hero">
+    <p class="tagline">n0brains // build mode</p>
+    <h1>
+      think less<br />
+      <span class="highlight">ship more.</span>
+    </h1>
+    <p>
+      A blog about building things without overthinking them.
+      No grand theories. No analysis paralysis. Just shipping.
+    </p>
+  </section>
+
+  <section>
+    <div class="post-list">
+      {
+        posts.map((post) => (
+          <a href={`/${post.id}/`} class="post-card">
+            <div class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
