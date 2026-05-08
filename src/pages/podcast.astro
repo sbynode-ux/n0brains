@@ -1,0 +1,169 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Episodes JSON is updated by the publisher pipeline on each new ep.
+// Falls back to empty list if file missing (first deploy).
+let episodes: any[] = [];
+try {
+  const data = await import("../data/episodes.json");
+  episodes = (data.default as any[]) ?? [];
+} catch {
+  episodes = [];
+}
+
+// Sort newest first
+episodes.sort((a, b) => (b.pubDate ?? "").localeCompare(a.pubDate ?? ""));
+
+function fmtDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+---
+
+<BaseLayout title="podcast" description="n0brains podcast — two hosts break down agentic AI.">
+  <section class="hero">
+    <p class="hero-eyebrow">n0brains // podcast</p>
+    <h1>
+      the <span class="highlight">no brains</span><br />
+      podcast.
+    </h1>
+    <p class="hero-desc">
+      Two hosts break down what's actually happening in agentic AI.
+      No fluff. No grand theories. Just shipping.
+    </p>
+    <div class="subscribe-row">
+      <a href="/podcast.xml" class="sub-btn">RSS feed</a>
+      <a href="https://open.spotify.com/show/" class="sub-btn">Spotify</a>
+      <a href="https://podcasts.apple.com/" class="sub-btn">Apple Podcasts</a>
+    </div>
+  </section>
+
+  <section>
+    <p class="section-label">// episodes</p>
+    {episodes.length === 0 && (
+      <p class="empty">No episodes yet. Check back soon.</p>
+    )}
+    <div class="ep-list">
+      {episodes.map((ep) => (
+        <article class="ep-card">
+          <div class="ep-meta">
+            <span class="ep-num">{`Ep ${String(ep.num).padStart(2, "0")}`}</span>
+            <span class="ep-date">{fmtDate(ep.pubDate)}</span>
+            <span class="ep-dur">{fmtDuration(ep.duration_sec ?? 0)}</span>
+          </div>
+          <h2>{ep.title}</h2>
+          <p class="ep-summary">{ep.summary}</p>
+          <audio controls preload="none" src={ep.mp3_url}></audio>
+          {ep.articles && ep.articles.length > 0 && (
+            <div class="ep-articles">
+              <span class="ep-articles-label">covers:</span>
+              {ep.articles.map((slug: string) => (
+                <a href={`/blog/${slug}/`}>{slug.replace(/-/g, " ")}</a>
+              ))}
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .subscribe-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .sub-btn {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+  }
+  .sub-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .empty {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 24px 0;
+  }
+  .ep-list {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  .ep-card {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ep-meta {
+    display: flex;
+    gap: 16px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+  }
+  .ep-num {
+    color: var(--accent);
+  }
+  .ep-card h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
+    color: var(--text-heading);
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    margin-bottom: 10px;
+  }
+  .ep-summary {
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    max-width: 600px;
+  }
+  audio {
+    width: 100%;
+    max-width: 600px;
+    height: 36px;
+    margin-bottom: 16px;
+    filter: invert(1) hue-rotate(180deg);
+  }
+  .ep-articles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+  .ep-articles-label {
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-right: 4px;
+  }
+  .ep-articles a {
+    color: var(--text-muted);
+    border-bottom: 1px dashed var(--border);
+    text-transform: lowercase;
+  }
+  .ep-articles a:hover {
+    color: var(--accent);
+  }
+</style>
