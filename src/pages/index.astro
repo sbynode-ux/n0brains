@@ -9,25 +9,31 @@ posts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 
 <BaseLayout title="n0brains" description="think less, ship more — a blog about building without overthinking." homepage={true}>
   <section class="hero" id="hero">
-    <p class="tagline">n0brains // build mode</p>
+    <p class="hero-eyebrow">n0brains // build mode</p>
     <h1>
-      think less<br />
+      think<br />
+      less.<br />
       <span class="highlight">ship more.</span>
     </h1>
     <p class="hero-desc">
-      A blog about building things without overthinking them.
-      No grand theories. No analysis paralysis. Just shipping.
+      Building things without overthinking them.
+      No grand theories. No analysis paralysis.
     </p>
   </section>
 
   <section>
+    <p class="section-label">// latest posts</p>
     <div class="post-list">
       {
-        posts.map((post) => (
+        posts.map((post, i) => (
           <a href={`/blog/${post.id}/`} class="post-card">
-            <div class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</div>
+            <div class="post-meta">
+              <span class="post-index">0{i + 1}</span>
+              <span class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+            </div>
             <h2>{post.data.title}</h2>
             <p>{post.data.description}</p>
+            <span class="read-more">read</span>
           </a>
         ))
       }
