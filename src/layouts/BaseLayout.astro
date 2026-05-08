@@ -23,6 +23,7 @@ const url = canonicalURL ?? Astro.url;
     <link rel="canonical" href={url} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="n0brains RSS" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title="n0brains podcast" href="/podcast.xml" />
 
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -45,6 +46,7 @@ const url = canonicalURL ?? Astro.url;
         <nav>
           <a href="/">home</a>
           <a href="/about">about</a>
+          <a href="/podcast">podcast</a>
           <a href="/rss.xml">rss</a>
         </nav>
       </div>
