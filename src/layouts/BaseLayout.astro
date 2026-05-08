@@ -35,13 +35,13 @@ const url = canonicalURL ?? Astro.url;
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   </head>
   <body>
     <header id="site-header">
       <div class="inner">
         <a href="/" class="logo" id="header-logo">&lt;<span>n0</span>brains /&gt;</a>
-        {homepage && <span class="header-hero-text" id="header-hero-text">think less ship more.</span>}
+        {homepage && <span class="header-hero-text" id="header-hero-text">// think less. ship more.</span>}
         <nav>
           <a href="/">home</a>
           <a href="/about">about</a>
@@ -63,6 +63,7 @@ const url = canonicalURL ?? Astro.url;
     {homepage && (
       <script>
         (() => {
+          // Header scroll swap
           const header = document.getElementById("site-header");
           const hero = document.getElementById("hero");
           let ticking = false;
@@ -70,28 +71,36 @@ const url = canonicalURL ?? Astro.url;
           const update = () => {
             if (!hero) return;
             const heroBottom = hero.getBoundingClientRect().bottom;
-            if (heroBottom < 60) {
-              header.classList.add("scrolled");
-            } else {
-              header.classList.remove("scrolled");
-            }
+            header.classList.toggle("scrolled", heroBottom < 60);
           };
 
-          const onScroll = () => {
+          window.addEventListener("scroll", () => {
             if (!ticking) {
-              window.requestAnimationFrame(() => {
-                update();
-                ticking = false;
-              });
+              requestAnimationFrame(() => { update(); ticking = false; });
               ticking = true;
             }
-          };
-
-          window.addEventListener("scroll", onScroll, { passive: true });
+          }, { passive: true });
           update();
+
+          // Scroll-triggered post card reveals
+          const cards = document.querySelectorAll(".post-card");
+          const io = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+              if (entry.isIntersecting) {
+                const card = entry.target;
+                const delay = card.dataset.delay || 0;
+                setTimeout(() => card.classList.add("visible"), Number(delay));
+                io.unobserve(card);
+              }
+            });
+          }, { threshold: 0.12 });
+
+          cards.forEach((card, i) => {
+            card.dataset.delay = i * 80;
+            io.observe(card);
+          });
         })();
       </script>
     )}
   </body>
 </html>
-
