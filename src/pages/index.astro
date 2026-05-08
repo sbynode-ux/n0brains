@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 
 const posts = await getCollection("blog");
-const order = ["the-end-of-prompt-engineering", "blitzy-thousand-agents", "agents-cant-find-the-file", "openai-symphony", "hello-world"];
+const order = ["the-6-week-deadline-for-shipping-ai", "the-end-of-prompt-engineering", "blitzy-thousand-agents", "agents-cant-find-the-file", "openai-symphony", "hello-world"];
 posts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 ---
 
