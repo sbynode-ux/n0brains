@@ -1,0 +1,16 @@
+[
+  {
+    "num": 1,
+    "title": "Ep 1: 10,000 Agents Need Attention",
+    "summary": "A startup raises $200M for 10,000 agents, coding agents waste 81% of time searching files, and OpenAI says human attention is the real bottleneck.",
+    "mp3_url": "https://n0brains.com/podcast/ep-001-blitzy-thousand-agents.mp3",
+    "duration_sec": 698,
+    "size_bytes": 11183730,
+    "pubDate": "2026-05-08",
+    "articles": [
+      "blitzy-thousand-agents",
+      "agents-cant-find-the-file",
+      "openai-symphony"
+    ]
+  }
+]
