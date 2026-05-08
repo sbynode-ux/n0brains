@@ -1,5 +1,19 @@
 [
   {
+    "num": 2,
+    "title": "Ep 2: From AI Demos to Hardened Systems",
+    "summary": "Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.",
+    "mp3_url": "https://n0brains.com/podcast/ep-002-from-ai-demos-to-hardened-systems.mp3",
+    "duration_sec": 1283,
+    "size_bytes": 20537815,
+    "pubDate": "2026-05-08",
+    "articles": [
+      "the-6-week-deadline-for-shipping-ai",
+      "the-end-of-prompt-engineering",
+      "the-pentagon-is-betting-on-agents-before-theyre-safe-google"
+    ]
+  },
+  {
     "num": 1,
     "title": "Ep 1: How AI swarms broke the coding bottleneck",
     "summary": "Three stories on agentic coding: Blitzy's 10,000 parallel agents, why coding agents waste 81% of their time searching files, and OpenAI's Symphony for autonomous dispatch.",
