@@ -20,6 +20,18 @@
     <itunes:category text="Technology"/>
     <itunes:type>episodic</itunes:type>
     <item>
+      <title>Ep 2: From AI Demos to Hardened Systems</title>
+      <description>Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.</description>
+      <itunes:summary>Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.</itunes:summary>
+      <pubDate>Fri, 08 May 2026 15:00:00 GMT</pubDate>
+      <guid isPermaLink="false">n0brains-ep-002</guid>
+      <enclosure url="https://n0brains.com/podcast/ep-002-from-ai-demos-to-hardened-systems.mp3" length="20537815" type="audio/mpeg"/>
+      <itunes:duration>21:23</itunes:duration>
+      <itunes:episode>2</itunes:episode>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>n0brains</itunes:author>
+    </item>
+    <item>
       <title>Ep 1: How AI swarms broke the coding bottleneck</title>
       <description>Three stories on agentic coding: Blitzy's 10,000 parallel agents, why coding agents waste 81% of their time searching files, and OpenAI's Symphony for autonomous dispatch.</description>
       <itunes:summary>Three stories on agentic coding: Blitzy's 10,000 parallel agents, why coding agents waste 81% of their time searching files, and OpenAI's Symphony for autonomous dispatch.</itunes:summary>
