@@ -1,0 +1,16 @@
+[
+  {
+    "num": 1,
+    "title": "Ep 1: How AI swarms broke the coding bottleneck",
+    "summary": "Three stories on agentic coding: Blitzy's 10,000 parallel agents, why coding agents waste 81% of their time searching files, and OpenAI's Symphony for autonomous dispatch.",
+    "mp3_url": "https://n0brains.com/podcast/ep-001-how-ai-swarms-broke-the-coding-bottleneck.mp3",
+    "duration_sec": 2610,
+    "size_bytes": 41765126,
+    "pubDate": "2026-05-08",
+    "articles": [
+      "blitzy-thousand-agents",
+      "agents-cant-find-the-file",
+      "openai-symphony"
+    ]
+  }
+]
