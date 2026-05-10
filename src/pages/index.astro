@@ -3,7 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 
 const posts = await getCollection("blog");
-const order = ["the-fed-chair-called-banks-over-an-ai-that-found-everything", "the-end-of-unlimited-ai", "the-pentagon-is-betting-on-agents-before-theyre-safe-google", "the-6-week-deadline-for-shipping-ai", "the-end-of-prompt-engineering", "blitzy-thousand-agents", "agents-cant-find-the-file", "openai-symphony", "hello-world"];
+const order = ["cloudflares-24-plunge-proves-the-ai-efficiency-trap", "the-fed-chair-called-banks-over-an-ai-that-found-everything", "the-end-of-unlimited-ai", "the-pentagon-is-betting-on-agents-before-theyre-safe-google", "the-6-week-deadline-for-shipping-ai", "the-end-of-prompt-engineering", "blitzy-thousand-agents", "agents-cant-find-the-file", "openai-symphony", "hello-world"];
 posts.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
 ---
 
