@@ -2,12 +2,13 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="about" description="About n0brains.com — think less, ship more.">
+<BaseLayout title="about" description="About n0brains — our vision, mission, and what we're building.">
   <section class="about-section">
     <h1>about // n0brains</h1>
 
     <p>
-      <strong>n0brains</strong> is a blog for builders who don't overthink.
+      <strong>n0brains</strong> is a crypto intelligence platform and builder community.
+      We think less and ship more.
     </p>
 
     <p>
@@ -20,15 +21,75 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       Every post here is something real — a project shipped, a lesson learned,
       a thing that actually works (or spectacularly doesn't).
     </p>
+  </section>
+
+  <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
+    <h1>vision</h1>
 
     <p>
-      Topics include software engineering, AI agents, crypto trading, and whatever else
-      seems worth building. The bar is low. The shipping frequency is high.
+      A world where anyone with internet access can trade crypto markets with
+      institutional-grade intelligence — without paying institutional prices.
     </p>
 
-    <p style="margin-top: 32px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
-      // think less, ship more<br />
-      // brain not required
+    <p>
+      The best signals aren't locked behind $500/month paywalls or exclusive Discord groups.
+      They're hiding in plain sight: on-chain flows, whale wallets, funding rates, government filings,
+      and a dozen other free data sources. The edge isn't in the data — it's in <strong>connecting it fast enough to act</strong>.
+    </p>
+
+    <p>
+      We're building the infrastructure to make that connection automatic.
     </p>
   </section>
+
+  <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
+    <h1>mission</h1>
+
+    <p>
+      Turn raw crypto data into actionable signals — and deliver them before the opportunity is gone.
+    </p>
+
+    <p>
+      Our signal pipeline monitors 18+ sources in real-time: Telegram channels, whale wallets,
+      exchange order books, government RSS feeds, on-chain flows, and more. Every signal is
+      classified by a local LLM, cross-referenced across sources, and scored for confidence before
+      it ever reaches you.
+    </p>
+
+    <p>
+      We don't predict the future. We detect the present — faster and more completely than any
+      human could — and we deliver it through a clean API that integrates with whatever you're
+      already using.
+    </p>
+
+    <p>
+      <strong>Zero paid data dependencies.</strong> Every source in our pipeline is free and public.
+      If it stops being free, we replace it. The product is the synthesis, not the data.
+    </p>
+  </section>
+
+  <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
+    <h1>how it works</h1>
+
+    <p>
+      <strong>1. Collect.</strong> 18 watchers scrape Telegram, RSS, blockchains, exchanges, and social media around the clock.
+    </p>
+
+    <p>
+      <strong>2. Classify.</strong> An on-device LLM tags every event with direction, confidence, and asset scope. No external API calls. No latency. No censorship.
+    </p>
+
+    <p>
+      <strong>3. Corroborate.</strong> The signal processor cross-references multiple sources. A whale alert backed by a funding rate spike and a news headline scores higher than any single source alone.
+    </p>
+
+    <p>
+      <strong>4. Deliver.</strong> Signals hit your system via REST API, WebSocket, or Webhook — within seconds of detection. Free tier gets 15-minute delay. Pro gets real-time.
+    </p>
+  </section>
+
+  <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+    // think less, ship more<br />
+    // brain not required
+  </p>
 </BaseLayout>

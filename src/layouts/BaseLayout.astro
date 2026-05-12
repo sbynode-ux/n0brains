@@ -44,11 +44,10 @@ const url = canonicalURL ?? Astro.url;
         <a href="/" class="logo" id="header-logo">&lt;<span>n0</span>brains /&gt;</a>
         {homepage && <span class="header-hero-text" id="header-hero-text">// think less. ship more.</span>}
         <nav>
-          <a href="/">home</a>
           <a href="/signals">signals</a>
+          <a href="/blog">blog</a>
           <a href="/about">about</a>
-          <a href="/podcast">podcast</a>
-          <a href="/rss.xml">rss</a>
+          <a href="/contact">contact</a>
         </nav>
       </div>
     </header>
@@ -60,6 +59,12 @@ const url = canonicalURL ?? Astro.url;
     <footer>
       <div class="inner">
         <p>© {new Date().getFullYear()} <a href="https://n0brains.com">n0brains.com</a> — think less, ship more.</p>
+        <p class="footer-links">
+          <a href="/privacy">privacy</a>
+          <a href="/terms">terms</a>
+          <a href="/rss.xml">rss</a>
+          <a href="/podcast">podcast</a>
+        </p>
       </div>
     </footer>
 

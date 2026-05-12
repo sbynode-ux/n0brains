@@ -1,0 +1,152 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="terms of service" description="n0brains terms of service — the rules of engagement.">
+  <section class="about-section legal-page">
+    <h1>terms of service</h1>
+    <p class="legal-updated">Last updated: May 2025</p>
+
+    <h2>1. acceptance</h2>
+    <p>
+      By using n0brains Signals ("the Service"), you agree to these terms. If you don't agree,
+      don't use the Service. Simple.
+    </p>
+
+    <h2>2. description of service</h2>
+    <p>
+      n0brains Signals provides cryptocurrency market intelligence via REST API, WebSocket, and
+      Webhook. The Service aggregates, classifies, and delivers signals from publicly available
+      data sources. We do not provide financial advice, trading recommendations, or investment
+      counsel. Signals are informational only.
+    </p>
+
+    <h2>3. accounts</h2>
+    <p>
+      You must provide a valid email address to register. You are responsible for keeping your
+      API key confidential. If your key is compromised, contact us immediately — we'll rotate it.
+      You may not create multiple free-tier accounts to circumvent rate limits.
+    </p>
+
+    <h2>4. tiers &amp; billing</h2>
+    <p>
+      <strong>Free tier:</strong> 60 requests/minute, 15-minute signal delay, REST API only. No
+      credit card required.
+    </p>
+    <p>
+      <strong>Pro tier:</strong> $49.99/month. 600 requests/minute, real-time signals, full API
+      access. Billed monthly via Stripe. You may cancel at any time — access continues through
+      the end of your billing period.
+    </p>
+    <p>
+      We reserve the right to change pricing with 30 days' notice. Existing subscribers keep
+      their current rate until the next billing cycle after the change.
+    </p>
+
+    <h2>5. refunds</h2>
+    <p>
+      Pro subscriptions are non-refundable. If you cancel, you retain access through the end of
+      your paid period. No prorated refunds for partial months.
+    </p>
+
+    <h2>6. acceptable use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Resell or redistribute signals without written permission</li>
+      <li>Reverse-engineer, scrape, or extract our classification models or source data pipelines</li>
+      <li>Use the Service for any illegal purpose</li>
+      <li>Attempt to overwhelm, DDoS, or otherwise degrade the Service</li>
+      <li>Create multiple free accounts to bypass rate limits</li>
+    </ul>
+
+    <h2>7. disclaimers</h2>
+    <p>
+      <strong>The Service is provided "as is" without warranty of any kind.</strong> We do not
+      guarantee signal accuracy, timeliness, or profitability. Cryptocurrency markets are volatile.
+      You can lose money. Past signal performance does not predict future results.
+    </p>
+    <p>
+      We are not financial advisors. Nothing in the Service constitutes investment advice.
+      You are solely responsible for your trading decisions.
+    </p>
+
+    <h2>8. limitation of liability</h2>
+    <p>
+      To the maximum extent permitted by law, n0brains shall not be liable for any direct,
+      indirect, incidental, special, or consequential damages arising from your use of the Service,
+      including but not limited to trading losses, missed opportunities, or data inaccuracies.
+      Our total liability shall not exceed the amount you paid us in the 12 months preceding
+      the claim.
+    </p>
+
+    <h2>9. intellectual property</h2>
+    <p>
+      The n0brains name, logo, and Service design are our property. Signal data derived from
+      public sources is not proprietary, but our classification methodology, scoring algorithms,
+      and API structure are. Don't copy them.
+    </p>
+
+    <h2>10. termination</h2>
+    <p>
+      We may suspend or terminate your account for violations of these terms, with or without
+      notice. You may delete your account at any time by emailing
+      <a href="mailto:support@n0brains.com">support@n0brains.com</a>.
+    </p>
+
+    <h2>11. changes</h2>
+    <p>
+      We may update these terms periodically. Material changes will be communicated via email
+      to registered users. Continued use after changes constitutes acceptance.
+    </p>
+
+    <h2>12. governing law</h2>
+    <p>
+      These terms are governed by the laws of the jurisdiction in which n0brains operates.
+      Any disputes shall be resolved in the courts of that jurisdiction.
+    </p>
+
+    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+      // questions? <a href="mailto:support@n0brains.com">support@n0brains.com</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal-page h2 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal-updated {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem !important;
+  }
+
+  .legal-page ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  .legal-page li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .legal-page li::before {
+    content: "—";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+</style>

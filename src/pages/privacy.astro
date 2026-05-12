@@ -1,0 +1,91 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="privacy policy" description="n0brains privacy policy — how we handle your data.">
+  <section class="about-section legal-page">
+    <h1>privacy policy</h1>
+    <p class="legal-updated">Last updated: May 2025</p>
+
+    <h2>1. information we collect</h2>
+    <p>
+      When you register for n0brains Signals, we collect your email address and a password hash.
+      If you subscribe to the Pro tier, we also collect payment information processed by Stripe —
+      we never see or store your credit card number.
+    </p>
+    <p>
+      When you use the API, we log request timestamps, endpoints accessed, and response status codes
+      for rate limiting and abuse prevention. We do not log the content of your requests or responses.
+    </p>
+
+    <h2>2. how we use your information</h2>
+    <p>
+      Your email is used for account verification, billing notifications, and — if you opt in —
+      occasional product updates. We do not sell, rent, or share your email with third parties.
+    </p>
+    <p>
+      API usage logs are used solely to enforce rate limits, detect abuse, and improve service
+      reliability. We retain these logs for 90 days, after which they are automatically deleted.
+    </p>
+
+    <h2>3. data storage</h2>
+    <p>
+      All data is stored in encrypted PostgreSQL databases. Connections are encrypted via TLS.
+      Passwords are stored as bcrypt hashes — we cannot read them.
+    </p>
+
+    <h2>4. third-party services</h2>
+    <p>
+      <strong>Stripe</strong> processes all payments. We receive a customer ID and subscription status
+      from Stripe — never your card details. Stripe's privacy policy applies to payment data.
+    </p>
+
+    <h2>5. cookies</h2>
+    <p>
+      The n0brains.com website uses no tracking cookies. The API uses bearer tokens (JWT) for
+      authentication — these are not cookies and are not sent to third parties.
+    </p>
+
+    <h2>6. data deletion</h2>
+    <p>
+      You can request full account deletion by emailing <a href="mailto:support@n0brains.com">support@n0brains.com</a>.
+      We will delete your account, API key, and all associated data within 30 days. Stripe customer
+      records are managed by Stripe and subject to their retention policy.
+    </p>
+
+    <h2>7. security</h2>
+    <p>
+      We use industry-standard practices: TLS for all connections, bcrypt for passwords, JWT for
+      API auth, and row-level security in our database. We do not share infrastructure with other services.
+    </p>
+
+    <h2>8. changes</h2>
+    <p>
+      We may update this policy periodically. Changes will be posted on this page with an updated
+      "Last updated" date. Continued use of the service after changes constitutes acceptance.
+    </p>
+
+    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+      // questions? <a href="mailto:support@n0brains.com">support@n0brains.com</a>
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal-page h2 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .legal-updated {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem !important;
+  }
+</style>

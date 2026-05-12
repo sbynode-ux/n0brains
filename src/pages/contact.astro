@@ -1,0 +1,107 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="contact" description="Get in touch with n0brains.">
+  <section class="about-section">
+    <h1>contact</h1>
+
+    <p>
+      Questions, feedback, or issues with the signals API? Reach out through the channels below.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="contact-icon">📧</div>
+        <h3>Email</h3>
+        <p><a href="mailto:hello@n0brains.com">hello@n0brains.com</a></p>
+        <p class="contact-note">For general inquiries and partnership requests.</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">🛠</div>
+        <h3>API Support</h3>
+        <p><a href="mailto:support@n0brains.com">support@n0brains.com</a></p>
+        <p class="contact-note">Pro tier users get priority response. Include your API key in the subject line.</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">🐦</div>
+        <h3>Bluesky</h3>
+        <p><a href="https://bsky.app/profile/n0brains.com">@n0brains.com</a></p>
+        <p class="contact-note">Signal highlights, market commentary, and new feature announcements.</p>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon">💬</div>
+        <h3>Telegram</h3>
+        <p><a href="https://t.me/n0brains_signals">t.me/n0brains_signals</a></p>
+        <p class="contact-note">Community channel for signal discussions and real-time updates.</p>
+      </div>
+    </div>
+
+    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+      // we read everything, reply to most
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 600px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+
+  .contact-card {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .contact-card:hover {
+    border-color: var(--accent);
+  }
+
+  .contact-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-card h3 {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-card p {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .contact-card a {
+    color: var(--text-heading);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .contact-card a:hover {
+    color: var(--accent);
+  }
+
+  .contact-note {
+    font-size: 0.8rem !important;
+    color: var(--text-muted);
+    margin-top: 0.5rem !important;
+  }
+</style>
