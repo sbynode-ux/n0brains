@@ -2,69 +2,43 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="about" description="About n0brains — our vision, mission, and what we're building.">
+<BaseLayout title="about" description="About n0brains — what we are, why we exist, and how the signal pipeline works.">
   <section class="about-section">
     <h1>about // n0brains</h1>
 
     <p>
-      <strong>n0brains</strong> is a crypto intelligence platform and builder community.
-      We think less and trade more.
+      <strong>n0brains</strong> is a crypto signal API. Raw data goes in. Actionable signals come out.
     </p>
 
     <p>
-      The name says it all. You don't need a perfect plan, a board-approved strategy,
-      or a five-year roadmap. You just need to <strong>build</strong>.
+      18 watchers monitor Telegram, blockchains, exchanges, government filings, and social media
+      around the clock. An on-device LLM classifies every event, cross-references it across sources,
+      and scores it for confidence — before the opportunity disappears.
     </p>
 
     <p>
-      This site exists because overthinking kills more projects than bad ideas ever will.
-      Every post here is something real — a project shipped, a lesson learned,
-      a thing that actually works (or spectacularly doesn't).
+      You get the signal. You decide what to do with it.
     </p>
   </section>
 
   <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
-    <h1>vision</h1>
+    <h1>why this exists</h1>
 
     <p>
-      A world where anyone with internet access can trade crypto markets with
-      institutional-grade intelligence — without paying institutional prices.
-    </p>
-
-    <p>
-      The best signals aren't locked behind $500/month paywalls or exclusive Discord groups.
+      The best crypto signals aren't locked behind $500/month paywalls or exclusive Discord groups.
       They're hiding in plain sight: on-chain flows, whale wallets, funding rates, government filings,
-      and a dozen other free data sources. The edge isn't in the data — it's in <strong>connecting it fast enough to act</strong>.
+      a dozen free data sources. The edge isn't the data — it's <strong>connecting it fast enough to act</strong>.
     </p>
 
     <p>
-      We're building the infrastructure to make that connection automatic.
-    </p>
-  </section>
-
-  <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
-    <h1>mission</h1>
-
-    <p>
-      Turn raw crypto data into actionable signals — and deliver them before the opportunity is gone.
+      Most people can't watch 18 sources at once. Most people can't cross-reference a whale alert
+      against a funding rate spike and a Senate committee vote in the 90 seconds before the market
+      moves. A machine can.
     </p>
 
     <p>
-      Our signal pipeline monitors 18+ sources in real-time: Telegram channels, whale wallets,
-      exchange order books, government RSS feeds, on-chain flows, and more. Every signal is
-      classified by a local LLM, cross-referenced across sources, and scored for confidence before
-      it ever reaches you.
-    </p>
-
-    <p>
-      We don't predict the future. We detect the present — faster and more completely than any
-      human could — and we deliver it through a clean API that integrates with whatever you're
-      already using.
-    </p>
-
-    <p>
-      <strong>Zero paid data dependencies.</strong> Every source in our pipeline is free and public.
-      If it stops being free, we replace it. The product is the synthesis, not the data.
+      <strong>Zero paid data dependencies.</strong> Every source in the pipeline is free and public.
+      If one goes down or starts charging, we replace it. The product is the synthesis, not the data.
     </p>
   </section>
 
@@ -85,6 +59,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     <p>
       <strong>4. Deliver.</strong> Signals hit your system via REST API, WebSocket, or Webhook — within seconds of detection. Free tier gets 15-minute delay. Pro gets real-time.
+    </p>
+  </section>
+
+  <section class="about-section" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 48px;">
+    <h1>for agents</h1>
+
+    <p>
+      n0brains was built for autonomous trading agents first, humans second.
+      The API is the product. There is no dashboard. There is no app.
+    </p>
+
+    <p>
+      If you run an OpenClaw agent, a custom bot, or any system that needs crypto intelligence
+      piped in programmatically — this is for you. Point your agent at the endpoint, give it your
+      API key, and let it trade.
+    </p>
+
+    <p>
+      Free tier: 60 requests/min, 15-minute signal delay. Enough to evaluate the data quality before you commit.<br />
+      Pro tier: 600 requests/min, real-time signals, WebSocket stream, webhooks. $49.99/month. No tiers above it. No upsells.
     </p>
   </section>
 
