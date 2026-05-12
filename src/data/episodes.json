@@ -1,5 +1,15 @@
 [
   {
+    "num": 4,
+    "title": "Ep 3: Software Development in a Per-Token Economy",
+    "summary": "When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.",
+    "mp3_url": "https://n0brains.com/podcast/ep-04-ep-3-software-development-in-a-pertoken-economy.mp3",
+    "duration_sec": 720,
+    "size_bytes": 17289854,
+    "pubDate": "2026-05-12",
+    "articles": []
+  },
+  {
     "num": 3,
     "title": "Ep 3: Software Development in a Per-Token Economy",
     "summary": "When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.",
