@@ -20,6 +20,18 @@
     <itunes:category text="Technology"/>
     <itunes:type>episodic</itunes:type>
     <item>
+      <title>Ep 3: Software Development in a Per-Token Economy</title>
+      <description>When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.</description>
+      <itunes:summary>When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.</itunes:summary>
+      <pubDate>Mon, 12 May 2026 12:00:00 GMT</pubDate>
+      <guid isPermaLink="false">n0brains-ep-003</guid>
+      <enclosure url="https://n0brains.com/podcast/ep-003-software-development-in-a-per-token-economy.mp3" length="17289854" type="audio/mpeg"/>
+      <itunes:duration>12:00</itunes:duration>
+      <itunes:episode>3</itunes:episode>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>n0brains</itunes:author>
+    </item>
+    <item>
       <title>Ep 2: From AI Demos to Hardened Systems</title>
       <description>Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.</description>
       <itunes:summary>Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.</itunes:summary>
