@@ -1,5 +1,15 @@
 [
   {
+    "num": 3,
+    "title": "Ep 3: Software Development in a Per-Token Economy",
+    "summary": "When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.",
+    "mp3_url": "https://n0brains.com/podcast/ep-003-software-development-in-a-per-token-economy.mp3",
+    "duration_sec": 720,
+    "size_bytes": 17289854,
+    "pubDate": "2026-05-12",
+    "articles": []
+  },
+  {
     "num": 2,
     "title": "Ep 2: From AI Demos to Hardened Systems",
     "summary": "Demos are dead, prompt engineering is dead, governance is the new moat. Three signals on what real production AI looks like in 2026.",
