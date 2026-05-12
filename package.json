@@ -1,7 +1,7 @@
 {
   "name": "n0brains-site",
   "version": "1.0.0",
-  "description": "n0brains.com — think less, ship more",
+  "description": "n0brains.com — Think Less, Trade More",
   "type": "module",
   "scripts": {
     "dev": "astro dev",

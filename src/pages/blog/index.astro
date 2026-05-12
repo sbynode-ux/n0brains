@@ -6,13 +6,13 @@ const posts = await getCollection("blog");
 posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
-<BaseLayout title="blog" description="n0brains blog — think less, ship more. Articles about building, AI agents, and crypto." homepage={true}>
+<BaseLayout title="blog" description="n0brains blog — Think Less, Trade More. Articles about building, AI agents, and crypto." homepage={true}>
   <section class="hero" id="hero">
     <p class="hero-eyebrow">n0brains // build mode</p>
     <h1>
       think<br />
       less.<br />
-      <span class="highlight">ship more.</span>
+      <span class="highlight">Trade More.</span>
     </h1>
     <p class="hero-desc">
       Building things without overthinking them.
