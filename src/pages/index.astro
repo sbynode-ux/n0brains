@@ -322,7 +322,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <h1>AI-POWERED<br><span class="accent">CRYPTO</span><br>INTELLIGENCE</h1>
       <p>10+ verified sources. Machine-classified, backtested, and delivered via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>. Built for traders who execute.</p>
       <div class="cta-row">
-        <a href="/auth/register" class="btn btn-primary">Start Free →</a>
+        <a href="/signup" class="btn btn-primary">Start Free →</a>
         <a href="/docs/" class="btn btn-secondary">API Docs ↗</a>
       </div>
     </section>
@@ -392,7 +392,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             <li><span class="check">✓</span> Limited signal detail</li>
             <li><span class="check">✓</span> Community support</li>
           </ul>
-          <a href="/auth/register" class="btn btn-secondary" style="width: 100%; justify-content: center;">Start Free</a>
+          <a href="/signup" class="btn btn-secondary" style="width: 100%; justify-content: center;">Start Free</a>
         </div>
 
         <!-- Pro -->
@@ -471,7 +471,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         var apiKey = localStorage.getItem('api_key');
         var token = localStorage.getItem('auth_token');
         if (!apiKey && !token) {
-          window.location.href = '/auth/register?redirect=checkout&tier=' + encodeURIComponent(tier);
+          window.location.href = '/signup?redirect=checkout&tier=' + encodeURIComponent(tier);
           return;
         }
         var headers = { 'Content-Type': 'application/json' };
@@ -482,7 +482,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           headers: headers,
           body: JSON.stringify({ price_id: tier })
         }).then(function(r) {
-          if (r.status === 401) { window.location.href = '/auth/login?redirect=checkout&tier=' + encodeURIComponent(tier); return; }
+          if (r.status === 401) { window.location.href = '/login?redirect=checkout&tier=' + encodeURIComponent(tier); return; }
           return r.json();
         }).then(function(data) {
           if (data && data.url) window.location.href = data.url;
