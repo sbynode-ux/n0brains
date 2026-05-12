@@ -1,0 +1,325 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const signalsResponse = JSON.stringify({
+  count: 2,
+  signals: [{
+    id: 195,
+    asset: null,
+    signal_type: "regulatory",
+    direction: "neutral",
+    urgency: "medium",
+    summary: "Senate Banking Committee scheduled to vote on the Clarity Act crypto bill.",
+    confidence: 0.90,
+    action_hint: "monitor",
+    corroborated: false,
+    score: 0.90,
+    entry_price: null,
+    stop_loss: null,
+    take_profit: null,
+    timestamp: 1778555605,
+    expires_at: 1778570005,
+    disclaimer: "Not financial advice. Past performance does not guarantee future results."
+  }],
+  market_opens: {
+    tokyo: {BTC: 81150.00, ETH: 3200.50, SOL: 96.30, timestamp: 1778539200},
+    london: {BTC: 81201.50, ETH: 3205.00, SOL: 96.48, timestamp: 1778553600},
+    new_york: {BTC: 81262.50, ETH: 3210.00, SOL: 96.55, timestamp: 1778560800}
+  }
+}, null, 2);
+
+const proFields = JSON.stringify({
+  sources: ["news", "whale"],
+  source: "news",
+  channel: "google_crypto"
+}, null, 2);
+
+const levelsResponse = JSON.stringify({
+  coin: "BTC",
+  current_price: 81262.50,
+  nearest_resistance: 81450.00,
+  nearest_support: 80871.00,
+  all_resistance: [81450.00, 81800.00, 82200.00, 82500.00, 83000.00],
+  all_support: [80871.00, 80500.00, 80000.00, 79500.00, 79000.00]
+}, null, 2);
+
+const marketOpensResponse = JSON.stringify({
+  market_opens: {
+    tokyo: {BTC: 81150.00, ETH: 3200.50, SOL: 96.30, timestamp: 1778539200},
+    shanghai: {BTC: 81180.00, ETH: 3202.00, SOL: 96.35, timestamp: 1778542800},
+    hong_kong: {BTC: 81190.00, ETH: 3203.50, SOL: 96.40, timestamp: 1778542800},
+    london: {BTC: 81201.50, ETH: 3205.00, SOL: 96.48, timestamp: 1778553600},
+    new_york: {BTC: 81262.50, ETH: 3210.00, SOL: 96.55, timestamp: 1778560800}
+  }
+}, null, 2);
+
+const registerResponse = JSON.stringify({
+  api_key: "intel_sk_a1b2c3d4e5f6...",
+  key_prefix: "intel_sk",
+  tier: "free",
+  message: "Save your API key - it will not be shown again."
+}, null, 2);
+
+const loginResponse = JSON.stringify({
+  token: "eyJhbGciOiJIUzI1NiIs...",
+  tier: "free",
+  api_keys: [{id: 1, prefix: "intel_sk_a1b2", name: "default", created_at: 1778555605}]
+}, null, 2);
+
+const webhookCreateResponse = JSON.stringify({
+  id: 1,
+  url: "https://your-server.com/hooks/n0brains",
+  secret: "a1b2c3d4...",
+  events: "signal.created",
+  note: "Use X-Intel-Signature header to verify deliveries. Secret is shown only once."
+}, null, 2);
+
+const webhookDeliveryResponse = JSON.stringify({
+  event: "signal.created",
+  timestamp: 1778555605,
+  data: {
+    id: 195,
+    asset: "BTC",
+    signal_type: "whale",
+    direction: "bullish",
+    urgency: "high",
+    summary: "Strategy buys 535 BTC for $43M",
+    confidence: 0.95,
+    score: 1.42,
+    entry_price: 81262.50,
+    stop_loss: 80871.00,
+    take_profit: 81385.50
+  }
+}, null, 2);
+
+const errorResponses = `// 401 Unauthorized
+{"detail": "Invalid API key"}
+
+// 429 Rate Limited
+{"detail": "Rate limit exceeded (60 req/min for free tier). Upgrade at https://n0brains.com"}
+
+// 404 Not Found
+{"detail": "Signal not found"}
+
+// 403 Forbidden
+{"detail": "WebSocket requires Pro tier"}`;
+
+const websocketExample = `wss://api.n0brains.com/stream?api_key=intel_sk_...
+
+Signal received:
+{"type": "signal", "data": {"id": 195, "asset": "BTC", "signal_type": "whale", "direction": "bullish", "urgency": "high", "summary": "Strategy buys 535 BTC for $43M", "confidence": 0.95, "score": 1.42, "entry_price": 81262.50, "stop_loss": 80871.00, "take_profit": 81385.50}}
+
+Ping/pong:
+send: "ping"
+recv: {"type": "pong", "timestamp": 1778555605}`;
+---
+<BaseLayout title="API Docs" description="n0brains Signals API documentation — endpoints, authentication, rate limits, and response formats.">
+  <section class="docs-page">
+    <h1>API Reference</h1>
+    <p class="docs-subtitle">Base URL: <code>https://api.n0brains.com</code> &middot; All responses are JSON &middot; Timestamps are Unix epoch (seconds)</p>
+
+    <div class="card">
+      <h2 id="quickstart">Quick Start</h2>
+      <ol>
+        <li><a href="/signup">Create an account</a> — get your API key instantly</li>
+        <li>Set the header <code>X-API-Key</code> on every request</li>
+        <li>Hit <code>GET /signals</code> — you are done</li>
+      </ol>
+      <pre><code>curl -H "X-API-Key: intel_sk_your_key" https://api.n0brains.com/signals</code></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="auth">Authentication</h2>
+      <p>All authenticated endpoints require an API key via the <code>X-API-Key</code> header. Keys are generated on registration and can be rotated via <code>POST /auth/api-keys</code>.</p>
+      <p>Login also returns a JWT token usable via <code>Authorization: Bearer</code>.</p>
+      <table>
+        <thead><tr><th>Method</th><th>Header</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>API Key</td><td><code>X-API-Key</code></td><td><code>intel_sk_a1b2c3...</code></td></tr>
+          <tr><td>JWT Token</td><td><code>Authorization</code></td><td><code>Bearer eyJhbGci...</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="rate-limits">Rate Limits</h2>
+      <table>
+        <thead><tr><th>Tier</th><th>Requests/min</th><th>Signal Delay</th><th>Access</th></tr></thead>
+        <tbody>
+          <tr><td>Free</td><td>60</td><td>15 minutes</td><td>REST API only, limited fields</td></tr>
+          <tr><td>Pro</td><td>600</td><td>Real-time</td><td>REST + WebSocket + Webhooks, full fields</td></tr>
+        </tbody>
+      </table>
+      <p>Rate limit exceeded returns <code>429</code> with a message pointing to the upgrade page.</p>
+    </div>
+
+    <div class="card">
+      <h2 id="endpoints">Endpoints</h2>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/health</code></td><td>None</td><td>Liveness check</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/signals</code></td><td>API Key</td><td>List active signals (filterable)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/signals/{'{id}'}</code></td><td>API Key</td><td>Single signal detail</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/auth/register</code></td><td>None</td><td>Create account</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/auth/login</code></td><td>None</td><td>Login</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/auth/me</code></td><td>API Key</td><td>User profile</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/auth/api-keys</code></td><td>API Key</td><td>Generate new API key</td></tr>
+          <tr><td><span class="method method-del">DEL</span></td><td><code>/auth/api-keys/{'{id}'}</code></td><td>API Key</td><td>Revoke API key</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/billing/checkout</code></td><td>API Key</td><td>Stripe checkout session</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/billing/portal</code></td><td>API Key</td><td>Stripe customer portal</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/webhooks</code></td><td>Pro</td><td>Register webhook</td></tr>
+          <tr><td><span class="method method-del">DEL</span></td><td><code>/webhooks/{'{id}'}</code></td><td>Pro</td><td>Remove webhook</td></tr>
+          <tr><td><span class="method method-ws">WS</span></td><td><code>/stream</code></td><td>Pro</td><td>Real-time signal stream</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="signals-endpoint">GET /signals</h2>
+      <p>Returns active signals, optionally filtered. Free tier receives signals with a 15-minute delay.</p>
+      <h3>Query Parameters</h3>
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, liquidation, funding, other</td></tr>
+          <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
+          <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
+          <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
+          <tr><td><code>offset</code></td><td>int</td><td>Pagination offset (default 0)</td></tr>
+          <tr><td><code>include_opens</code></td><td>bool</td><td>Include market opening prices (default true)</td></tr>
+        </tbody>
+      </table>
+      <h3>Response - Free Tier</h3>
+      <pre><code set:html={signalsResponse} /></pre>
+      <h3>Pro Tier Adds</h3>
+      <p>Each signal object includes these additional fields:</p>
+      <pre><code set:html={proFields} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="signal-fields">Signal Fields</h2>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>id</code></td><td>int</td><td>Unique signal ID</td></tr>
+          <tr><td><code>asset</code></td><td>string|null</td><td>Ticker symbol or null if market-wide</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, liquidation, funding, other</td></tr>
+          <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
+          <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
+          <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
+          <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, LLM-assessed confidence</td></tr>
+          <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore</td></tr>
+          <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
+          <tr><td><code>score</code></td><td>float</td><td>source_weight x urgency_weight x confidence</td></tr>
+          <tr><td><code>entry_price</code></td><td>float|null</td><td>Suggested entry price</td></tr>
+          <tr><td><code>stop_loss</code></td><td>float|null</td><td>Suggested stop-loss price</td></tr>
+          <tr><td><code>take_profit</code></td><td>float|null</td><td>Suggested take-profit price</td></tr>
+          <tr><td><code>timestamp</code></td><td>int</td><td>Unix epoch (seconds)</td></tr>
+          <tr><td><code>expires_at</code></td><td>int</td><td>When this signal expires</td></tr>
+          <tr><td><code>sources</code></td><td>array</td><td>Pro only - Source names that contributed</td></tr>
+          <tr><td><code>source</code></td><td>string</td><td>Pro only - Primary source name</td></tr>
+          <tr><td><code>channel</code></td><td>string</td><td>Pro only - Specific channel/feed</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="levels">GET /levels/{'{coin}'}</h2>
+      <p>Returns nearest support/resistance levels from the Hyperliquid order book.</p>
+      <pre><code set:html={levelsResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="market-opens">GET /market-opens</h2>
+      <p>Opening prices for BTC, ETH, and SOL at each major trading session.</p>
+      <pre><code set:html={marketOpensResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="auth-endpoints">Auth Endpoints</h2>
+      <h3>POST /auth/register</h3>
+      <p>Create a new account. Returns an API key immediately.</p>
+      <pre><code set:html={registerResponse} /></pre>
+      <h3>POST /auth/login</h3>
+      <pre><code set:html={loginResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="websocket">WebSocket /stream</h2>
+      <p><em>Pro tier only.</em> Connect to receive signals in real-time.</p>
+      <pre><code set:html={websocketExample} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="webhooks">Webhooks</h2>
+      <p><em>Pro tier only.</em> Register a URL to receive POST deliveries for new signals.</p>
+      <h3>POST /webhooks</h3>
+      <pre><code set:html={webhookCreateResponse} /></pre>
+      <h3>Delivery Format</h3>
+      <p>POST to your URL with header <code>X-Intel-Signature</code>:</p>
+      <pre><code set:html={webhookDeliveryResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="sources">Data Sources and Scoring</h2>
+      <p>13 active watchers feed the pipeline. Each source has a weight that multiplies into the final signal score.</p>
+      <p class="formula"><code>score = source_weight x urgency_weight x confidence</code></p>
+      <p>Urgency weights: <code>low: 1.0</code>, <code>medium: 2.0</code>, <code>high: 3.0</code></p>
+
+      <h3>Active Watchers</h3>
+      <ol class="source-list">
+        <li><strong>Telegram</strong> - WatcherGuru, ZachXBT Investigations, yoyodexhaber, sondakikav</li>
+        <li><strong>Twitter/X</strong> - @cz_binance, @CryptoGodJohn, @elonmusk + 20 hashtag trends</li>
+        <li><strong>News RSS</strong> - 15 feeds (Reuters, AP, BBC, CNBC, Bloomberg, CoinDesk, CoinTelegraph, Decrypt, Google News, etc.)</li>
+        <li><strong>Government RSS</strong> - 11 feeds (White House, SEC, CFTC, Fed, Kremlin, Xinhua, TASS, EU, etc.)</li>
+        <li><strong>CoinMarketCap</strong> - Price alerts, trending coins</li>
+        <li><strong>Macro</strong> - Fear and Greed Index, DeFi TVL</li>
+        <li><strong>Binance</strong> - Funding rates, liquidation cascades (WebSocket)</li>
+        <li><strong>Market Opens</strong> - BTC/ETH/SOL prices at Tokyo, Shanghai, Hong Kong, London, NY session opens</li>
+        <li><strong>Launchpad</strong> - Pump.fun WebSocket, Raydium new pairs, Binance/Bybit new listings</li>
+        <li><strong>Smart Money</strong> - Blockchair ETH address dashboards, blockchain.com BTC, burn tracking</li>
+        <li><strong>Whale Tracking</strong> - Hyperliquid leaderboard, SOL whale wallets (110+ curated addresses)</li>
+        <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
+        <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
+      </ol>
+
+      <h3>Source Weights</h3>
+      <table>
+        <thead><tr><th>Source</th><th>Weight</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>gov_news</td><td>1.3</td><td>Market-moving regulatory/policy events</td></tr>
+          <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking</td></tr>
+          <tr><td>telegram:investigations</td><td>1.2</td><td>High-signal hack/exploit intel</td></tr>
+          <tr><td>twitter:cz_binance</td><td>1.0</td><td>Exchange CEO, market-moving</td></tr>
+          <tr><td>whale_sol</td><td>1.0</td><td>SOL whale tracking</td></tr>
+          <tr><td>binance_funding</td><td>1.0</td><td>Primary exchange data</td></tr>
+          <tr><td>binance_liq</td><td>1.0</td><td>Liquidation data</td></tr>
+          <tr><td>cmc_price</td><td>0.9</td><td>CoinMarketCap price alerts</td></tr>
+          <tr><td>telegram:WatcherGuru</td><td>0.9</td><td>Fast breaking news</td></tr>
+          <tr><td>rss:trumpstruth</td><td>0.9</td><td>Market-moving but noisy</td></tr>
+          <tr><td>rss:coindesk</td><td>0.8</td><td>Established outlet</td></tr>
+          <tr><td>launchpad</td><td>0.8</td><td>New token launches</td></tr>
+          <tr><td>rss:cointelegraph</td><td>0.7</td><td>General crypto news</td></tr>
+          <tr><td>rss:decrypt</td><td>0.7</td><td>General crypto news</td></tr>
+          <tr><td>twitter:CryptoGodJohn</td><td>0.7</td><td>Trader sentiment</td></tr>
+          <tr><td>market_open</td><td>0.6</td><td>Session opening prices</td></tr>
+          <tr><td>macro_fearGreed</td><td>0.6</td><td>Sentiment index</td></tr>
+          <tr><td>twitter:elonmusk</td><td>0.5</td><td>Noisy but market-moving</td></tr>
+          <tr><td>twitter_hashtag</td><td>0.4</td><td>Aggregated sentiment</td></tr>
+          <tr><td>dexscreener</td><td>0.2</td><td>Enrichment only</td></tr>
+          <tr><td>Default (unlisted)</td><td>0.5</td><td>-</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="errors">Error Responses</h2>
+      <pre><code set:html={errorResponses} /></pre>
+    </div>
+  </section>
+</BaseLayout>
