@@ -3,15 +3,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import MonoChip from "../components/MonoChip.astro";
 
 /* ---------- Source taxonomy (lives here so it's editable in one place) ---------- */
+/* Ordered by market-signaling significance — strongest directional / timing edge first. */
 const sources = [
-  { chip: "TG",  title: "Telegram Channels",      desc: "WatcherGuru, ZachXBT Investigations, and more. Fastest signal source for hacks and breaking news." },
-  { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it." },
-  { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before reversals." },
-  { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket." },
-  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges. Whale deposits = selling pressure." },
-  { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered for crypto." },
-  { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts." },
-  { chip: "SR",  title: "S/R Levels",             desc: "Real-time support/resistance from Hyperliquid order book. Rejects trades near adverse levels." },
+  { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
+  { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
+  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges. Inflows lead selling pressure; outflows lead accumulation." },
+  { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
+  { chip: "SR",  title: "S/R Levels",             desc: "Real-time support/resistance from the Hyperliquid order book. Shapes entries and stops; rejects trades near adverse levels." },
+  { chip: "TG",  title: "Telegram Channels",      desc: "WatcherGuru, ZachXBT Investigations, and more. Fastest source for hacks and breaking events — high speed, needs corroboration." },
+  { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
+  { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
 ];
 
 const proFeatures = [
