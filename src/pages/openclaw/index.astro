@@ -4,11 +4,13 @@ import MonoChip from "../../components/MonoChip.astro";
 import MethodBadge from "../../components/MethodBadge.astro";
 
 /* -----------------------------------------------------------------------
-   /openclaw — give any agent runtime (OpenClaw, Claude Code, custom
-   orchestrators) live crypto market intelligence. Download the
-   n0brains-signals skill (a plain .md file) and point it at your API key,
-   or call the REST endpoints directly. Optional TypeScript client.
+   /openclaw — point any agent (OpenClaw, Claude Code, custom orchestrator)
+   at the n0brains API. The headline: just tell the agent the base URL and
+   key — it figures the rest out. A downloadable skill .md is the optional
+   structured version. Optional TypeScript client.
    ---------------------------------------------------------------------- */
+
+const tellAgent = `Use the n0brains API at https://api.n0brains.com with X-API-Key intel_sk_your_key`;
 
 const tools = [
   { method: "GET", path: "/signals",          name: "list signals",         desc: "Active signals, filter by asset / type / urgency / direction.",          tier: "free + pro" },
@@ -28,22 +30,11 @@ const can = [
   { chip: "4",  title: "Stay inside guardrails",
     desc: "It's an intelligence layer, not an execution layer — n0brains never trades for you. Free keys get 403 on Pro-only endpoints." },
 ];
-
-const runtimes = [
-  { chip: "OC",  title: "OpenClaw",
-    desc: "Drop <code>n0brains-signals.md</code> into your agent's skills directory. Set <code>NB_API_KEY</code> in the environment (or your secret store, key <code>n0brains_api_key</code>)." },
-  { chip: "CC",  title: "Claude Code",
-    desc: "Copy it to <code>~/.claude/skills/n0brains-signals/SKILL.md</code>. Set <code>NB_API_KEY</code> in your environment." },
-  { chip: "OR",  title: "Custom orchestrator",
-    desc: "Load the file as system context, or skip it and call REST directly. Read the key from <code>NB_API_KEY</code> or your secret store." },
-  { chip: "TS",  title: "TypeScript client",
-    desc: "Optional — <code>npm install github:sbynode-ux/n0brains-ts</code> (not on npm yet). Wraps the same endpoints with typings + a stream helper." },
-];
 ---
 
 <BaseLayout
   title="n0brains for agents"
-  description="Plug n0brains live crypto signals into your OpenClaw or Claude agent. Download the n0brains-signals skill — a plain Markdown file — or call the REST API directly. Free tier, no SDK required."
+  description="Point your OpenClaw or Claude agent at the n0brains API: just hand it the base URL and your key, and it figures the rest out. Optional skill file and TypeScript client. Free tier, no SDK required."
   ogType="article"
 >
   <section class="oc-page">
@@ -53,26 +44,17 @@ const runtimes = [
       <p class="eyebrow">// integrations · agents</p>
       <h1>Your agent.<br /><span class="accent">Market-aware.</span></h1>
       <p class="lede">
-        Give any agent runtime — OpenClaw, Claude Code, your own orchestrator — read access to the live signal feed our watchers produce: corroborated trading signals, support/resistance levels, session opens. Drop in the <code>n0brains-signals</code> skill (a plain Markdown file) and set your API key, or call the REST endpoints directly. No SDK to wire up. It never trades for you.
+        n0brains is a plain HTTP API. You don't need an SDK or an install step — just hand your agent the base URL and your key, and it figures the rest out. One line in the agent's instructions:
       </p>
 
-      <div class="dl-card">
-        <div class="dl-row">
-          <div class="dl-meta">
-            <code class="dl-name">n0brains-signals.md</code>
-            <span class="dl-sub">markdown · ~10 KB · the skill</span>
-          </div>
-          <a class="btn btn-primary" href="/openclaw/n0brains-signals.md" download>Download .md ↓</a>
+      <div class="tell-card">
+        <div class="tell-row">
+          <code id="tell-text">{tellAgent}</code>
+          <button class="copy-btn" data-copy={tellAgent} aria-label="copy">copy</button>
         </div>
-        <div class="dl-row alt">
-          <code><span class="prompt">$</span>curl -O https://n0brains.com/openclaw/n0brains-signals.md</code>
-          <button class="copy-btn" data-copy="curl -O https://n0brains.com/openclaw/n0brains-signals.md" aria-label="copy">copy</button>
-        </div>
-        <div class="dl-row alt">
-          <code><span class="prompt">$</span>export NB_API_KEY=intel_sk_...</code>
-        </div>
+        <p class="tell-sub">Swap <code>intel_sk_your_key</code> for your real key. That's the whole integration — the agent reads <a href="/docs/">/docs</a> implicitly through the API's shape. Base URL: <code>https://api.n0brains.com</code> · auth header: <code>X-API-Key</code>.</p>
         <div class="cta-row">
-          <a href="/signup" class="btn btn-secondary">Get a free API key →</a>
+          <a href="/signup" class="btn btn-primary">Get a free key →</a>
           <a href="/docs/" class="btn btn-secondary">API docs ↗</a>
         </div>
       </div>
@@ -108,7 +90,7 @@ const runtimes = [
           </div>
         ))}
       </div>
-      <p class="note">Full signatures, response shapes, and per-tool examples live inside <a href="/openclaw/n0brains-signals.md">the skill file</a> and in <a href="/docs/">the API docs</a>.</p>
+      <p class="note">Full signatures, params, and response shapes are in <a href="/docs/">the API docs</a>.</p>
     </section>
 
     <!-- Code example -->
@@ -122,7 +104,7 @@ const runtimes = [
         <button class="tab"        data-lang="ts">TypeScript</button>
       </div>
 
-      <pre class="snippet" data-lang="agent"><code><span class="c"># An OpenClaw / Claude agent with the n0brains-signals skill loaded:</span>
+      <pre class="snippet" data-lang="agent"><code><span class="c"># An agent that's been told to use the n0brains API:</span>
 USER:    show me high-urgency BTC whale signals
 AGENT:   <span class="c">→ GET /signals?asset=BTC&signal_type=whale&urgency=high</span>
 AGENT:   1 signal: bullish · score 1.42 · "Strategy buys 535 BTC for $43M"
@@ -139,21 +121,42 @@ AGENT:   1 signal: bullish · score 1.42 · "Strategy buys 535 BTC for $43M"
 signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></pre>
     </section>
 
-    <!-- Runtimes -->
+    <!-- Optional skill file + runtimes -->
     <section class="block">
-      <p class="section-label">// install it in your runtime</p>
-      <div class="rt-grid">
-        {runtimes.map((r) => (
-          <div class="rt-card">
-            <div class="chip-row"><MonoChip text={r.chip} /></div>
-            <h3>{r.title}</h3>
-            <p set:html={r.desc}></p>
-          </div>
-        ))}
-      </div>
-      <p class="note">
-        Whichever runtime you use, the skill reads your key from <code>NB_API_KEY</code> first. Get one — free tier, no card — at <a href="/signup">/signup</a>.
+      <p class="section-label">// optional: a structured skill file</p>
+      <p class="note" style="margin-top:0;">
+        Some runtimes prefer a structured skill file over a one-line instruction. <code>n0brains-signals.md</code> packages the same thing — frontmatter, all five tools with examples, auth, error handling, behaviour rules — as a single Markdown file you drop in. The one-liner above works just as well; this is for when you want it codified.
       </p>
+      <div class="dl-card">
+        <div class="dl-row">
+          <div class="dl-meta">
+            <code class="dl-name">n0brains-signals.md</code>
+            <span class="dl-sub">markdown · ~10 KB · the skill</span>
+          </div>
+          <a class="btn btn-secondary" href="/openclaw/n0brains-signals.md" download>Download .md ↓</a>
+        </div>
+        <div class="dl-row alt">
+          <code><span class="prompt">$</span>curl -O https://n0brains.com/openclaw/n0brains-signals.md</code>
+          <button class="copy-btn" data-copy="curl -O https://n0brains.com/openclaw/n0brains-signals.md" aria-label="copy">copy</button>
+        </div>
+      </div>
+      <table class="runtimes">
+        <thead><tr><th>runtime</th><th>where it goes</th><th>auth</th></tr></thead>
+        <tbody>
+          <tr><td>OpenClaw</td>
+              <td>drop <code>n0brains-signals.md</code> into your agent's skills dir</td>
+              <td>env <code>NB_API_KEY</code></td></tr>
+          <tr><td>Claude Code</td>
+              <td>copy to <code>~/.claude/skills/n0brains-signals/SKILL.md</code></td>
+              <td>env <code>NB_API_KEY</code></td></tr>
+          <tr><td>Custom orchestrator</td>
+              <td>load the <code>.md</code> as system context, or just use the one-liner</td>
+              <td>your secret store, key <code>n0brains_api_key</code></td></tr>
+          <tr><td>Direct HTTP / TS client</td>
+              <td>skip the skill — see <a href="/docs/">/docs</a> or <a href="https://github.com/sbynode-ux/n0brains-ts">n0brains-ts</a></td>
+              <td>header <code>X-API-Key</code></td></tr>
+        </tbody>
+      </table>
     </section>
 
     <!-- Final CTA -->
@@ -162,7 +165,7 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
       <p>Pro is $49.99/mo when you need real-time and the WebSocket stream. Skip dashboards — your agent does the work.</p>
       <div class="cta-row">
         <a href="/signup" class="btn btn-primary">Create free account →</a>
-        <a href="/openclaw/n0brains-signals.md" class="btn btn-secondary" download>Download the skill ↓</a>
+        <a href="/docs/" class="btn btn-secondary">Read the API docs ↗</a>
       </div>
     </section>
 
@@ -188,35 +191,34 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
   .hero h1 .accent { color: var(--accent); }
   .lede {
     font-size: 1.05rem; color: var(--text);
-    max-width: 640px; margin-bottom: 2.5rem; line-height: 1.65;
+    max-width: 640px; margin-bottom: 1.8rem; line-height: 1.65;
   }
-  .lede code, .block p code, .block table code, .note code, .rt-card p code {
-    font-family: var(--font-mono); font-size: 0.92em;
-    color: var(--accent); background: var(--bg-hover);
+  code { font-family: var(--font-mono); }
+  .lede code, .block p code, .block table code, .note code, .can-card p code, .tell-sub code {
+    font-size: 0.92em; color: var(--accent); background: var(--bg-hover);
     padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border);
   }
 
-  /* ─── Download card ──────────────────────────────────── */
-  .dl-card {
+  /* ─── "Tell your agent" card ─────────────────────────── */
+  .tell-card {
     background: var(--bg-alt); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 22px; position: relative; max-width: 680px;
   }
-  .dl-card::before {
+  .tell-card::before {
     content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
     background: linear-gradient(90deg, var(--accent) 0%, transparent 60%); opacity: 0.6;
   }
-  .dl-row {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  .tell-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
     background: var(--bg-code); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 12px;
-    font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-heading);
-    overflow-x: auto;
+    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 14px;
   }
-  .dl-row.alt code { color: var(--text); white-space: nowrap; }
-  .dl-row .prompt { color: var(--accent); margin-right: 8px; user-select: none; }
-  .dl-meta { display: flex; flex-direction: column; gap: 2px; }
-  .dl-name { color: var(--text-heading); }
-  .dl-sub { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .tell-row code {
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-heading);
+    line-height: 1.6; background: transparent; border: 0; padding: 0;
+  }
+  .tell-sub { font-size: 0.85rem; color: var(--text); line-height: 1.6; margin-bottom: 18px; }
+  .tell-sub a { color: var(--accent); }
   .copy-btn {
     font-family: var(--font-mono); font-size: 0.62rem; color: var(--text);
     letter-spacing: 0.15em; text-transform: uppercase;
@@ -225,7 +227,7 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
     transition: all 0.15s ease;
   }
   .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
-  .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 6px; }
+  .cta-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2px; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 0.85rem 1.5rem; border-radius: var(--radius-sm);
@@ -252,8 +254,8 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
     color: var(--text-heading); letter-spacing: 0.04em; margin-bottom: 14px;
   }
   .block p { color: var(--text); }
-  .note { font-size: 0.9rem; color: var(--text); margin-top: 20px; max-width: 700px; }
-  .note a, .block p a, .runtimes a, .tools a { color: var(--accent); }
+  .note { font-size: 0.9rem; color: var(--text); margin-top: 20px; max-width: 700px; line-height: 1.6; }
+  .note a { color: var(--accent); }
 
   /* ─── Capability grid ─────────────────────────────── */
   .can-grid {
@@ -269,8 +271,7 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
   }
   .can-card p { font-size: 0.9rem; line-height: 1.55; }
   .can-card p code {
-    font-size: 0.82em; color: var(--accent);
-    background: var(--bg-code); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
+    font-size: 0.82em; background: var(--bg-code); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);
   }
 
   /* ─── Tools list ─────────────────────────────────── */
@@ -326,19 +327,34 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
   .snippet .k { color: var(--accent); }
   .snippet .s { color: #ffc107; }
 
-  /* ─── Runtimes grid ──────────────────────────────── */
-  .rt-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1px; background: var(--border); border: 1px solid var(--border);
+  /* ─── Download card ──────────────────────────────── */
+  .dl-card {
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; max-width: 680px; margin-bottom: 24px;
   }
-  .rt-card { background: var(--bg-alt); padding: 22px 24px; transition: background 0.2s ease; }
-  .rt-card:hover { background: var(--bg-hover); }
-  .rt-card .chip-row { margin-bottom: 14px; }
-  .rt-card h3 {
-    font-family: var(--font-body); font-size: 1rem; font-weight: 700;
-    color: var(--text-heading); margin-bottom: 6px;
+  .dl-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 12px;
+    font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-heading); overflow-x: auto;
   }
-  .rt-card p { font-size: 0.9rem; line-height: 1.55; }
+  .dl-row:last-child { margin-bottom: 0; }
+  .dl-row.alt code { color: var(--text); white-space: nowrap; }
+  .dl-row .prompt { color: var(--accent); margin-right: 8px; user-select: none; }
+  .dl-meta { display: flex; flex-direction: column; gap: 2px; }
+  .dl-name { color: var(--text-heading); }
+  .dl-sub { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ─── Runtimes table ─────────────────────────────── */
+  .runtimes { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .runtimes th {
+    text-align: left; font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  .runtimes td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  .runtimes tr:last-child td { border-bottom: 0; }
+  .runtimes a { color: var(--accent); }
 
   /* ─── Final CTA ──────────────────────────────────── */
   .final-cta { text-align: center; padding-bottom: 4rem; }
