@@ -5,6 +5,7 @@ import MonoChip from "../components/MonoChip.astro";
 /* ---------- Source taxonomy (lives here so it's editable in one place) ---------- */
 /* Ordered by market-signaling significance — strongest directional / timing edge first. */
 const sources = [
+  { chip: "MP",  title: "Macro Pulse",            desc: "Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive." },
   { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
   { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
   { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges. Inflows lead selling pressure; outflows lead accumulation." },
@@ -23,6 +24,7 @@ const proFeatures = [
   "Entry, SL &amp; TP levels",
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
+  "<strong>Macro Pulse</strong> — daily + weekly BTC/ETH bias",
   "Email support",
 ];
 const freeFeatures = [
@@ -36,7 +38,7 @@ const freeFeatures = [
 
 <BaseLayout
   title="AI-Powered Crypto Signals API"
-  description="Corroborated, scored crypto signals — entry, stop, take — not a feed firehose. REST API, WebSocket, and Webhooks built for autonomous trading agents. Free tier — no credit card."
+  description="Corroborated, scored crypto signals — entry, stop, take — not a feed firehose. Anchored by Macro Pulse, our daily BTC + ETH directional bias. REST API, WebSocket, and Webhooks built for autonomous trading agents. Free tier — no credit card."
   homepage={true}
   ogType="website"
 >
@@ -191,7 +193,7 @@ const freeFeatures = [
       </p>
       <h1>AI-POWERED<br /><span class="accent">CRYPTO</span><br />INTELLIGENCE</h1>
       <p class="lede">
-        Events from across the market, machine-classified, cross-corroborated, and scored into one signal — with entry, stop, and take. Delivered via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>. Built for agents and traders who execute.
+        Events from across the market, machine-classified, cross-corroborated, and scored into one signal — with entry, stop, and take. Anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Delivered via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>. Built for agents and traders who execute.
       </p>
       <div class="cta-row">
         <a href="/signup" class="btn btn-primary">Start Free →</a>
@@ -202,7 +204,7 @@ const freeFeatures = [
     <!-- What we watch -->
     <section class="sources-section">
       <h2>What we watch</h2>
-      <p class="subtitle">Telegram, whales, positioning, funding, on-chain flows, news, macro, order-book levels — every event classified, cross-corroborated, and scored in real-time.</p>
+      <p class="subtitle">Telegram, whales, positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias.</p>
       <div class="sources-grid">
         {sources.map((s) => (
           <div class="source-card">

@@ -112,6 +112,32 @@ Signal received:
 Ping/pong:
 send: "ping"
 recv: {"type": "pong", "timestamp": 1778555605}`;
+
+const macroPulseResponse = JSON.stringify({
+  generated_at: "2026-05-13T07:00:00+00:00",
+  window_days: 7,
+  horizon: "week",
+  regime: "risk-off",
+  regime_reason: "Hotter-than-expected CPI/PPI driving inflation fears and heavy long de-leveraging.",
+  btc: {
+    bias: "bearish",
+    conviction: 0.85,
+    reason: "Macro bearishness triggered by PPI surge and heavy long liquidations.",
+    key_levels: "$80,000 (psychological), $76,500 (structural)",
+    invalidation: "Retail Sales print materially below forecast, sparking risk-on rotation."
+  },
+  eth: {
+    bias: "bearish",
+    conviction: 0.90,
+    reason: "Extreme long squeeze risk; 97% long liquidations on key venues.",
+    key_levels: "$3,200 (immediate support), $2,850 (major pivot)",
+    invalidation: "Unexpected dovish turn from new Fed chair."
+  },
+  calendar_risks: [
+    "Core Retail Sales m/m (2026-05-14) — potential further downside if hot",
+    "Fed Chair Nomination Vote (2026-05-13) — policy uncertainty"
+  ]
+}, null, 2);
 ---
 <BaseLayout title="API Docs" description="n0brains Signals API documentation — endpoints, authentication, rate limits, and response formats.">
   <section class="docs-page">
@@ -164,6 +190,8 @@ recv: {"type": "pong", "timestamp": 1778555605}`;
           <tr><td><span class="method method-get">GET</span></td><td><code>/signals/{'{id}'}</code></td><td>API Key</td><td>Single signal detail</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/macro/latest</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/macro/history</code></td><td>Pro</td><td>Macro Pulse historical snapshots</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/register</code></td><td>None</td><td>Create account</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/login</code></td><td>None</td><td>Login</td></tr>
@@ -187,7 +215,7 @@ recv: {"type": "pong", "timestamp": 1778555605}`;
         <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
           <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, macro_pulse, liquidation, funding, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
@@ -209,7 +237,7 @@ recv: {"type": "pong", "timestamp": 1778555605}`;
         <tbody>
           <tr><td><code>id</code></td><td>int</td><td>Unique signal ID</td></tr>
           <tr><td><code>asset</code></td><td>string|null</td><td>Ticker symbol or null if market-wide</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, sentiment, price, hack, listing, macro, macro_pulse, liquidation, funding, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
@@ -239,6 +267,30 @@ recv: {"type": "pong", "timestamp": 1778555605}`;
       <h2 id="market-opens">GET /market-opens</h2>
       <p>Opening prices for BTC, ETH, and SOL at each major trading session.</p>
       <pre><code set:html={marketOpensResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="macro-pulse">GET /macro/latest</h2>
+      <p><strong>Macro Pulse</strong> — our daily directional bias for BTC and ETH. Generated at 07:00 UTC daily (with a deeper 30-day review every Sunday 22:00 UTC). Synthesises the upcoming USD high-impact macro calendar (FOMC, CPI, NFP, PPI, Retail Sales) with the last 7 days of intel signals into a single regime call plus per-asset bias, conviction, key levels, and invalidation.</p>
+      <p>Free tier: latest report only, generated_at + regime + bias/conviction. Pro tier: full payload including reasoning, key levels, invalidation, and calendar_risks. <code>/macro/history</code> (Pro) returns the last 30 snapshots.</p>
+      <pre><code set:html={macroPulseResponse} /></pre>
+      <h3>Field Reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>regime</code></td><td>string</td><td>risk-on, risk-off, range, squeeze</td></tr>
+          <tr><td><code>regime_reason</code></td><td>string</td><td>≤120 char rationale</td></tr>
+          <tr><td><code>btc.bias</code> / <code>eth.bias</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
+          <tr><td><code>btc.conviction</code> / <code>eth.conviction</code></td><td>float</td><td>0.0–1.0. ≥0.7 = very high. ≥0.85 = veto-grade contradictions.</td></tr>
+          <tr><td><code>btc.reason</code> / <code>eth.reason</code></td><td>string</td><td>Primary driver, ≤140 chars</td></tr>
+          <tr><td><code>btc.key_levels</code> / <code>eth.key_levels</code></td><td>string</td><td>Relevant macro pivots</td></tr>
+          <tr><td><code>btc.invalidation</code> / <code>eth.invalidation</code></td><td>string</td><td>What flips the call</td></tr>
+          <tr><td><code>calendar_risks</code></td><td>array</td><td>Top 1–3 upcoming events that could flip bias</td></tr>
+          <tr><td><code>window_days</code></td><td>int</td><td>Lookback window (7 daily / 30 weekly)</td></tr>
+          <tr><td><code>horizon</code></td><td>string</td><td>Forward horizon label (e.g. "week", "next two weeks")</td></tr>
+          <tr><td><code>generated_at</code></td><td>string</td><td>ISO-8601 UTC. Stale after 36h — clients should refetch.</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="card">
@@ -287,6 +339,7 @@ recv: {"type": "pong", "timestamp": 1778555605}`;
         <li><strong>Whale Tracking</strong> - Hyperliquid leaderboard, SOL whale wallets (110+ curated addresses)</li>
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
+        <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
       </ol>
 
       <h3>Source Weights</h3>

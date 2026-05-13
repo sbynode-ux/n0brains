@@ -11,9 +11,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </p>
 
     <p>
-      12 watchers monitor Telegram, blockchains, exchanges, government filings, and social media
-      around the clock. An on-device LLM classifies every event, cross-references it across sources,
-      and scores it for confidence — before the opportunity disappears.
+      Dozens of watchers monitor Telegram, blockchains, exchanges, government filings, and social media
+      around the clock. An on-device LLM classifies every event into one of 13 signal types,
+      cross-references across sources, and scores it for confidence — before the opportunity disappears.
+      A separate <strong>Macro Pulse</strong> layer anchors per-event signals to the broader weekly bias for BTC and ETH.
     </p>
 
     <p>
@@ -46,11 +47,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <h1>how it works</h1>
 
     <p>
-      <strong>1. Collect.</strong> 12 watchers scrape Telegram, RSS, blockchains, exchanges, and social media around the clock.
+      <strong>1. Collect.</strong> Dozens of watchers scrape Telegram, RSS, blockchains, exchanges, government filings, and social media around the clock.
     </p>
 
     <p>
-      <strong>2. Classify.</strong> An on-device LLM tags every event with direction, confidence, and asset scope. No external API calls. No latency. No censorship.
+      <strong>2. Classify.</strong> An on-device LLM tags every event into one of 13 signal types — regulatory, whale, sentiment, price, hack, listing, macro, liquidation, funding, macro_pulse, and more — with direction, confidence, and asset scope. No external API calls. No latency. No censorship.
     </p>
 
     <p>
@@ -58,7 +59,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </p>
 
     <p>
-      <strong>4. Deliver.</strong> Signals hit your system via REST API, WebSocket, or Webhook — within seconds of detection. Free tier gets 15-minute delay. Pro gets real-time.
+      <strong>4. Anchor.</strong> <strong>Macro Pulse</strong> runs daily at 07:00 UTC (and deeper Sundays). It ingests the upcoming USD high-impact calendar — FOMC, CPI, NFP, PPI — plus the last 7 days of intel signals, and emits a directional bias for BTC and ETH with conviction, key levels, and an invalidation. Every per-coin signal is scored against this backdrop. Trades that contradict a high-conviction macro call are downgraded or vetoed.
+    </p>
+
+    <p>
+      <strong>5. Deliver.</strong> Signals hit your system via REST API, WebSocket, or Webhook — within seconds of detection. Free tier gets 15-minute delay. Pro gets real-time + Macro Pulse access.
     </p>
   </section>
 
