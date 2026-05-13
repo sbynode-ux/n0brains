@@ -1,46 +1,39 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import MonoChip from "../components/MonoChip.astro";
+
+const channels = [
+  { chip: "@",   title: "Email",       href: "mailto:hello@n0brains.com",
+    value: "hello@n0brains.com",       note: "For general inquiries and partnership requests." },
+  { chip: "API", title: "API Support", href: "mailto:support@n0brains.com",
+    value: "support@n0brains.com",     note: "Pro tier users get priority response. Include your API key in the subject line." },
+  { chip: "BS",  title: "Bluesky",     href: "https://bsky.app/profile/n0brains.com",
+    value: "@n0brains.com",            note: "Signal highlights, market commentary, and new feature announcements." },
+  { chip: "TG",  title: "Telegram",    href: "https://t.me/n0brains_signals",
+    value: "t.me/n0brains_signals",    note: "Community channel for signal discussions and real-time updates." },
+];
 ---
 
-<BaseLayout title="contact" description="Get in touch with n0brains.">
+<BaseLayout
+  title="contact"
+  description="Get in touch with n0brains — email, API support, Bluesky, Telegram community."
+>
   <section class="about-section">
     <h1>contact</h1>
-
-    <p>
-      Questions, feedback, or issues with the signals API? Reach out through the channels below.
-    </p>
+    <p>Questions, feedback, or issues with the signals API? Reach out through the channels below.</p>
 
     <div class="contact-grid">
-      <div class="contact-card">
-        <div class="contact-icon">📧</div>
-        <h3>Email</h3>
-        <p><a href="mailto:hello@n0brains.com">hello@n0brains.com</a></p>
-        <p class="contact-note">For general inquiries and partnership requests.</p>
-      </div>
-
-      <div class="contact-card">
-        <div class="contact-icon">🛠</div>
-        <h3>API Support</h3>
-        <p><a href="mailto:support@n0brains.com">support@n0brains.com</a></p>
-        <p class="contact-note">Pro tier users get priority response. Include your API key in the subject line.</p>
-      </div>
-
-      <div class="contact-card">
-        <div class="contact-icon">🐦</div>
-        <h3>Bluesky</h3>
-        <p><a href="https://bsky.app/profile/n0brains.com">@n0brains.com</a></p>
-        <p class="contact-note">Signal highlights, market commentary, and new feature announcements.</p>
-      </div>
-
-      <div class="contact-card">
-        <div class="contact-icon">💬</div>
-        <h3>Telegram</h3>
-        <p><a href="https://t.me/n0brains_signals">t.me/n0brains_signals</a></p>
-        <p class="contact-note">Community channel for signal discussions and real-time updates.</p>
-      </div>
+      {channels.map((c) => (
+        <div class="contact-card">
+          <div class="contact-icon"><MonoChip text={c.chip} /></div>
+          <h3>{c.title}</h3>
+          <p><a href={c.href}>{c.value}</a></p>
+          <p class="contact-note">{c.note}</p>
+        </div>
+      ))}
     </div>
 
-    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">
+    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text);">
       // we read everything, reply to most
     </p>
   </section>
@@ -48,15 +41,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <style>
   .contact-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-top: 2rem;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.5rem; margin-top: 2rem;
   }
-
-  @media (max-width: 600px) {
-    .contact-grid { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 600px) { .contact-grid { grid-template-columns: 1fr; } }
 
   .contact-card {
     background: var(--bg-alt);
@@ -65,43 +53,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     padding: 1.5rem;
     transition: border-color 0.2s ease;
   }
+  .contact-card:hover { border-color: var(--accent); }
 
-  .contact-card:hover {
-    border-color: var(--accent);
-  }
-
-  .contact-icon {
-    font-size: 1.5rem;
-    margin-bottom: 0.75rem;
-  }
+  .contact-icon { margin-bottom: 0.85rem; }
 
   .contact-card h3 {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    margin-bottom: 0.5rem;
+    font-family: var(--font-mono); font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--accent); margin-bottom: 0.5rem;
   }
-
-  .contact-card p {
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-  }
-
+  .contact-card p { font-size: 0.92rem; margin-bottom: 0.25rem; }
   .contact-card a {
     color: var(--text-heading);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration: underline; text-underline-offset: 3px;
   }
-
-  .contact-card a:hover {
-    color: var(--accent);
-  }
-
+  .contact-card a:hover { color: var(--accent); }
   .contact-note {
-    font-size: 0.8rem !important;
-    color: var(--text-muted);
+    font-size: 0.82rem !important;
+    color: var(--text);
     margin-top: 0.5rem !important;
   }
 </style>

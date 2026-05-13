@@ -1,0 +1,404 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MonoChip from "../../components/MonoChip.astro";
+import MethodBadge from "../../components/MethodBadge.astro";
+
+/* -----------------------------------------------------------------------
+   /integrations/openclaw — conversion page for OpenClaw / Claude Code /
+   any agent runtime that consumes the n0brains-signals skill.
+   ---------------------------------------------------------------------- */
+
+const tools = [
+  { method: "GET", path: "/signals",          name: "get_signals",       desc: "List active signals, filter by asset / type / urgency / direction.",  tier: "free + pro" },
+  { method: "GET", path: "/signals/{id}",     name: "get_signal",        desc: "Pull a single signal by ID — for following a webhook alert.",          tier: "free + pro" },
+  { method: "GET", path: "/levels/{coin}",    name: "get_levels",        desc: "Nearest support / resistance from the Hyperliquid order book.",       tier: "free + pro" },
+  { method: "GET", path: "/market-opens",     name: "get_market_opens",  desc: "BTC / ETH / SOL at Tokyo, Shanghai, HK, London, NY session opens.",   tier: "free + pro" },
+  { method: "WS",  path: "/stream",           name: "stream_signals",    desc: "Real-time WebSocket — every new signal in milliseconds.",              tier: "pro only" },
+];
+
+const can = [
+  { chip: "1",  title: "Surface a market-aware answer",
+    desc: "Your agent asks <code>get_signals(asset='BTC', urgency='high')</code> before answering any “should I…” question. No more hallucinated take-profits." },
+  { chip: "2",  title: "Compose a real trade plan",
+    desc: "Pair <code>get_signals</code> with <code>get_levels</code> for entry, stop, and take values rooted in live order-book liquidity." },
+  { chip: "3",  title: "React in seconds",
+    desc: "On Pro, <code>stream_signals</code> pushes whale and funding events seconds after detection — your agent acts before headlines hit." },
+  { chip: "4",  title: "Stay inside guardrails",
+    desc: "The skill ships behaviour rules: never auto-trade, surface the disclaimer once per session, refuse Pro endpoints when the key is Free." },
+];
+---
+
+<BaseLayout
+  title="OpenClaw Integration"
+  description="Plug n0brains live crypto signals into your OpenClaw or Claude agent in 30 seconds. Five tools, free tier, no SDK to wire up."
+  ogType="article"
+>
+  <section class="integration-page">
+
+    <!-- Hero -->
+    <header class="hero">
+      <p class="eyebrow">// integrations · openclaw</p>
+      <h1>Your agent.<br /><span class="accent">Market-aware.</span><br />In 30 seconds.</h1>
+      <p class="lede">
+        Drop the <code>n0brains-signals</code> skill into your OpenClaw runtime, set one env var, and your agent can read the same signal feed that 18 watchers produce in real-time. No SDK to wire up — the agent reads the skill on first invocation.
+      </p>
+
+      <div class="install-card">
+        <div class="cmd-row">
+          <code><span class="prompt">$</span>clawhub install n0brains-signals</code>
+          <button class="copy-btn" data-copy="clawhub install n0brains-signals" aria-label="copy">copy</button>
+        </div>
+        <div class="cmd-row alt">
+          <code><span class="prompt">$</span>export NB_API_KEY=intel_sk_...</code>
+        </div>
+        <div class="cta-row">
+          <a href="/signup" class="btn btn-primary">Get free key →</a>
+          <a href="/clawhub/listing" class="btn btn-secondary">View on Clawhub ↗</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Capability grid -->
+    <section class="block">
+      <p class="section-label">// what your agent can now do</p>
+      <div class="can-grid">
+        {can.map((c) => (
+          <div class="can-card">
+            <div class="chip-row"><MonoChip text={c.chip} /></div>
+            <h3>{c.title}</h3>
+            <p set:html={c.desc}></p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Five tools table -->
+    <section class="block">
+      <p class="section-label">// the five tools</p>
+      <div class="tools">
+        {tools.map((t) => (
+          <div class="tool">
+            <div class="tool-head">
+              <MethodBadge method={t.method} />
+              <code class="endpoint">{t.path}</code>
+              <span class={`tier ${t.tier === "pro only" ? "pro" : ""}`}>{t.tier}</span>
+            </div>
+            <div class="tool-name"><code>{t.name}</code></div>
+            <p>{t.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Code example -->
+    <section class="block">
+      <p class="section-label">// 30-second example</p>
+      <h2>From prompt to signal in three lines.</h2>
+
+      <div class="lang-tabs">
+        <button class="tab active" data-lang="agent">In the agent</button>
+        <button class="tab"        data-lang="py">Python</button>
+        <button class="tab"        data-lang="ts">TypeScript</button>
+      </div>
+
+      <pre class="snippet" data-lang="agent"><code><span class="c"># An OpenClaw agent with the skill installed:</span>
+USER:    show me high-urgency BTC whale signals
+AGENT:   <span class="c">→ reads SKILL.md, calls get_signals(asset="BTC", signal_type="whale", urgency="high")</span>
+AGENT:   1 signal: bullish · score 1.42 · "Strategy buys 535 BTC for $43M"
+         entry $81,262 · stop $80,871 · take $81,386 (R:R 2.4)
+         // not financial advice.</code></pre>
+
+      <pre class="snippet hidden" data-lang="py"><code><span class="k">from</span> n0brains <span class="k">import</span> Client
+nb = Client(api_key=os.environ[<span class="s">"NB_API_KEY"</span>])
+sigs = nb.get_signals(asset=<span class="s">"BTC"</span>, signal_type=<span class="s">"whale"</span>, urgency=<span class="s">"high"</span>)
+<span class="k">for</span> s <span class="k">in</span> sigs[<span class="s">"signals"</span>]:
+    <span class="k">print</span>(s[<span class="s">"direction"</span>], s[<span class="s">"score"</span>], s[<span class="s">"summary"</span>])</code></pre>
+
+      <pre class="snippet hidden" data-lang="ts"><code><span class="k">import</span> &#123; N0Brains &#125; <span class="k">from</span> <span class="s">"@n0brains/client"</span>;
+<span class="k">const</span> nb = <span class="k">new</span> N0Brains(&#123; apiKey: process.env.NB_API_KEY! &#125;);
+<span class="k">const</span> &#123; signals &#125; = <span class="k">await</span> nb.getSignals(&#123; asset: <span class="s">"BTC"</span>, signal_type: <span class="s">"whale"</span>, urgency: <span class="s">"high"</span> &#125;);
+signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></pre>
+    </section>
+
+    <!-- Runtimes -->
+    <section class="block">
+      <p class="section-label">// runtime support</p>
+      <p style="max-width: 640px; margin-bottom: 24px;">
+        The skill is plain markdown. Any agent runtime that reads <code>SKILL.md</code> frontmatter can install it.
+      </p>
+      <table class="runtimes">
+        <thead><tr><th>runtime</th><th>install</th><th>auth</th></tr></thead>
+        <tbody>
+          <tr><td>OpenClaw / Clawhub</td>
+              <td><code>clawhub install n0brains-signals</code></td>
+              <td><code>clawhub env set NB_API_KEY=...</code></td></tr>
+          <tr><td>Claude Code</td>
+              <td>copy folder into <code>~/.claude/skills/</code></td>
+              <td>env <code>NB_API_KEY</code></td></tr>
+          <tr><td>Custom orchestrator</td>
+              <td>load <code>SKILL.md</code> + <code>tools.md</code> as system context</td>
+              <td>your secret store, key <code>n0brains_api_key</code></td></tr>
+          <tr><td>Direct HTTP</td>
+              <td>skip the skill — call REST</td>
+              <td>header <code>X-API-Key</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="block final-cta">
+      <h2>Free tier. No card. 60 req/min.</h2>
+      <p>Pro is $49.99/mo when you need real-time and the WebSocket stream. Skip dashboards — your agent does the work.</p>
+      <div class="cta-row">
+        <a href="/signup" class="btn btn-primary">Create free account →</a>
+        <a href="/docs/" class="btn btn-secondary">API docs ↗</a>
+      </div>
+    </section>
+
+  </section>
+</BaseLayout>
+
+<style>
+  .integration-page { max-width: 980px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ─── Hero ───────────────────────────────────────────── */
+  .hero { padding: 4rem 0 3rem; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--accent); text-transform: uppercase; letter-spacing: 0.25em;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 7vw, 4.5rem);
+    font-weight: 400; line-height: 0.95; letter-spacing: 0.03em;
+    color: var(--text-heading);
+    margin-bottom: 1.2rem;
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .lede {
+    font-size: 1.05rem; color: var(--text);
+    max-width: 620px; margin-bottom: 2.5rem; line-height: 1.65;
+  }
+  .lede code {
+    font-family: var(--font-mono); font-size: 0.92em;
+    color: var(--accent); background: var(--bg-hover);
+    padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  /* ─── Install card ───────────────────────────────────── */
+  .install-card {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    position: relative;
+    max-width: 640px;
+  }
+  .install-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 60%);
+    opacity: 0.6;
+  }
+  .cmd-row {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono); font-size: 0.85rem;
+    color: var(--text-heading);
+  }
+  .cmd-row.alt code { color: var(--text); }
+  .cmd-row code { font-family: inherit; }
+  .cmd-row .prompt { color: var(--accent); margin-right: 8px; user-select: none; }
+  .copy-btn {
+    font-family: var(--font-mono); font-size: 0.62rem;
+    color: var(--text); letter-spacing: 0.15em; text-transform: uppercase;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 3px; padding: 4px 9px; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .cta-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0.85rem 1.5rem; border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    transition: all 0.2s ease; border: 0; cursor: pointer;
+  }
+  .btn-primary   { background: var(--accent); color: #000; }
+  .btn-primary:hover   { background: #fff; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── Block / section ────────────────────────────────── */
+  .block { padding: 3rem 0; border-top: 1px solid var(--border); }
+  .block:last-of-type { border-bottom: 0; }
+  .section-label {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3em;
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .section-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  .block h2 {
+    font-family: var(--font-display);
+    font-size: 2rem; font-weight: 400;
+    color: var(--text-heading); letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+  .block p { color: var(--text); }
+  .block p code, .block table code {
+    font-family: var(--font-mono); font-size: 0.92em;
+    color: var(--accent); background: var(--bg-hover);
+    padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border);
+  }
+
+  /* ─── Capability grid ─────────────────────────────── */
+  .can-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .can-card {
+    background: var(--bg-alt); padding: 22px 24px;
+    transition: background 0.2s ease;
+  }
+  .can-card:hover { background: var(--bg-hover); }
+  .can-card .chip-row { margin-bottom: 14px; }
+  .can-card h3 {
+    font-family: var(--font-body); font-size: 1rem; font-weight: 700;
+    color: var(--text-heading); margin-bottom: 6px;
+  }
+  .can-card p { font-size: 0.9rem; line-height: 1.55; }
+  .can-card p code {
+    font-size: 0.82em; color: var(--accent);
+    background: var(--bg-code); padding: 1px 5px; border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+
+  /* ─── Tools list ─────────────────────────────────── */
+  .tools {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .tool {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-alt);
+    transition: background 0.15s ease;
+  }
+  .tool:last-child { border-bottom: 0; }
+  .tool:hover { background: var(--bg-hover); }
+  .tool-head {
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap; margin-bottom: 6px;
+  }
+  .endpoint {
+    font-family: var(--font-mono); font-size: 0.88rem;
+    color: var(--text-heading);
+    background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: 3px; padding: 2px 8px;
+  }
+  .tier {
+    font-family: var(--font-mono); font-size: 0.62rem;
+    color: var(--text-muted); letter-spacing: 0.15em;
+    text-transform: uppercase; margin-left: auto;
+  }
+  .tier.pro { color: var(--accent); }
+  .tool-name { margin-bottom: 6px; }
+  .tool-name code {
+    font-family: var(--font-mono); font-size: 0.95rem;
+    color: var(--text-heading); background: transparent; border: 0; padding: 0;
+  }
+  .tool p { font-size: 0.88rem; color: var(--text); line-height: 1.5; max-width: 720px; }
+
+  /* ─── Code snippet + lang tabs ───────────────────── */
+  .lang-tabs { display: flex; gap: 4px; margin-bottom: 0; }
+  .lang-tabs .tab {
+    background: transparent; border: 1px solid var(--border); border-bottom: 0;
+    padding: 8px 16px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;
+    color: var(--text); letter-spacing: 0.1em; text-transform: uppercase;
+    border-top-left-radius: var(--radius-sm);
+    border-top-right-radius: var(--radius-sm);
+  }
+  .lang-tabs .tab.active {
+    background: var(--bg-code); color: var(--accent);
+    border-color: var(--accent); border-bottom-color: var(--bg-code);
+    position: relative; top: 1px;
+  }
+  .snippet {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-top-left-radius: 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
+    padding: 22px 26px;
+    overflow-x: auto;
+    margin: 0 0 24px;
+    font-family: var(--font-mono); font-size: 0.86rem;
+    line-height: 1.7;
+    color: #ccc;
+    position: relative;
+  }
+  .snippet.hidden { display: none; }
+  .snippet .c { color: var(--text-muted); }
+  .snippet .k { color: var(--accent); }
+  .snippet .s { color: #ffc107; }
+
+  /* ─── Runtimes table ─────────────────────────────── */
+  .runtimes {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .runtimes th {
+    text-align: left;
+    font-family: var(--font-mono); font-size: 0.7rem;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+  }
+  .runtimes td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text); vertical-align: top;
+  }
+  .runtimes tr:last-child td { border-bottom: 0; }
+
+  /* ─── Final CTA ──────────────────────────────────── */
+  .final-cta { text-align: center; padding-bottom: 4rem; }
+  .final-cta p { max-width: 540px; margin: 0 auto 28px; }
+  .final-cta .cta-row { justify-content: center; }
+</style>
+
+<script>
+  // Lang tab switcher — no framework
+  const tabs    = document.querySelectorAll(".lang-tabs .tab");
+  const panels  = document.querySelectorAll(".snippet");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const lang = tab.dataset.lang;
+      tabs.forEach((t)   => t.classList.toggle("active", t === tab));
+      panels.forEach((p) => p.classList.toggle("hidden", p.dataset.lang !== lang));
+    });
+  });
+
+  // Copy button
+  document.querySelectorAll("[data-copy]").forEach((b) => {
+    b.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy || "");
+        const orig = b.textContent;
+        b.textContent = "copied";
+        setTimeout(() => { b.textContent = orig; }, 1500);
+      } catch { /* ignore */ }
+    });
+  });
+</script>

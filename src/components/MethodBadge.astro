@@ -1,0 +1,45 @@
+---
+/**
+ * MethodBadge — the colored HTTP-method chip used in /docs.
+ *
+ * Methods are the ONLY place colorful chips live in the n0brains brand.
+ * Strictly one of: GET, POST, DELETE, WS, PATCH, PUT.
+ *
+ * Props:
+ *   - method: string  (case-insensitive)
+ */
+export interface Props { method: string; }
+const { method } = Astro.props;
+const m = method.toUpperCase();
+
+const tokenFor = (mm: string): string => {
+  switch (mm) {
+    case "GET": return "get";
+    case "POST":
+    case "PATCH":
+    case "PUT": return "post";
+    case "DELETE": return "del";
+    case "WS": return "ws";
+    default: return "get";
+  }
+};
+const variant = tokenFor(m);
+---
+<span class={`method method-${variant}`}>{m}</span>
+
+<style>
+  .method {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+  }
+  .method-get  { background: rgba(0,200,83,0.15); color: #00c853; }
+  .method-post { background: rgba(33,150,243,0.15); color: #2196f3; }
+  .method-del  { background: rgba(244,67,54,0.15); color: #f44336; }
+  .method-ws   { background: rgba(255,193,7,0.15); color: #ffc107; }
+</style>

@@ -1,0 +1,47 @@
+---
+/**
+ * MonoChip — the on-brand "icon" primitive.
+ *
+ * Renders a 2–4 character abbreviation in a 1px-bordered square. The
+ * canonical n0brains alternative to icon fonts or emoji — scales cleanly,
+ * copy-pastes into terminals, never fights the editorial flatness.
+ *
+ * Props:
+ *   - size:  number  (px, default 32)
+ *   - color: string  (CSS color or var; default --accent)
+ *   - text:  string  (the 2–4 char label; required)
+ *
+ * Usage:
+ *   <MonoChip text="TG" />
+ *   <MonoChip text="L/S" size={40} />
+ *   <MonoChip text="$"  color="var(--method-post)" />
+ */
+export interface Props {
+  text: string;
+  size?: number;
+  color?: string;
+}
+const { text, size = 32, color = "var(--accent)" } = Astro.props;
+const fontSize = size <= 24 ? "0.62rem" : size <= 36 ? "0.8rem" : "0.95rem";
+---
+<span
+  class="mono-chip"
+  style={`width:${size}px; height:${size}px; border-color:${color}; color:${color}; font-size:${fontSize};`}
+  aria-hidden="true"
+>{text}</span>
+
+<style>
+  .mono-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    flex-shrink: 0;
+    /* sharp corners — never round */
+    border-radius: 0;
+  }
+</style>

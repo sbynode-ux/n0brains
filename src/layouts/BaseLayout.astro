@@ -4,12 +4,44 @@ import "../styles/global.css";
 export interface Props {
   title: string;
   description: string;
-  canonicalURL?: string;
+  canonicalURL?: string | URL;
   homepage?: boolean;
+  ogType?: "website" | "article";
+  ogImage?: string;        // absolute or /-rooted path
+  noIndex?: boolean;
 }
 
-const { title, description, canonicalURL, homepage } = Astro.props;
-const url = canonicalURL ?? Astro.url;
+const {
+  title,
+  description,
+  canonicalURL,
+  homepage = false,
+  ogType = "website",
+  ogImage = "/og-default.png",
+  noIndex = false,
+} = Astro.props;
+
+const url        = canonicalURL ?? Astro.url;
+const siteUrl    = "https://n0brains.com";
+const fullTitle  = homepage ? "n0brains — Think Less, Trade More" : `${title} — n0brains`;
+const absoluteOg = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
+const year       = new Date().getFullYear();
+
+// JSON-LD: site-wide on home, article on blog posts (via ogType)
+const orgLd = {
+  "@context":  "https://schema.org",
+  "@type":     "Organization",
+  name:        "n0brains",
+  url:         siteUrl,
+  logo:        `${siteUrl}/favicon.svg`,
+  sameAs: [
+    "https://bsky.app/profile/n0brains.com",
+    "https://t.me/n0brains_signals",
+    "https://github.com/sbynode-ux/n0brains",
+  ],
+  description:
+    "Crypto signal API for autonomous trading agents. 10+ sources, machine-classified, delivered via REST, WebSocket, or webhook.",
+};
 ---
 
 <!doctype html>
@@ -17,34 +49,61 @@ const url = canonicalURL ?? Astro.url;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} — n0brains</title>
+
+    <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {noIndex && <meta name="robots" content="noindex,nofollow" />}
 
     <link rel="canonical" href={url} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" type="application/rss+xml" title="n0brains RSS" href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title="n0brains RSS"     href="/rss.xml" />
     <link rel="alternate" type="application/rss+xml" title="n0brains podcast" href="/podcast.xml" />
 
-    <meta property="og:title" content={title} />
+    <!-- Open Graph -->
+    <meta property="og:title"       content={fullTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={url} />
-    <meta property="og:site_name" content="n0brains" />
+    <meta property="og:url"         content={url} />
+    <meta property="og:site_name"   content="n0brains" />
+    <meta property="og:type"        content={ogType} />
+    <meta property="og:image"       content={absoluteOg} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
+    <!-- Twitter -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content={fullTitle} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image"       content={absoluteOg} />
 
+    <!-- Color -->
+    <meta name="theme-color" content="#050505" />
+
+    <!-- Fonts: prefer locally-hosted (in /fonts) when self-hosting; otherwise CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Structured data -->
+    <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
   </head>
   <body>
+    <a href="#main" class="skip-link">Skip to content</a>
+
     <header id="site-header">
       <div class="inner">
-        <a href="/" class="logo" id="header-logo">&lt;<span>n0</span>brains /&gt;</a>
-        {homepage && <span class="header-hero-text" id="header-hero-text">// Think Less. Trade More.</span>}
-        <nav>
-          <a href="/docs">api</a>
+        <a href="/" class="logo" id="header-logo" aria-label="n0brains home">
+          &lt;<span>n0</span>brains /&gt;
+        </a>
+        {homepage && (
+          <span class="header-hero-text" id="header-hero-text" aria-hidden="true">
+            // Think Less. Trade More.
+          </span>
+        )}
+        <nav aria-label="Primary">
+          <a href="/docs/">api</a>
           <a href="/blog">blog</a>
           <a href="/about">about</a>
           <a href="/podcast">podcast</a>
@@ -52,13 +111,13 @@ const url = canonicalURL ?? Astro.url;
       </div>
     </header>
 
-    <main>
+    <main id="main">
       <slot />
     </main>
 
     <footer>
       <div class="inner">
-        <p>© {new Date().getFullYear()} <a href="https://n0brains.com">n0brains.com</a> — Think Less, Trade More.</p>
+        <p>© {year} <a href="https://n0brains.com">n0brains.com</a> — Think Less, Trade More.</p>
         <p class="footer-links">
           <a href="/privacy">privacy</a>
           <a href="/terms">terms</a>
@@ -71,17 +130,14 @@ const url = canonicalURL ?? Astro.url;
     {homepage && (
       <script>
         (() => {
-          // Header scroll swap
           const header = document.getElementById("site-header");
-          const hero = document.getElementById("hero");
+          const hero   = document.getElementById("hero");
           let ticking = false;
-
           const update = () => {
             if (!hero) return;
             const heroBottom = hero.getBoundingClientRect().bottom;
             header.classList.toggle("scrolled", heroBottom < 60);
           };
-
           window.addEventListener("scroll", () => {
             if (!ticking) {
               requestAnimationFrame(() => { update(); ticking = false; });
@@ -90,21 +146,19 @@ const url = canonicalURL ?? Astro.url;
           }, { passive: true });
           update();
 
-          // Scroll-triggered post card reveals
           const cards = document.querySelectorAll(".post-card");
           const io = new IntersectionObserver((entries) => {
-            entries.forEach((entry, i) => {
+            entries.forEach((entry) => {
               if (entry.isIntersecting) {
                 const card = entry.target;
-                const delay = card.dataset.delay || 0;
+                const delay = (card as HTMLElement).dataset.delay || 0;
                 setTimeout(() => card.classList.add("visible"), Number(delay));
                 io.unobserve(card);
               }
             });
           }, { threshold: 0.12 });
-
           cards.forEach((card, i) => {
-            card.dataset.delay = i * 80;
+            (card as HTMLElement).dataset.delay = String(i * 80);
             io.observe(card);
           });
         })();
