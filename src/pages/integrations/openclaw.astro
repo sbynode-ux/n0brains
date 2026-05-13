@@ -5,55 +5,57 @@ import MethodBadge from "../../components/MethodBadge.astro";
 
 /* -----------------------------------------------------------------------
    /integrations/openclaw — conversion page for OpenClaw / Claude Code /
-   any agent runtime that consumes the n0brains-signals skill.
+   any agent runtime. The n0brains API is plain REST + a WebSocket stream;
+   the n0brains-signals skill (a downloadable .md) wires it into an agent,
+   or you can call the endpoints directly. Optional TypeScript client.
    ---------------------------------------------------------------------- */
 
 const tools = [
-  { method: "GET", path: "/signals",          name: "get_signals",       desc: "List active signals, filter by asset / type / urgency / direction.",  tier: "free + pro" },
-  { method: "GET", path: "/signals/{id}",     name: "get_signal",        desc: "Pull a single signal by ID — for following a webhook alert.",          tier: "free + pro" },
-  { method: "GET", path: "/levels/{coin}",    name: "get_levels",        desc: "Nearest support / resistance from the Hyperliquid order book.",       tier: "free + pro" },
-  { method: "GET", path: "/market-opens",     name: "get_market_opens",  desc: "BTC / ETH / SOL at Tokyo, Shanghai, HK, London, NY session opens.",   tier: "free + pro" },
-  { method: "WS",  path: "/stream",           name: "stream_signals",    desc: "Real-time WebSocket — every new signal in milliseconds.",              tier: "pro only" },
+  { method: "GET", path: "/signals",          name: "list signals",         desc: "Active signals, filter by asset / type / urgency / direction.",       tier: "free + pro" },
+  { method: "GET", path: "/signals/{id}",     name: "get one signal",       desc: "A single signal by ID — for following a webhook alert.",              tier: "free + pro" },
+  { method: "GET", path: "/levels/{coin}",    name: "support / resistance", desc: "Nearest S/R from the Hyperliquid order book — for entry / stop sizing.", tier: "free + pro" },
+  { method: "GET", path: "/market-opens",     name: "session opens",        desc: "BTC / ETH / SOL at Tokyo, Shanghai, HK, London, NY session opens.",   tier: "free + pro" },
+  { method: "WS",  path: "/stream",           name: "live stream",          desc: "Real-time WebSocket — every new signal in milliseconds.",             tier: "pro only" },
 ];
 
 const can = [
   { chip: "1",  title: "Surface a market-aware answer",
-    desc: "Your agent asks <code>get_signals(asset='BTC', urgency='high')</code> before answering any “should I…” question. No more hallucinated take-profits." },
+    desc: "Your agent calls <code>GET /signals?asset=BTC&urgency=high</code> before answering any “should I…” question. No more hallucinated take-profits." },
   { chip: "2",  title: "Compose a real trade plan",
-    desc: "Pair <code>get_signals</code> with <code>get_levels</code> for entry, stop, and take values rooted in live order-book liquidity." },
+    desc: "Pair <code>/signals</code> with <code>/levels/{coin}</code> for entry, stop, and take values rooted in live order-book liquidity." },
   { chip: "3",  title: "React in seconds",
-    desc: "On Pro, <code>stream_signals</code> pushes whale and funding events seconds after detection — your agent acts before headlines hit." },
+    desc: "On Pro, the <code>/stream</code> WebSocket pushes whale and funding events seconds after detection — your agent acts before headlines hit." },
   { chip: "4",  title: "Stay inside guardrails",
-    desc: "The skill ships behaviour rules: never auto-trade, surface the disclaimer once per session, refuse Pro endpoints when the key is Free." },
+    desc: "It's an intelligence layer, not an execution layer — n0brains never trades for you. Free keys get 403 on Pro-only endpoints." },
 ];
 ---
 
 <BaseLayout
-  title="OpenClaw Integration"
-  description="Plug n0brains live crypto signals into your OpenClaw or Claude agent in 30 seconds. Five tools, free tier, no SDK to wire up."
+  title="n0brains for agents"
+  description="Plug n0brains live crypto signals into your OpenClaw or Claude agent. Plain REST + a WebSocket stream, a downloadable skill file, free tier, no SDK required."
   ogType="article"
 >
   <section class="integration-page">
 
     <!-- Hero -->
     <header class="hero">
-      <p class="eyebrow">// integrations · openclaw</p>
-      <h1>Your agent.<br /><span class="accent">Market-aware.</span><br />In 30 seconds.</h1>
+      <p class="eyebrow">// integrations · agents</p>
+      <h1>Your agent.<br /><span class="accent">Market-aware.</span></h1>
       <p class="lede">
-        Drop the <code>n0brains-signals</code> skill into your OpenClaw runtime, set one env var, and your agent can read the same signal feed that 18 watchers produce in real-time. No SDK to wire up — the agent reads the skill on first invocation.
+        Give any agent runtime — OpenClaw, Claude Code, your own orchestrator — read access to the live signal feed our watchers produce. Drop in the <a href="/clawhub/"><code>n0brains-signals</code> skill</a> (a plain Markdown file) and set your API key, or call the REST endpoints directly. No SDK to wire up.
       </p>
 
       <div class="install-card">
         <div class="cmd-row">
-          <code><span class="prompt">$</span>clawhub install n0brains-signals</code>
-          <button class="copy-btn" data-copy="clawhub install n0brains-signals" aria-label="copy">copy</button>
+          <code><span class="prompt">$</span>curl -O https://n0brains.com/clawhub/n0brains-signals.md</code>
+          <button class="copy-btn" data-copy="curl -O https://n0brains.com/clawhub/n0brains-signals.md" aria-label="copy">copy</button>
         </div>
         <div class="cmd-row alt">
           <code><span class="prompt">$</span>export NB_API_KEY=intel_sk_...</code>
         </div>
         <div class="cta-row">
           <a href="/signup" class="btn btn-primary">Get free key →</a>
-          <a href="/clawhub/" class="btn btn-secondary">View on Clawhub ↗</a>
+          <a href="/clawhub/" class="btn btn-secondary">Get the skill ↗</a>
         </div>
       </div>
     </header>
@@ -72,9 +74,9 @@ const can = [
       </div>
     </section>
 
-    <!-- Five tools table -->
+    <!-- Endpoints table -->
     <section class="block">
-      <p class="section-label">// the five tools</p>
+      <p class="section-label">// the endpoints</p>
       <div class="tools">
         {tools.map((t) => (
           <div class="tool">
@@ -93,28 +95,26 @@ const can = [
     <!-- Code example -->
     <section class="block">
       <p class="section-label">// 30-second example</p>
-      <h2>From prompt to signal in three lines.</h2>
+      <h2>From prompt to signal.</h2>
 
       <div class="lang-tabs">
         <button class="tab active" data-lang="agent">In the agent</button>
-        <button class="tab"        data-lang="py">Python</button>
+        <button class="tab"        data-lang="curl">curl</button>
         <button class="tab"        data-lang="ts">TypeScript</button>
       </div>
 
-      <pre class="snippet" data-lang="agent"><code><span class="c"># An OpenClaw agent with the skill installed:</span>
+      <pre class="snippet" data-lang="agent"><code><span class="c"># An OpenClaw / Claude agent with the n0brains-signals skill loaded:</span>
 USER:    show me high-urgency BTC whale signals
-AGENT:   <span class="c">→ reads SKILL.md, calls get_signals(asset="BTC", signal_type="whale", urgency="high")</span>
+AGENT:   <span class="c">→ GET /signals?asset=BTC&signal_type=whale&urgency=high</span>
 AGENT:   1 signal: bullish · score 1.42 · "Strategy buys 535 BTC for $43M"
          entry $81,262 · stop $80,871 · take $81,386 (R:R 2.4)
          // not financial advice.</code></pre>
 
-      <pre class="snippet hidden" data-lang="py"><code><span class="k">from</span> n0brains <span class="k">import</span> Client
-nb = Client(api_key=os.environ[<span class="s">"NB_API_KEY"</span>])
-sigs = nb.get_signals(asset=<span class="s">"BTC"</span>, signal_type=<span class="s">"whale"</span>, urgency=<span class="s">"high"</span>)
-<span class="k">for</span> s <span class="k">in</span> sigs[<span class="s">"signals"</span>]:
-    <span class="k">print</span>(s[<span class="s">"direction"</span>], s[<span class="s">"score"</span>], s[<span class="s">"summary"</span>])</code></pre>
+      <pre class="snippet hidden" data-lang="curl"><code>curl -H <span class="s">"X-API-Key: $NB_API_KEY"</span> \
+  <span class="s">"https://api.n0brains.com/signals?asset=BTC&signal_type=whale&urgency=high"</span></code></pre>
 
-      <pre class="snippet hidden" data-lang="ts"><code><span class="k">import</span> &#123; N0Brains &#125; <span class="k">from</span> <span class="s">"@n0brains/client"</span>;
+      <pre class="snippet hidden" data-lang="ts"><code><span class="c">// optional TypeScript client — github.com/sbynode-ux/n0brains-ts</span>
+<span class="k">import</span> &#123; N0Brains &#125; <span class="k">from</span> <span class="s">"@n0brains/client"</span>;
 <span class="k">const</span> nb = <span class="k">new</span> N0Brains(&#123; apiKey: process.env.NB_API_KEY! &#125;);
 <span class="k">const</span> &#123; signals &#125; = <span class="k">await</span> nb.getSignals(&#123; asset: <span class="s">"BTC"</span>, signal_type: <span class="s">"whale"</span>, urgency: <span class="s">"high"</span> &#125;);
 signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></pre>
@@ -124,22 +124,22 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
     <section class="block">
       <p class="section-label">// runtime support</p>
       <p style="max-width: 640px; margin-bottom: 24px;">
-        The skill is plain markdown. Any agent runtime that reads <code>SKILL.md</code> frontmatter can install it.
+        The skill is plain markdown — <a href="/clawhub/">grab <code>n0brains-signals.md</code></a> and drop it in. Or skip the skill: it's an HTTP API, any runtime that can make a request can use it.
       </p>
       <table class="runtimes">
-        <thead><tr><th>runtime</th><th>install</th><th>auth</th></tr></thead>
+        <thead><tr><th>runtime</th><th>how</th><th>auth</th></tr></thead>
         <tbody>
-          <tr><td>OpenClaw / Clawhub</td>
-              <td><code>clawhub install n0brains-signals</code></td>
-              <td><code>clawhub env set NB_API_KEY=...</code></td></tr>
+          <tr><td>OpenClaw</td>
+              <td>drop <code>n0brains-signals.md</code> into your agent's skills dir</td>
+              <td>env <code>NB_API_KEY</code></td></tr>
           <tr><td>Claude Code</td>
-              <td>copy folder into <code>~/.claude/skills/</code></td>
+              <td>copy to <code>~/.claude/skills/n0brains-signals/SKILL.md</code></td>
               <td>env <code>NB_API_KEY</code></td></tr>
           <tr><td>Custom orchestrator</td>
-              <td>load <code>SKILL.md</code> + <code>tools.md</code> as system context</td>
+              <td>load the <code>.md</code> as system context, or call REST / <code>@n0brains/client</code></td>
               <td>your secret store, key <code>n0brains_api_key</code></td></tr>
           <tr><td>Direct HTTP</td>
-              <td>skip the skill — call REST</td>
+              <td>skip the skill — see <a href="/docs/">/docs</a></td>
               <td>header <code>X-API-Key</code></td></tr>
         </tbody>
       </table>
@@ -371,6 +371,7 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
     color: var(--text); vertical-align: top;
   }
   .runtimes tr:last-child td { border-bottom: 0; }
+  .runtimes a, .block p a { color: var(--accent); }
 
   /* ─── Final CTA ──────────────────────────────────── */
   .final-cta { text-align: center; padding-bottom: 4rem; }
