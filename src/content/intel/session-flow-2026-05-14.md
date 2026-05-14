@@ -17,9 +17,9 @@ All three majors are trading **below their London session opens** — a bearish 
 | Session | BTC | ETH | SOL |
 |---------|-----|-----|-----|
 | Tokyo | $79,278 | $2,258 | $91.08 |
-| London | $80,976 | $2,300 | $95.05 |
+| London | $79,766 | $2,265 | $90.97 |
 | New York | $79,824 | $2,268 | $92.21 |
-| **Current** | **$79,834** | **$2,269** | **$91.24** |
+| **Current** | **$79,728** | **$2,261** | **$91.17** |
 
 ## What This Means
 
@@ -33,9 +33,9 @@ When all three assets are trading below London opens, it signals that European s
 
 ## Key Levels to Watch
 
-- **BTC**: Current $79,834 — watch for a reclaim of the London open at $80,976
-- **ETH**: Current $2,269 — watch for a reclaim of the London open at $2,300
-- **SOL**: Current $91.24 — watch for a reclaim of the London open at $95.05
+- **BTC**: Current $79,728 — watch for a reclaim of the London open at $79,766
+- **ETH**: Current $2,261 — watch for a reclaim of the London open at $2,265
+- **SOL**: Current $91.17 — watch for a reclaim of the London open at $90.97
 
 ## Get Session Open Data
 
@@ -49,4 +49,4 @@ For real-time signals that incorporate session flow into entry/exit decisions �
 
 ## Methodology
 
-Session opening prices sourced from the n0brains.com Signals Pro Market Opens API (`/market-opens`). Prices captured at the start of each major trading session. Current prices from the n0brains Levels API. Data pulled at approximately 06:46 UTC on May 14, 2026.
+Session opening prices sourced from the n0brains.com Signals Pro Market Opens API (`/market-opens`). Prices captured at the start of each major trading session. Current prices from the n0brains Levels API. Data pulled at approximately 13:00 UTC on May 14, 2026.
