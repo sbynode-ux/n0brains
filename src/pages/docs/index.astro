@@ -340,6 +340,7 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
         <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
+        <li><strong>Congress Trades</strong> - CapitolExposed API — every crypto trade disclosed by US Congress members. Bitcoin ETFs (IBIT, FBTC, BITB), crypto equities (COIN, MSTR), direct BTC/ETH. Conflict-scored. 34 tickers tracked.</li>
       </ol>
 
       <h3>Source Weights</h3>
@@ -347,6 +348,9 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Source</th><th>Weight</th><th>Rationale</th></tr></thead>
         <tbody>
           <tr><td>gov_news</td><td>1.3</td><td>Market-moving regulatory/policy events</td></tr>
+          <tr><td>congress_trades:crypto</td><td>1.3</td><td>Verified congressional crypto disclosures</td></tr>
+          <tr><td>congress_trades:crypto_conflict</td><td>1.5</td><td>Crypto trade + conflict of interest</td></tr>
+          <tr><td>congress_trades:high_conflict</td><td>1.2</td><td>High-conflict congressional trade (any asset)</td></tr>
           <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking</td></tr>
           <tr><td>telegram:investigations</td><td>1.2</td><td>High-signal hack/exploit intel</td></tr>
           <tr><td>twitter:cz_binance</td><td>1.0</td><td>Exchange CEO, market-moving</td></tr>
