@@ -190,8 +190,8 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/signals/{'{id}'}</code></td><td>API Key</td><td>Single signal detail</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
-          <tr><td><span class="method method-get">GET</span></td><td><code>/macro/latest</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
-          <tr><td><span class="method method-get">GET</span></td><td><code>/macro/history</code></td><td>Pro</td><td>Macro Pulse historical snapshots</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/register</code></td><td>None</td><td>Create account</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/login</code></td><td>None</td><td>Login</td></tr>
@@ -270,9 +270,9 @@ const macroPulseResponse = JSON.stringify({
     </div>
 
     <div class="card">
-      <h2 id="macro-pulse">GET /macro/latest</h2>
+      <h2 id="macro-pulse">GET /macro</h2>
       <p><strong>Macro Pulse</strong> — our daily directional bias for BTC and ETH. Generated at 07:00 UTC daily (with a deeper 30-day review every Sunday 22:00 UTC). Synthesises the upcoming USD high-impact macro calendar (FOMC, CPI, NFP, PPI, Retail Sales) with the last 7 days of intel signals into a single regime call plus per-asset bias, conviction, key levels, and invalidation.</p>
-      <p>Free tier: latest report only, generated_at + regime + bias/conviction. Pro tier: full payload including reasoning, key levels, invalidation, and calendar_risks. <code>/macro/history</code> (Pro) returns the last 30 snapshots.</p>
+      <p>Free tier: latest report only, generated_at + regime + bias/conviction. Pro tier: full payload including reasoning, key levels, invalidation, and calendar_risks. Add <code>?history=N</code> (Pro, max 30) to include the last N snapshots alongside the current report.</p>
       <pre><code set:html={macroPulseResponse} /></pre>
       <h3>Field Reference</h3>
       <table>

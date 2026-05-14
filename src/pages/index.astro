@@ -22,7 +22,6 @@ const proFeatures = [
   "<strong>Real-time</strong> signals — no delay",
   "REST + WebSocket + Webhooks",
   "Full source &amp; channel detail",
-  "Entry, SL &amp; TP levels",
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
   "<strong>Macro Pulse</strong> — daily + weekly BTC/ETH bias",
@@ -169,21 +168,7 @@ const freeFeatures = [
     }
     .pricing-card li .check { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
 
-    /* Stats */
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 1px; background: var(--border);
-    }
-    @media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr; } }
-    .stat-card { background: var(--bg-alt); padding: 1.5rem; }
-    .stat-card .label {
-      font-family: var(--font-mono); font-size: 0.65rem;
-      text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--text); margin-bottom: 0.5rem;
-    }
-    .stat-card .value { font-size: 1.8rem; font-weight: 800; color: var(--text-heading); }
-    .stat-card .value.green { color: var(--accent); }
-    .stat-card .value.blue  { color: #5c7cfa; }
+
   </style>
 
   <div class="signals-page">
@@ -194,7 +179,7 @@ const freeFeatures = [
       </p>
       <h1>AI-POWERED<br /><span class="accent">CRYPTO</span><br />INTELLIGENCE</h1>
       <p class="lede">
-        Events from across the market, machine-classified, cross-corroborated, and scored into one signal — with entry, stop, and take. Anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Delivered via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>. Built for agents and traders who execute.
+        Events from across the market, machine-classified, cross-corroborated, and scored. Type, direction, urgency, confidence — plus <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent, strategy, or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>. Raw intel. You decide what to do with it.
       </p>
       <div class="cta-row">
         <a href="/signup" class="btn btn-primary">Start Free →</a>
@@ -227,7 +212,7 @@ const freeFeatures = [
         </div>
         <div class="contrast-col us">
           <div class="ctag">n0brains</div>
-          <p>Does the synthesis. Fuses the events into one corroborated, scored signal — direction, confidence, entry, stop, take — over a plain API. Built for an agent to <em>act</em> on.</p>
+          <p>Does the synthesis. Fuses the events into one corroborated, scored signal — type, direction, urgency, confidence — over a plain API. Raw classified intel your agent can filter, route, and act on directly.</p>
         </div>
       </div>
     </section>
@@ -264,63 +249,5 @@ const freeFeatures = [
       </div>
     </section>
 
-    <!-- Stats -->
-    <section class="stats-section">
-      <h2>30-Day Track Record</h2>
-      <div id="home-stats-widget">
-        <div class="stats-grid">
-          <div class="stat-card"><div class="label">Win Rate</div><div class="value green" id="stat-winrate">—</div></div>
-          <div class="stat-card"><div class="label">Total Signals</div><div class="value" id="stat-total">—</div></div>
-          <div class="stat-card"><div class="label">Avg PnL</div><div class="value" id="stat-pnl">—</div></div>
-        </div>
-      </div>
-    </section>
   </div>
 </BaseLayout>
-
-<script>
-  const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? 'http://127.0.0.1:8000'
-    : 'https://api.n0brains.com';
-
-  async function loadStats() {
-    try {
-      const resp = await fetch(`${API_BASE}/performance/public`);
-      if (!resp.ok) return;
-      const data = await resp.json();
-      if (data.win_rate != null) document.getElementById('stat-winrate').textContent = (data.win_rate * 100).toFixed(1) + '%';
-      if (data.total_signals)    document.getElementById('stat-total').textContent   = data.total_signals.toLocaleString();
-      if (data.avg_pnl != null)  document.getElementById('stat-pnl').textContent     = (data.avg_pnl >= 0 ? '+' : '') + data.avg_pnl.toFixed(2) + '%';
-    } catch (_) { /* dashes remain */ }
-  }
-
-  function initCheckoutButtons() {
-    document.querySelectorAll('[data-checkout]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const tier  = (btn as HTMLElement).dataset.checkout;
-        const apiKey = localStorage.getItem('api_key');
-        const token  = localStorage.getItem('auth_token');
-        if (!apiKey && !token) {
-          window.location.href = '/signup?redirect=checkout&tier=' + encodeURIComponent(tier);
-          return;
-        }
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        else if (apiKey) headers['X-API-Key'] = apiKey;
-        fetch(API_BASE + '/billing/checkout', {
-          method: 'POST', headers,
-          body: JSON.stringify({ price_id: tier }),
-        }).then((r) => {
-          if (r.status === 401) { window.location.href = '/login?redirect=checkout&tier=' + encodeURIComponent(tier); return; }
-          return r.json();
-        }).then((data) => {
-          if (data && data.url) window.location.href = data.url;
-        }).catch((err) => console.error('Checkout error:', err));
-      });
-    });
-  }
-
-  loadStats();
-  initCheckoutButtons();
-</script>
