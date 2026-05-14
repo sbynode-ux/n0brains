@@ -1,0 +1,144 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("intel");
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const siteUrl = "https://n0brains.com";
+const pageUrl = `${siteUrl}/intel/${post.id}/`;
+const pubDateISO = post.data.pubDate.toISOString();
+const updatedISO = post.data.updatedDate?.toISOString() || pubDateISO;
+
+// FAQPage structured data — critical for AI search bait
+const faqLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": post.data.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": post.data.description,
+    },
+  }],
+};
+
+// Article structured data
+const articleLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": post.data.title,
+  "description": post.data.description,
+  "datePublished": pubDateISO,
+  "dateModified": updatedISO,
+  "author": {
+    "@type": "Organization",
+    "name": "n0brains",
+    "url": siteUrl,
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "n0brains",
+    "url": siteUrl,
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/favicon.svg`,
+    },
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": pageUrl,
+  },
+};
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  canonicalURL={pageUrl}
+  ogType="article"
+>
+  <!-- Structured data for AI search engines -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(articleLd)} />
+
+  <article>
+    <header class="post-header">
+      <div class="post-meta-top">
+        <span class="category-chip">{post.data.category}</span>
+        <span class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+      </div>
+      <h1>{post.data.title}</h1>
+      <p class="description">{post.data.description}</p>
+      {
+        post.data.dataSources && post.data.dataSources.length > 0 && (
+          <p class="data-sources">
+            Data sources: {post.data.dataSources.join(", ")}
+          </p>
+        )
+      }
+    </header>
+
+    <div class="content">
+      <Content />
+    </div>
+
+    <footer class="post-footer">
+      <p class="updated">Last updated: {post.data.updatedDate?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) || post.data.pubDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+      <p class="back-link"><a href="/intel/">← Back to Market Intel</a></p>
+    </footer>
+  </article>
+</BaseLayout>
+
+<style>
+  .post-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .category-chip {
+    display: inline-block;
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2em 0.7em;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-accent);
+  }
+  .data-sources {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  .post-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .updated {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .back-link {
+    margin-top: 0.5rem;
+  }
+  .back-link a {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+</style>

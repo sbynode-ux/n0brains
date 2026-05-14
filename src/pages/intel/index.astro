@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("intel");
+posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout
+  title="Market Intel"
+  description="Ultra-specific, data-backed crypto market intelligence. Funding rates, liquidation clusters, smart money flows, and narrative performance — updated daily."
+  canonicalURL="https://n0brains.com/intel/"
+  ogType="website"
+>
+  <section class="hero" id="hero">
+    <p class="hero-eyebrow">n0brains // market intel</p>
+    <h1>
+      data-backed<br />
+      <span class="highlight">Market Intel.</span>
+    </h1>
+    <p class="hero-desc">
+      Ultra-specific answers to the questions traders are asking.
+      Funding rates, liquidation clusters, smart money flows, narrative performance.
+      Updated daily from live market data.
+    </p>
+  </section>
+
+  <section>
+    <p class="section-label">// latest intel</p>
+    <div class="post-list">
+      {
+        posts.map((post, i) => (
+          <a href={`/intel/${post.id}/`} class="post-card">
+            <div class="post-meta">
+              <span class="post-index">0{i + 1}</span>
+              <span class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+              <span class="category-chip">{post.data.category}</span>
+            </div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            <span class="read-more">read</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
