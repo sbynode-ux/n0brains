@@ -19,6 +19,19 @@
     <itunes:explicit>false</itunes:explicit>
     <itunes:category text="Technology"/>
     <itunes:type>episodic</itunes:type>
+        <item>
+      <title>Ep 4: Ai Swarms And Institutional Crypto Rotations</title>
+      <description></description>
+      <itunes:summary></itunes:summary>
+      <pubDate>Fri, 15 May 2026 12:00:00 GMT</pubDate>
+      <guid isPermaLink="false">n0brains-ep-04</guid>
+      <enclosure url="https://n0brains.com/podcast/ep-04-ai-swarms-and-institutional-crypto-rotations.mp3" length="24256398" type="audio/mpeg"/>
+      <itunes:duration>16:50</itunes:duration>
+      <itunes:episode>4</itunes:episode>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>n0brains</itunes:author>
+    </item>
+
     <item>
       <title>Ep 3: Software Development in a Per-Token Economy</title>
       <description>When every LLM call costs money, software development changes. We break down what per-token economics means for builders, traders, and the agents that run on this stuff.</description>
