@@ -2,6 +2,12 @@
 title: "Macro Brief: Risk-Off — Bearish BTC, Bearish ETH"
 description: "Sticky CPI flips the macro regime to risk-off. Bearish bias for BTC and ETH headed into Retail Sales."
 pubDate: 2026-05-14
+question: "What is the macro regime and directional bias for BTC and ETH this week?"
+category: "macro-brief"
+dataSources:
+  - "ForexFactory"
+  - "Alternative.me Fear & Greed"
+  - "CoinGecko"
 ---
 
 Macro Brief: Risk-Off — Bearish BTC, Bearish ETH
