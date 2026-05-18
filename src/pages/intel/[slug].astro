@@ -32,32 +32,25 @@ const faqLd = {
   }],
 };
 
-// Article structured data
-const articleLd = {
+const newsArticleLd = {
   "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": post.data.title,
-  "description": post.data.description,
-  "datePublished": pubDateISO,
-  "dateModified": updatedISO,
-  "author": {
+  "@type": "NewsArticle",
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: pubDateISO,
+  dateModified: updatedISO,
+  author: { "@type": "Organization", name: "n0brains", url: siteUrl },
+  publisher: {
     "@type": "Organization",
-    "name": "n0brains",
-    "url": siteUrl,
+    name: "n0brains",
+    url: siteUrl,
+    logo: { "@type": "ImageObject", url: `${siteUrl}/og-default.png` },
   },
-  "publisher": {
-    "@type": "Organization",
-    "name": "n0brains",
-    "url": siteUrl,
-    "logo": {
-      "@type": "ImageObject",
-      "url": `${siteUrl}/favicon.svg`,
-    },
-  },
-  "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": pageUrl,
-  },
+  mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
+  url: pageUrl,
+  ...(post.data.dataSources?.length
+    ? { mentions: post.data.dataSources.map((s: string) => ({ "@type": "Thing", name: s })) }
+    : {}),
 };
 ---
 
@@ -67,9 +60,8 @@ const articleLd = {
   canonicalURL={pageUrl}
   ogType="article"
 >
-  <!-- Structured data for AI search engines -->
   <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
-  <script type="application/ld+json" set:html={JSON.stringify(articleLd)} />
+  <script type="application/ld+json" set:html={JSON.stringify(newsArticleLd)} />
 
   <article>
     <header class="post-header">
