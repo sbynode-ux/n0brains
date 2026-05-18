@@ -12,33 +12,43 @@ try {
 episodes.sort((a, b) => (b.pubDate ?? "").localeCompare(a.pubDate ?? ""));
 
 const siteUrl = "https://n0brains.com";
+const podcastUrl = `${siteUrl}/podcast/`;
 const podcastLd = {
   "@context": "https://schema.org",
   "@type": "PodcastSeries",
+  "@id": podcastUrl,
   name: "The No Brains Podcast",
-  url: `${siteUrl}/podcast`,
+  url: podcastUrl,
   description: "Crypto signals, AI agents, and the trades that matter. Think Less, Trade More.",
   inLanguage: "en-US",
   keywords: ["crypto", "bitcoin", "AI agents", "trading signals", "macro"],
-  image: `${siteUrl}/podcast-cover-v2.jpg`,
+  image: { "@type": "ImageObject", url: `${siteUrl}/podcast-cover-v2.jpg` },
   publisher: {
     "@type": "Organization",
     name: "n0brains",
     url: siteUrl,
     logo: { "@type": "ImageObject", url: `${siteUrl}/og-default.png` },
   },
-  hasPart: episodes.map((ep) => ({
-    "@type": "PodcastEpisode",
-    name: ep.title,
-    datePublished: ep.pubDate,
-    description: ep.summary || ep.title,
-    url: `${siteUrl}/podcast#ep${ep.num}`,
-    associatedMedia: {
-      "@type": "MediaObject",
-      contentUrl: ep.mp3_url,
-      duration: `PT${Math.floor(ep.duration_sec / 60)}M${ep.duration_sec % 60}S`,
-    },
-  })),
+  hasPart: episodes.map((ep) => {
+    const epUrl = `${podcastUrl}#ep${ep.num}`;
+    const mins = Math.floor(ep.duration_sec / 60);
+    const secs = ep.duration_sec % 60;
+    return {
+      "@type": "PodcastEpisode",
+      "@id": epUrl,
+      name: ep.title,
+      datePublished: ep.pubDate,
+      description: ep.summary || ep.title,
+      url: epUrl,
+      partOfSeries: { "@type": "PodcastSeries", "@id": podcastUrl },
+      associatedMedia: {
+        "@type": "AudioObject",
+        contentUrl: ep.mp3_url,
+        encodingFormat: "audio/mpeg",
+        duration: `PT${mins}M${secs}S`,
+      },
+    };
+  }),
 };
 
 function fmtDuration(sec: number): string {
