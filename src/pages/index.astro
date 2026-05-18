@@ -25,6 +25,11 @@ const proFeatures = [
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
   "<strong>Macro Pulse</strong> — daily + weekly BTC/ETH bias",
+  "<strong>Narrative heatmap</strong> — 1h/4h/24h signal momentum per asset",
+  "<strong>Semantic search</strong> — find similar signals by meaning",
+  "<strong>Trust scoring</strong> — contract risk + rug probability per token",
+  "<strong>Manipulation detection</strong> — coordinated pump + social burst flags",
+  "<strong>Wallet DNA</strong> — smart money classification + stealth accumulation",
   "Email support",
 ];
 const freeFeatures = [
@@ -202,6 +207,49 @@ const freeFeatures = [
       </div>
     </section>
 
+    <!-- Intelligence Layers -->
+    <section class="sources-section">
+      <h2>What we compute</h2>
+      <p class="subtitle">Raw signals are just the start. Seven intelligence layers run on every event before it reaches your API key.</p>
+      <div class="sources-grid">
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="∿" /></div>
+          <h3>Confidence Decay</h3>
+          <p>Signal confidence degrades exponentially with age. A liquidation cascade from 4 hours ago is not the same signal as one from 4 minutes ago. Every score you receive reflects time.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="⚖" /></div>
+          <h3>Source Accuracy Feedback</h3>
+          <p>Source weights self-tune daily via EMA-smoothed win rates from tracked outcomes. Sources that predict correctly get boosted; sources that don't get dampened. Automatically.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="🌡" /></div>
+          <h3>Narrative Heatmap</h3>
+          <p>Rolling 1h / 4h / 24h signal momentum per asset. Narrative strength, velocity, and decay rate. Coordination detection: three independent source types firing the same direction in 5 minutes raises a manipulation flag.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="⚠" /></div>
+          <h3>Manipulation Detection</h3>
+          <p>Social burst scoring, coordinated pump detection, and liquidation cascade identification. If engagement spikes 5× baseline or four unrelated sources fire the same coin in 10 minutes — you know.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="🧬" /></div>
+          <h3>Wallet DNA</h3>
+          <p>Whale signals tagged with wallet archetype — VC/institutional, market maker, MEV arb, smart whale, government, sniper. Credibility scores evolve from tracked outcomes. Stealth accumulation flag fires when the same wallet buys quietly across multiple transactions.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="🛡" /></div>
+          <h3>Trust &amp; Scam Scoring</h3>
+          <p>Every new token signal gets a contract risk pass — GoPlus honeypot check, mint function, sell tax, insider concentration, and DexScreener liquidity. Composite rug probability score. Cached 6 hours per token.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="∿∿" /></div>
+          <h3>Semantic Signal Search</h3>
+          <p>BGE-M3 embeddings on every signal, stored in a vector database. Find signals by meaning, not just keywords. Semantic deduplication suppresses near-duplicate events before they reach the feed.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- vs. the dashboards -->
     <section class="contrast-section">
       <h2>One API. Not twelve.</h2>
@@ -212,7 +260,7 @@ const freeFeatures = [
         </div>
         <div class="contrast-col us">
           <div class="ctag">n0brains</div>
-          <p>All of it — one endpoint. Telegram, whales, funding, liquidations, on-chain, L/S ratios, news, congress trades, macro calendar — fused, corroborated, and scored. One API key. One bill. Raw classified intel your agent can filter, route, and act on directly.</p>
+          <p>All of it — one endpoint. Telegram, whales, funding, liquidations, on-chain, L/S ratios, news, congress trades, macro calendar — fused, corroborated, and scored. Plus narrative momentum, manipulation detection, wallet DNA, token trust scoring, and semantic signal search baked in. One API key. One bill. Raw classified intel your agent can filter, route, and act on directly.</p>
         </div>
       </div>
     </section>

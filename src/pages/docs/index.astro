@@ -17,9 +17,13 @@ const signalsResponse = JSON.stringify({
     entry_price: null,
     stop_loss: null,
     take_profit: null,
+    trade_quality_score: 0.61,
+    trade_quality_band: "B",
+    expected_move_pct: null,
+    regime_at_signal: "risk-off",
     timestamp: 1778555605,
     expires_at: 1778570005,
-    disclaimer: "Not financial advice. Past performance does not guarantee future results."
+    disclaimer: "Analytical data only. Not financial advice."
   }],
   market_opens: {
     tokyo: {BTC: 81150.00, ETH: 3200.50, SOL: 96.30, timestamp: 1778539200},
@@ -91,6 +95,65 @@ const webhookDeliveryResponse = JSON.stringify({
     take_profit: 81385.50
   }
 }, null, 2);
+
+const narrativeResponse = JSON.stringify({
+  coin: "BTC",
+  narrative_strength: 0.74,
+  narrative_velocity: 3.2,
+  narrative_decay_rate: 0.18,
+  manipulation_probability: 0.12,
+  dominant_direction: "bullish",
+  direction_conviction: 0.81,
+  source_diversity: 4,
+  signal_count_1h: 7,
+  signal_count_4h: 19,
+  signal_count_24h: 42,
+  disclaimer: "Analytical data only. Not financial advice."
+}, null, 2);
+
+const manipulationResponse = JSON.stringify({
+  coin: "ETH",
+  manipulation_score: 0.34,
+  social_burst_score: 0.20,
+  coordinated_pump_score: 0.50,
+  liquidation_cascade_score: 0.10,
+  flags: ["coordinated_pump"],
+  disclaimer: "Analytical data only. Not financial advice."
+}, null, 2);
+
+const trustResponse = JSON.stringify({
+  asset: "PEPE",
+  address: "0x6982508145454ce325ddbe47a25d4ec3d2311933",
+  chain_id: "1",
+  trust_score: 0.82,
+  rug_probability: 0.18,
+  contract_risk: 0.10,
+  insider_pct: 0.04,
+  is_honeypot: false,
+  is_mintable: false,
+  sell_tax: 0.0,
+  low_liquidity: false,
+  liquidity_usd: 4820000,
+  flags: [],
+  data_source: "goplus",
+  computed_at: 1778555605,
+  disclaimer: "Analytical data only. Not financial advice."
+}, null, 2);
+
+const similarResponse = JSON.stringify([
+  {
+    id: 182,
+    similarity: 0.97,
+    summary: "BTC whale | bullish | high | Strategy loads 420 BTC at open",
+    metadata: {asset: "BTC", signal_type: "whale", direction: "bullish", urgency: "high", score: 1.38, timestamp: 1778551200}
+  },
+  {
+    id: 178,
+    similarity: 0.94,
+    summary: "BTC whale | bullish | medium | Institutional wallet accumulates 310 BTC",
+    metadata: {asset: "BTC", signal_type: "whale", direction: "bullish", urgency: "medium", score: 1.10, timestamp: 1778548800}
+  }
+], null, 2);
 
 const errorResponses = `// 401 Unauthorized
 {"detail": "Invalid API key"}
@@ -188,6 +251,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/health</code></td><td>None</td><td>Liveness check</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/signals</code></td><td>API Key</td><td>List active signals (filterable)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/signals/{'{id}'}</code></td><td>API Key</td><td>Single signal detail</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/signals/similar</code></td><td>Pro</td><td>Semantic nearest-neighbor search</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/narrative/{'{coin}'}</code></td><td>Pro</td><td>Narrative heatmap for asset</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/manipulation/{'{coin}'}</code></td><td>Pro</td><td>Manipulation score for asset</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/trust/{'{coin}'}</code></td><td>Pro</td><td>Trust &amp; scam score for token</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
@@ -253,6 +320,16 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>sources</code></td><td>array</td><td>Pro only - Source names that contributed</td></tr>
           <tr><td><code>source</code></td><td>string</td><td>Pro only - Primary source name</td></tr>
           <tr><td><code>channel</code></td><td>string</td><td>Pro only - Specific channel/feed</td></tr>
+          <tr><td><code>trade_quality_score</code></td><td>float</td><td>0.0–1.0 composite signal quality (regime + confidence + corroboration)</td></tr>
+          <tr><td><code>trade_quality_band</code></td><td>string</td><td>A+/A/B/C/D quality band — A+ ≥ 0.85, A ≥ 0.70, B ≥ 0.55, C ≥ 0.40</td></tr>
+          <tr><td><code>expected_move_pct</code></td><td>float|null</td><td>Estimated move size as % of price based on nearest S/R delta + ATR</td></tr>
+          <tr><td><code>regime_at_signal</code></td><td>string</td><td>Market regime when signal was generated: risk-on, risk-off, range, squeeze</td></tr>
+          <tr><td><code>manipulation_score</code></td><td>float</td><td>0.0–1.0 coordination/manipulation probability at signal creation time</td></tr>
+          <tr><td><code>wallet_type</code></td><td>string|null</td><td>Whale signal only — vc_institutional, smart_whale, market_maker, mev_arb, sniper, etc.</td></tr>
+          <tr><td><code>smart_money_score</code></td><td>float|null</td><td>Whale signal only — credibility of originating wallet (0.0–1.0)</td></tr>
+          <tr><td><code>trust_score</code></td><td>float|null</td><td>Launchpad/token signals — composite contract trust (0.0–1.0)</td></tr>
+          <tr><td><code>rug_probability</code></td><td>float|null</td><td>Launchpad/token signals — estimated rug/scam probability (0.0–1.0)</td></tr>
+          <tr><td><code>is_honeypot</code></td><td>bool|null</td><td>Launchpad/token signals — GoPlus honeypot flag</td></tr>
         </tbody>
       </table>
     </div>
@@ -321,8 +398,10 @@ const macroPulseResponse = JSON.stringify({
     <div class="card">
       <h2 id="sources">Data Sources and Scoring</h2>
       <p>The pipeline ingests from the watchers listed below. Each source carries a weight that multiplies into the final signal score — so what you read isn't a raw feed dump, it's one corroborated, ranked number.</p>
-      <p class="formula"><code>score = source_weight x urgency_weight x confidence</code></p>
+      <p class="formula"><code>score = source_weight × urgency_weight × confidence_decayed</code></p>
       <p>Urgency weights: <code>low: 1.0</code>, <code>medium: 2.0</code>, <code>high: 3.0</code></p>
+      <p><strong>Confidence decay:</strong> confidence degrades exponentially with age. <code>confidence_decayed = confidence₀ × exp(−age / τ)</code> where τ = TTL / ln(2) per signal type (liquidation: ~43min, hack: ~2.9h, macro: ~11.5h). A stale signal has a lower score than a fresh one of identical quality.</p>
+      <p><strong>Source weight self-tuning:</strong> weights are EMA-adjusted daily from tracked outcome win rates. Sources that fire correctly get boosted up to 1.4×; sources that underperform are dampened to 0.6×. Minimum 10 outcomes before adjustment.</p>
 
       <h3>Active Watchers</h3>
       <ol class="source-list">
@@ -371,6 +450,80 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>twitter_hashtag</td><td>0.4</td><td>Aggregated sentiment</td></tr>
           <tr><td>dexscreener</td><td>0.2</td><td>Enrichment only</td></tr>
           <tr><td>Default (unlisted)</td><td>0.5</td><td>-</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="signals-similar">GET /signals/similar</h2>
+      <p><em>Pro tier only.</em> Semantic nearest-neighbor search across all signals using BGE-M3 vector embeddings. Find signals related by meaning — not just matching keywords.</p>
+      <h3>Query Parameters</h3>
+      <table>
+        <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>coin</code></td><td>string</td><td>Optional — filter results to this asset ticker</td></tr>
+          <tr><td><code>q</code></td><td>string</td><td>Free-text query (defaults to coin name if omitted)</td></tr>
+          <tr><td><code>k</code></td><td>int</td><td>Number of results (default 5, max 20)</td></tr>
+        </tbody>
+      </table>
+      <pre><code set:html={similarResponse} /></pre>
+    </div>
+
+    <div class="card">
+      <h2 id="narrative">GET /narrative/{'{coin}'}</h2>
+      <p><em>Pro tier only.</em> Rolling narrative momentum for an asset — how many signals have fired, at what velocity, from how many independent sources, and whether a coordination pattern is detected.</p>
+      <pre><code set:html={narrativeResponse} /></pre>
+      <h3>Field Reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>narrative_strength</code></td><td>float</td><td>0.0–1.0 weighted signal volume over 24h</td></tr>
+          <tr><td><code>narrative_velocity</code></td><td>float</td><td>Rate of new signals per hour in 1h window</td></tr>
+          <tr><td><code>narrative_decay_rate</code></td><td>float</td><td>How quickly signal volume is falling (0 = growing, 1 = cold)</td></tr>
+          <tr><td><code>manipulation_probability</code></td><td>float</td><td>0.0–1.0. Elevated if ≥3 independent source types fire same direction within 5 min</td></tr>
+          <tr><td><code>dominant_direction</code></td><td>string</td><td>bullish, bearish, or neutral (majority vote across window)</td></tr>
+          <tr><td><code>direction_conviction</code></td><td>float</td><td>Fraction of signals matching dominant direction</td></tr>
+          <tr><td><code>source_diversity</code></td><td>int</td><td>Number of distinct source types in 1h window</td></tr>
+          <tr><td><code>signal_count_1h</code> / <code>4h</code> / <code>24h</code></td><td>int</td><td>Raw signal count per rolling window</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="manipulation">GET /manipulation/{'{coin}'}</h2>
+      <p><em>Pro tier only.</em> Composite manipulation score for an asset. Combines social burst, coordinated pump, and liquidation cascade sub-scores.</p>
+      <pre><code set:html={manipulationResponse} /></pre>
+      <h3>Field Reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>manipulation_score</code></td><td>float</td><td>Composite: social_burst×0.30 + coordinated_pump×0.45 + liq_cascade×0.25</td></tr>
+          <tr><td><code>social_burst_score</code></td><td>float</td><td>Elevated if social signal count ≥5× 10-min baseline</td></tr>
+          <tr><td><code>coordinated_pump_score</code></td><td>float</td><td>Elevated if ≥4 distinct source prefixes fire same direction in 10 min</td></tr>
+          <tr><td><code>liquidation_cascade_score</code></td><td>float</td><td>Elevated if ≥3 liquidation signals for coin within 15 min</td></tr>
+          <tr><td><code>flags</code></td><td>array</td><td>Active flags: social_burst, coordinated_pump, liquidation_cascade</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="trust">GET /trust/{'{coin}'}</h2>
+      <p><em>Pro tier only.</em> Trust and scam scoring for a token ticker. Resolves the ticker to a contract address via DexScreener, then checks GoPlus Security for contract flags. Results are cached 6 hours per token address.</p>
+      <pre><code set:html={trustResponse} /></pre>
+      <h3>Field Reference</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>trust_score</code></td><td>float</td><td>1.0 − rug_probability. Higher = safer.</td></tr>
+          <tr><td><code>rug_probability</code></td><td>float</td><td>Composite: contract_risk×0.60 + liquidity_risk×0.20 + vol_liq_risk×0.10 + signal_history_risk×0.10</td></tr>
+          <tr><td><code>contract_risk</code></td><td>float</td><td>GoPlus-derived. Sums: honeypot (+0.50), mintable (+0.20), owner_can_change_balance (+0.25), upgradeable_proxy (+0.10), high_sell_tax, insider_pct</td></tr>
+          <tr><td><code>insider_pct</code></td><td>float</td><td>Creator + owner combined token holding percentage</td></tr>
+          <tr><td><code>is_honeypot</code></td><td>bool</td><td>GoPlus honeypot flag — token cannot be sold</td></tr>
+          <tr><td><code>is_mintable</code></td><td>bool</td><td>Contract can mint unlimited new supply</td></tr>
+          <tr><td><code>sell_tax</code></td><td>float</td><td>Sell transaction tax (0.10 = 10%)</td></tr>
+          <tr><td><code>low_liquidity</code></td><td>bool</td><td>True if liquidity_usd &lt; $50,000</td></tr>
+          <tr><td><code>flags</code></td><td>array</td><td>Active contract risk flags from GoPlus</td></tr>
+          <tr><td><code>data_source</code></td><td>string</td><td>goplus, dexscreener, signal_history_only, or none</td></tr>
         </tbody>
       </table>
     </div>
