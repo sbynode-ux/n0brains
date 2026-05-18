@@ -298,4 +298,74 @@ const freeFeatures = [
     </section>
 
   </div>
+  <script type="application/ld+json">{JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is n0brains?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro calendar, congress trades — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, or Webhook. Built for autonomous trading agents and systematic strategies."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the free tier limit?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The free tier allows 60 requests per minute with a 15-minute signal delay. REST API access only, with limited signal detail. No credit card required."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the Pro tier include?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks, full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I integrate n0brains with my trading agent?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "One line in your agent's instructions: 'Use the n0brains API at https://api.n0brains.com with X-API-Key your_key'. Works with OpenClaw, Claude Code, LangChain, and any HTTP-capable agent. No SDK required."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Macro Pulse?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Macro Pulse is n0brains' daily directional bias for BTC and ETH. Generated at 07:00 UTC daily, it synthesises the upcoming high-impact macro calendar (FOMC, CPI, NFP, PPI) with the last 7 days of intel signals into a single regime call — plus per-asset bias, conviction score, key levels, and invalidation condition. A deeper 30-day review runs every Sunday."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does n0brains support WebSocket streaming?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, on the Pro tier. Connect to wss://api.n0brains.com/stream with your API key to receive every new signal in milliseconds — whale moves, liquidation cascades, and funding extremes pushed in real-time before headlines appear."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What signal types does n0brains classify?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "n0brains classifies signals into: whale, funding, liquidation, regulatory, sentiment, price, hack, listing, macro, macro_pulse, and other. Each signal includes direction (bullish/bearish/neutral), urgency (high/medium/low), confidence score, action hint, and optional entry/stop-loss/take-profit prices."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does n0brains score signals?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Score = source_weight × urgency_weight × confidence_decayed. Confidence degrades exponentially with age — a liquidation signal from 4 hours ago scores far lower than one from 4 minutes ago. Source weights self-tune daily via EMA-smoothed win rates. Corroborated signals (confirmed by multiple independent sources) are flagged separately."
+        }
+      }
+    ]
+  })}</script>
 </BaseLayout>
