@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'; // Using BaseLayout as it exists and matches the expected props
+---
+
+<BaseLayout title="System Status - N0Brains">
+  <main>
+    <h1>System Status</h1>
+    <p>Welcome to the N0Brains system status page. Here you can find real-time updates on the operational status of our services.</p>
+
+    <section>
+      <h2>Current Status: All Systems Operational</h2>
+      <p>Last updated: <time datetime="2023-10-27T10:00:00Z">October 27, 2023, 10:00 AM UTC</time></p>
+    </section>
+
+    <section>
+      <h2>Service Components</h2>
+      <ul>
+        <li>Core API: Operational</li>
+        <li>User Interface: Operational</li>
+        <li>Database Service: Degraded Performance (Investigating intermittent latency)</li>
+        <li>Authentication Service: Operational</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Recent Incidents</h2>
+      <div>
+        <h3>Database Latency Issue - October 26, 2023</h3>
+        <p>
+          <strong>Incident Start:</strong> October 26, 2023, 08:30 AM UTC<br>
+          <strong>Resolution:</strong> October 26, 2023, 09:15 AM UTC<br>
+          <strong>Status:</strong> Resolved<br>
+          A brief period of increased latency was observed for the database service. The issue was identified and resolved within 45 minutes. All services returned to normal operation.
+        </p>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
