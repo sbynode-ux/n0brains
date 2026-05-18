@@ -1,0 +1,223 @@
+# n0brains — Full Reference
+
+> AI-powered crypto intelligence platform. Machine-classified signals from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro, congress trades — fused, scored, and delivered via one REST/WebSocket/Webhook API. Built for autonomous trading agents.
+
+## What it is
+
+n0brains ingests from 10+ real-time sources, classifies every market event via LLM pipeline, cross-corroborates across sources, and scores it. Each signal includes direction (bullish/bearish/neutral), urgency, confidence, action hint, entry/stop/take-profit suggestions, and a composite quality band (A+/A/B/C/D). You get structured intelligence, not a firehose.
+
+---
+
+## Pricing
+
+| Tier | Price | Rate limit | Delay | Access |
+|------|-------|-----------|-------|--------|
+| Free | $0/mo | 60 req/min | 15 min | REST only, limited fields |
+| Pro  | $19.99/mo | 600 req/min | Real-time | REST + WebSocket + Webhooks, all fields |
+
+Sign up: https://n0brains.com/signup
+
+---
+
+## Data Sources
+
+| Code | Source | Description |
+|------|--------|-------------|
+| MP | Macro Pulse | Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive. |
+| WH | Whale Tracking | Hyperliquid leaderboard consensus — when top traders pile into the same side, we detect it. |
+| $ | Funding & Liquidations | Binance funding extremes + real-time liquidation cascades via WebSocket. |
+| ETH | On-Chain Flows | Large ETH/BTC transfers to/from exchanges. |
+| L/S | L/S Ratios | Bybit, Binance, Gate.io positioning data. |
+| SR | S/R Levels | Real-time support/resistance from the Hyperliquid order book. |
+| TG | Telegram | WatcherGuru, ZachXBT Investigations, and others. |
+| RSS | News & RSS | CoinDesk, Decrypt, CoinTelegraph, Reddit, Trump's Truth Social. |
+| CMC | CMC & Macro | CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL. |
+| 🏛️ | Congress Trades | CapitolExposed API — every crypto trade disclosed by US Congress members, conflict-scored. |
+
+---
+
+## Intelligence Layers (runs on every signal)
+
+- **Confidence Decay** — score degrades exponentially with age. `confidence_decayed = confidence₀ × exp(−age / τ)` where τ = TTL / ln(2) per signal type (liquidation: ~43min, hack: ~2.9h, macro: ~11.5h).
+- **Source Accuracy Feedback** — source weights self-tune daily via EMA-smoothed win rates.
+- **Narrative Heatmap** — rolling 1h/4h/24h signal momentum per asset. Coordination detection: 3 independent source types firing same direction in 5 min raises manipulation flag.
+- **Manipulation Detection** — social burst scoring, coordinated pump detection, liquidation cascade ID.
+- **Wallet DNA** — whale wallet archetypes: vc_institutional, smart_whale, market_maker, mev_arb, sniper, government. Credibility scores evolve from outcomes. Stealth accumulation flag.
+- **Trust & Scam Scoring** — GoPlus honeypot check, mint function, sell tax, insider concentration, DexScreener liquidity. Composite rug probability. Cached 6h per token.
+- **Semantic Signal Search** — BGE-M3 embeddings on every signal in vector DB. Semantic deduplication suppresses near-duplicates before they reach the feed.
+
+---
+
+## API Reference
+
+**Base URL:** `https://api.n0brains.com`
+**Auth:** `X-API-Key: intel_sk_your_key` (or `Authorization: Bearer <jwt>`)
+**Format:** All responses JSON. Timestamps Unix epoch (seconds).
+
+### Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | /health | None | Liveness check |
+| GET | /signals | API Key | List active signals (filterable) |
+| GET | /signals/{id} | API Key | Single signal detail |
+| GET | /signals/similar | Pro | Semantic nearest-neighbor search |
+| GET | /narrative/{coin} | Pro | Narrative heatmap for asset |
+| GET | /manipulation/{coin} | Pro | Manipulation score for asset |
+| GET | /trust/{coin} | Pro | Trust & scam score for token |
+| GET | /levels/{coin} | API Key | S/R levels from Hyperliquid order book |
+| GET | /market-opens | API Key | Session opening prices (Tokyo/London/NY) |
+| GET | /macro | API Key | Macro Pulse — latest BTC + ETH directional bias |
+| GET | /macro?history=N | Pro | Last N macro reports (max 30) |
+| GET | /performance | None | Public win rate / PnL stats |
+| POST | /auth/register | None | Create account, returns API key immediately |
+| POST | /auth/login | None | Login, returns JWT + API keys |
+| GET | /auth/me | API Key | User profile |
+| POST | /auth/api-keys | API Key | Generate new API key |
+| DELETE | /auth/api-keys/{id} | API Key | Revoke API key |
+| POST | /billing/checkout | API Key | Stripe checkout session |
+| POST | /billing/portal | API Key | Stripe customer portal |
+| POST | /webhooks | Pro | Register webhook URL |
+| DELETE | /webhooks/{id} | Pro | Remove webhook |
+| WS | /stream | Pro | Real-time signal stream |
+
+### GET /signals — Query Parameters
+
+| Param | Type | Values |
+|-------|------|--------|
+| asset | string | Ticker, e.g. BTC, ETH, SOL |
+| signal_type | string | regulatory, whale, sentiment, price, hack, listing, macro, macro_pulse, liquidation, funding, other |
+| direction | string | bullish, bearish, neutral |
+| urgency | string | high, medium, low |
+| limit | int | 1–200 (default 50) |
+| offset | int | Pagination offset (default 0) |
+| include_opens | bool | Include market opening prices (default true) |
+
+### Signal Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | int | Unique signal ID |
+| asset | string\|null | Ticker or null if market-wide |
+| signal_type | string | See signal_type values above |
+| direction | string | bullish / bearish / neutral |
+| urgency | string | high / medium / low |
+| summary | string | ≤100 char description |
+| confidence | float | 0.0–1.0, LLM-assessed |
+| action_hint | string | trade_signal / alert / monitor / ignore |
+| corroborated | bool | True if multiple sources confirm |
+| score | float | source_weight × urgency_weight × confidence_decayed |
+| entry_price | float\|null | Suggested entry |
+| stop_loss | float\|null | Suggested stop-loss |
+| take_profit | float\|null | Suggested take-profit |
+| trade_quality_score | float | 0.0–1.0 composite (regime + confidence + corroboration) |
+| trade_quality_band | string | A+ ≥0.85, A ≥0.70, B ≥0.55, C ≥0.40, D below |
+| expected_move_pct | float\|null | Estimated move % based on S/R delta + ATR |
+| regime_at_signal | string | risk-on / risk-off / range / squeeze |
+| manipulation_score | float | 0.0–1.0 coordination probability at signal time |
+| wallet_type | string\|null | Whale only: vc_institutional / smart_whale / market_maker / mev_arb / sniper |
+| smart_money_score | float\|null | Whale only: wallet credibility 0.0–1.0 |
+| trust_score | float\|null | Token signals: composite contract trust 0.0–1.0 |
+| rug_probability | float\|null | Token signals: scam probability 0.0–1.0 |
+| is_honeypot | bool\|null | Token signals: GoPlus honeypot flag |
+| timestamp | int | Unix epoch (seconds) |
+| expires_at | int | Signal expiry epoch |
+| sources | array | Pro only — source names that contributed |
+| source | string | Pro only — primary source name |
+| channel | string | Pro only — specific channel/feed |
+
+### GET /macro — Macro Pulse Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| regime | string | risk-on / risk-off / range / squeeze |
+| regime_reason | string | ≤120 char rationale |
+| btc.bias / eth.bias | string | bullish / bearish / neutral |
+| btc.conviction / eth.conviction | float | 0.0–1.0. ≥0.7 = very high. ≥0.85 = veto-grade. |
+| btc.reason / eth.reason | string | Primary driver, ≤140 chars |
+| btc.key_levels / eth.key_levels | string | Macro pivots |
+| btc.invalidation / eth.invalidation | string | What flips the call |
+| calendar_risks | array | Top 1–3 upcoming events that could flip bias |
+| window_days | int | Lookback window (7 daily / 30 weekly) |
+| horizon | string | Forward horizon label |
+| generated_at | string | ISO-8601 UTC. Stale after 36h — refetch. |
+
+Generated: 07:00 UTC daily. Deep-dive: Sundays 22:00 UTC.
+
+### WebSocket /stream (Pro)
+
+```
+wss://api.n0brains.com/stream?api_key=intel_sk_...
+```
+
+Pushes signal objects as `{"type": "signal", "data": {...}}`. Send `"ping"` → receive `{"type": "pong", "timestamp": ...}`.
+
+### Webhooks (Pro)
+
+Register via `POST /webhooks` with `{"url": "...", "events": "signal.created"}`.
+Deliveries POST to your URL with header `X-Intel-Signature` for verification (HMAC, secret shown once on creation).
+
+### Score Formula
+
+```
+score = source_weight × urgency_weight × confidence_decayed
+urgency_weights: low=1.0, medium=2.0, high=3.0
+```
+
+### Error Codes
+
+| Code | Meaning |
+|------|---------|
+| 401 | Invalid API key |
+| 403 | Pro-tier endpoint (WebSocket, webhooks, Pro fields) |
+| 404 | Signal not found |
+| 429 | Rate limit exceeded |
+
+---
+
+## Agent Integration
+
+One instruction line is all your agent needs:
+
+```
+Use the n0brains API at https://api.n0brains.com with X-API-Key intel_sk_your_key
+```
+
+Works with OpenClaw, Claude Code, LangChain, AutoGPT, and any HTTP-capable agent. The agent can self-discover endpoints via the docs. An optional downloadable skill file is available at https://n0brains.com/openclaw/.
+
+### Common Agent Patterns
+
+**Market-aware answer before trade decision:**
+```
+GET /signals?asset=BTC&urgency=high
+```
+
+**Full trade plan with live S/R:**
+```
+GET /signals?asset=BTC&direction=bullish
+GET /levels/BTC
+→ combine entry from signal, stop from nearest support, TP from nearest resistance
+```
+
+**Real-time reaction (Pro):**
+```
+WS /stream → filter on signal_type=whale and urgency=high
+```
+
+**Daily bias check:**
+```
+GET /macro → check regime + btc.bias + eth.conviction before any BTC/ETH position
+```
+
+---
+
+## Links
+
+- Homepage: https://n0brains.com
+- API docs: https://n0brains.com/docs/
+- Agent integration: https://n0brains.com/openclaw/
+- Market intel: https://n0brains.com/intel/
+- Sign up (free): https://n0brains.com/signup
+- Bluesky: https://bsky.app/profile/n0brains.com
+- Telegram signals: https://t.me/n0brains_signals
+- GitHub: https://github.com/sbynode-ux/n0brains

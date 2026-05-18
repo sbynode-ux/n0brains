@@ -42,6 +42,38 @@ const orgLd = {
   description:
     "Crypto signal API for autonomous trading agents. 10+ sources, machine-classified, delivered via REST, WebSocket, or webhook.",
 };
+
+const softwareAppLd = homepage ? {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "n0brains",
+  url: siteUrl,
+  description: "AI-powered crypto intelligence platform. Real-time signals from whales, funding, on-chain flows, news, macro, and congress trades — fused, scored, and delivered via REST, WebSocket, or Webhook API.",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: [
+    { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tier — 60 req/min, 15-minute signal delay, REST API" },
+    { "@type": "Offer", price: "19.99", priceCurrency: "USD", description: "Pro tier — 600 req/min, real-time signals, REST + WebSocket + Webhooks" },
+  ],
+  featureList: [
+    "Real-time whale tracking",
+    "Funding and liquidation alerts",
+    "On-chain flows",
+    "Macro Pulse daily BTC and ETH directional bias",
+    "Manipulation detection",
+    "Narrative heatmap",
+    "Trust and rug scoring",
+    "Semantic signal search",
+    "Congress trades signal",
+    "Wallet DNA classification",
+  ],
+  provider: {
+    "@type": "Organization",
+    name: "n0brains",
+    url: siteUrl,
+    logo: `${siteUrl}/og-default.png`,
+  },
+} : null;
 ---
 
 <!doctype html>
@@ -88,6 +120,7 @@ const orgLd = {
 
     <!-- Structured data -->
     <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
+    {softwareAppLd && <script type="application/ld+json" set:html={JSON.stringify(softwareAppLd)} />}
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to content</a>
