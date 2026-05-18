@@ -8,22 +8,32 @@ jobs:
   indexnow:
     runs-on: ubuntu-latest
     steps:
-      - name: Submit URLs to IndexNow
+      - name: Submit URLs to IndexNow (all engines)
         run: |
-          curl -s -w "\nHTTP %{http_code}" -X POST "https://api.indexnow.org/indexnow" \
-            -H "Content-Type: application/json; charset=utf-8" \
-            -d '{
-              "host": "n0brains.com",
-              "key": "52bcdadf595e461ca20b772571d4fb94",
-              "keyLocation": "https://n0brains.com/52bcdadf595e461ca20b772571d4fb94.txt",
-              "urlList": [
-                "https://n0brains.com/",
-                "https://n0brains.com/docs/",
-                "https://n0brains.com/agents/",
-                "https://n0brains.com/blog/",
-                "https://n0brains.com/intel/",
-                "https://n0brains.com/podcast/",
-                "https://n0brains.com/about",
-                "https://n0brains.com/signals/"
-              ]
-            }'
+          PAYLOAD='{
+            "host": "n0brains.com",
+            "key": "52bcdadf595e461ca20b772571d4fb94",
+            "keyLocation": "https://n0brains.com/52bcdadf595e461ca20b772571d4fb94.txt",
+            "urlList": [
+              "https://n0brains.com/",
+              "https://n0brains.com/docs/",
+              "https://n0brains.com/agents/",
+              "https://n0brains.com/blog/",
+              "https://n0brains.com/intel/",
+              "https://n0brains.com/podcast/",
+              "https://n0brains.com/about",
+              "https://n0brains.com/signals/"
+            ]
+          }'
+
+          for ENDPOINT in \
+            "https://api.indexnow.org/indexnow" \
+            "https://www.bing.com/indexnow" \
+            "https://yandex.com/indexnow" \
+            "https://searchadvisor.naver.com/indexnow" \
+            "https://search.seznam.cz/indexnow"; do
+            echo -n "$ENDPOINT → "
+            curl -s -w "HTTP %{http_code}\n" -o /dev/null -X POST "$ENDPOINT" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              -d "$PAYLOAD"
+          done
