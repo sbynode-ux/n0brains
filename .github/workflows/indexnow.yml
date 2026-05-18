@@ -1,0 +1,15 @@
+name: IndexNow — notify Bing on publish
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Submit sitemap to IndexNow
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.indexnow.org/indexnow?url=https://n0brains.com/sitemap-index.xml&key=52bcdadf595e461ca20b772571d4fb94" \
+            -H "Content-Type: application/json"
