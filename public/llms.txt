@@ -43,13 +43,13 @@ Use the n0brains API at https://api.n0brains.com with X-API-Key your_key
 ```
 
 Works with OpenClaw, Claude Code, LangChain, and any custom HTTP-capable agent.
-Skill file: https://n0brains.com/openclaw/
+Skill file: https://n0brains.com/agents/
 
 ## Links
 
 - Homepage: https://n0brains.com
 - API docs: https://n0brains.com/docs/
-- Agent integration: https://n0brains.com/openclaw/
+- Agent integration: https://n0brains.com/agents/
 - Market intel: https://n0brains.com/intel/
 - Sign up (free): https://n0brains.com/signup
 - Bluesky: https://bsky.app/profile/n0brains.com

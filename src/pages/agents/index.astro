@@ -4,7 +4,7 @@ import MonoChip from "../../components/MonoChip.astro";
 import MethodBadge from "../../components/MethodBadge.astro";
 
 /* -----------------------------------------------------------------------
-   /openclaw — point any agent (OpenClaw, Claude Code, custom orchestrator)
+   /agents — point any agent (Claude Code, LangChain, custom orchestrator)
    at the n0brains API. The headline: just tell the agent the base URL and
    key — it figures the rest out. A downloadable skill .md is the optional
    structured version. Optional TypeScript client.
@@ -34,7 +34,7 @@ const can = [
 
 <BaseLayout
   title="n0brains for agents"
-  description="Point your OpenClaw or Claude agent at the n0brains API: just hand it the base URL and your key, and it figures the rest out. Optional skill file and TypeScript client. Free tier, no SDK required."
+  description="Point your Claude, LangChain, or custom agent at the n0brains API: just hand it the base URL and your key, and it figures the rest out. Optional skill file and TypeScript client. Free tier, no SDK required."
   ogType="article"
 >
   <section class="oc-page">
@@ -133,11 +133,11 @@ signals.forEach(s =&gt; console.log(s.direction, s.score, s.summary));</code></p
             <code class="dl-name">n0brains-signals.md</code>
             <span class="dl-sub">markdown · ~10 KB · the skill</span>
           </div>
-          <a class="btn btn-secondary" href="/openclaw/n0brains-signals.md" download>Download .md ↓</a>
+          <a class="btn btn-secondary" href="/agents/n0brains-signals.md" download>Download .md ↓</a>
         </div>
         <div class="dl-row alt">
-          <code><span class="prompt">$</span>curl -O https://n0brains.com/openclaw/n0brains-signals.md</code>
-          <button class="copy-btn" data-copy="curl -O https://n0brains.com/openclaw/n0brains-signals.md" aria-label="copy">copy</button>
+          <code><span class="prompt">$</span>curl -O https://n0brains.com/agents/n0brains-signals.md</code>
+          <button class="copy-btn" data-copy="curl -O https://n0brains.com/agents/n0brains-signals.md" aria-label="copy">copy</button>
         </div>
       </div>
       <table class="runtimes">

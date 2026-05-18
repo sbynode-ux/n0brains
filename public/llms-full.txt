@@ -183,7 +183,7 @@ One instruction line is all your agent needs:
 Use the n0brains API at https://api.n0brains.com with X-API-Key intel_sk_your_key
 ```
 
-Works with OpenClaw, Claude Code, LangChain, AutoGPT, and any HTTP-capable agent. The agent can self-discover endpoints via the docs. An optional downloadable skill file is available at https://n0brains.com/openclaw/.
+Works with OpenClaw, Claude Code, LangChain, AutoGPT, and any HTTP-capable agent. The agent can self-discover endpoints via the docs. An optional downloadable skill file is available at https://n0brains.com/agents/.
 
 ### Common Agent Patterns
 
@@ -215,7 +215,7 @@ GET /macro → check regime + btc.bias + eth.conviction before any BTC/ETH posit
 
 - Homepage: https://n0brains.com
 - API docs: https://n0brains.com/docs/
-- Agent integration: https://n0brains.com/openclaw/
+- Agent integration: https://n0brains.com/agents/
 - Market intel: https://n0brains.com/intel/
 - Sign up (free): https://n0brains.com/signup
 - Bluesky: https://bsky.app/profile/n0brains.com
