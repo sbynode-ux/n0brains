@@ -17,6 +17,10 @@ const siteUrl = "https://n0brains.com";
 const pageUrl = `${siteUrl}/intel/${post.id}/`;
 const pubDateISO = post.data.pubDate.toISOString();
 const updatedISO = post.data.updatedDate?.toISOString() || pubDateISO;
+const keywords: string[] = post.data.keywords?.length
+  ? post.data.keywords
+  : [post.data.category, "crypto", "bitcoin", "trading signals", "n0brains",
+     ...(post.data.dataSources ?? [])].filter(Boolean);
 
 // FAQPage structured data — critical for AI search bait
 const faqLd = {
@@ -59,6 +63,7 @@ const newsArticleLd = {
   description={post.data.description}
   canonicalURL={pageUrl}
   ogType="article"
+  keywords={keywords}
 >
   <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />
   <script type="application/ld+json" set:html={JSON.stringify(newsArticleLd)} />

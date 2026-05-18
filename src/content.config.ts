@@ -9,6 +9,7 @@ const blog = defineCollection({
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     heroImage: z.string().optional(),
+    keywords: z.array(z.string()).optional(),
   }),
 });
 
@@ -22,6 +23,7 @@ const intel = defineCollection({
     question: z.string(),
     category: z.string(),
     dataSources: z.array(z.string()).optional(),
+    keywords: z.array(z.string()).optional(),
   }),
 });
 

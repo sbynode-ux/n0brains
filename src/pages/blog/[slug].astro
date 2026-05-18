@@ -17,6 +17,8 @@ const siteUrl = "https://n0brains.com";
 const pageUrl = `${siteUrl}/blog/${post.id}/`;
 const pubDateISO = post.data.pubDate.toISOString();
 const updatedISO = post.data.updatedDate?.toISOString() ?? pubDateISO;
+const ogImage = post.data.heroImage ?? "/og-default.png";
+const keywords = post.data.keywords ?? [];
 
 const blogPostingLd = {
   "@context": "https://schema.org",
@@ -37,7 +39,7 @@ const blogPostingLd = {
 };
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} canonicalURL={pageUrl} ogType="article">
+<BaseLayout title={post.data.title} description={post.data.description} canonicalURL={pageUrl} ogType="article" ogImage={ogImage} keywords={keywords}>
   <script type="application/ld+json" set:html={JSON.stringify(blogPostingLd)} />
   <article>
     <header class="post-header">

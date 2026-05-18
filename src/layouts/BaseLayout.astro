@@ -9,6 +9,7 @@ export interface Props {
   ogType?: "website" | "article";
   ogImage?: string;        // absolute or /-rooted path
   noIndex?: boolean;
+  keywords?: string[];
 }
 
 const {
@@ -19,6 +20,7 @@ const {
   ogType = "website",
   ogImage = "/og-default.png",
   noIndex = false,
+  keywords = [],
 } = Astro.props;
 
 const url        = canonicalURL ?? Astro.url;
@@ -95,6 +97,7 @@ const softwareAppLd = homepage ? {
 
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    {keywords.length > 0 && <meta name="keywords" content={keywords.join(", ")} />}
     {noIndex && <meta name="robots" content="noindex,nofollow" />}
 
     <link rel="canonical" href={url} />
