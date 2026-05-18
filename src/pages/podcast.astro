@@ -11,6 +11,36 @@ try {
 
 episodes.sort((a, b) => (b.pubDate ?? "").localeCompare(a.pubDate ?? ""));
 
+const siteUrl = "https://n0brains.com";
+const podcastLd = {
+  "@context": "https://schema.org",
+  "@type": "PodcastSeries",
+  name: "The No Brains Podcast",
+  url: `${siteUrl}/podcast`,
+  description: "Crypto signals, AI agents, and the trades that matter. Think Less, Trade More.",
+  inLanguage: "en-US",
+  keywords: ["crypto", "bitcoin", "AI agents", "trading signals", "macro"],
+  image: `${siteUrl}/podcast-cover-v2.jpg`,
+  publisher: {
+    "@type": "Organization",
+    name: "n0brains",
+    url: siteUrl,
+    logo: { "@type": "ImageObject", url: `${siteUrl}/og-default.png` },
+  },
+  hasPart: episodes.map((ep) => ({
+    "@type": "PodcastEpisode",
+    name: ep.title,
+    datePublished: ep.pubDate,
+    description: ep.summary || ep.title,
+    url: `${siteUrl}/podcast#ep${ep.num}`,
+    associatedMedia: {
+      "@type": "MediaObject",
+      contentUrl: ep.mp3_url,
+      duration: `PT${Math.floor(ep.duration_sec / 60)}M${ep.duration_sec % 60}S`,
+    },
+  })),
+};
+
 function fmtDuration(sec: number): string {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -25,6 +55,7 @@ function fmtDate(iso: string): string {
 ---
 
 <BaseLayout title="podcast" description="n0brains podcast — crypto signals, AI agents, and the trades that matter.">
+  <script type="application/ld+json" set:html={JSON.stringify(podcastLd)} />
   <section class="hero">
     <p class="hero-eyebrow">n0brains // podcast</p>
     <h1>
