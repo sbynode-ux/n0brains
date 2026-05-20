@@ -1,0 +1,158 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="status"
+  description="n0brains service status — uptime for the API and marketing site, refreshed live from UptimeRobot."
+>
+  <section class="about-section">
+    <h1>status</h1>
+    <p class="legal-updated">Live data from UptimeRobot. Refreshed every 60s.</p>
+
+    <div id="status-banner" class="status-banner status-loading">
+      <span class="dot"></span>
+      <span class="banner-text">checking…</span>
+    </div>
+
+    <div id="status-monitors" class="monitor-list"></div>
+
+    <p class="meta" id="status-meta"></p>
+    <p class="legal-updated" style="margin-top: 32px;">
+      This page is intentionally minimal. We do not guarantee uptime — see
+      <a href="/terms">terms</a> §7. Backups, alerts, and offsite monitoring
+      are described in our operations documentation. Report an outage at
+      <a href="mailto:support@n0brains.com">support@n0brains.com</a>.
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  const ENDPOINT = "https://api.n0brains.com/status/uptime";
+
+  function fmtPct(v) {
+    if (v === null || v === undefined) return "—";
+    return Number(v).toFixed(2) + "%";
+  }
+
+  function render(data) {
+    const banner = document.getElementById("status-banner");
+    const list   = document.getElementById("status-monitors");
+    const meta   = document.getElementById("status-meta");
+
+    if (!data || data.error) {
+      banner.className = "status-banner status-unknown";
+      banner.querySelector(".banner-text").textContent =
+        "status unavailable (" + (data?.error || "fetch failed") + ")";
+      return;
+    }
+
+    banner.className =
+      "status-banner status-" + (data.overall === "operational" ? "up" : "down");
+    banner.querySelector(".banner-text").textContent =
+      data.overall === "operational" ? "all systems operational" : "degraded";
+
+    list.innerHTML = "";
+    for (const m of data.monitors || []) {
+      const cls = m.status === "up" ? "up" : (m.status === "paused" ? "paused" : "down");
+      const card = document.createElement("div");
+      card.className = "monitor-card " + cls;
+      card.innerHTML = `
+        <div class="monitor-head">
+          <span class="monitor-dot"></span>
+          <span class="monitor-name">${m.name}</span>
+          <span class="monitor-status">${m.status}</span>
+        </div>
+        <div class="monitor-ratios">
+          <span>24h: <strong>${fmtPct(m.uptime_1d_pct)}</strong></span>
+          <span>7d:  <strong>${fmtPct(m.uptime_7d_pct)}</strong></span>
+          <span>30d: <strong>${fmtPct(m.uptime_30d_pct)}</strong></span>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+
+    if (data.generated_at) {
+      meta.textContent = "Last updated " + new Date(data.generated_at * 1000).toISOString();
+    }
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      const j = await r.json();
+      render(j);
+    } catch (e) {
+      render({ error: String(e) });
+    }
+  }
+
+  load();
+  setInterval(load, 60_000);
+</script>
+
+<style>
+  .status-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; border-radius: 6px;
+    font-family: var(--font-mono); font-size: 0.9rem;
+    margin: 1.5rem 0 2rem;
+    border: 1px solid var(--border);
+  }
+  .status-banner .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .status-up   { border-color: #2a7a2a; }
+  .status-up   .dot { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+  .status-down { border-color: #b13838; }
+  .status-down .dot { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+  .status-unknown { border-color: var(--border); }
+  .status-loading .dot { background: var(--accent); }
+
+  .monitor-list {
+    display: grid; gap: 0.75rem;
+    grid-template-columns: 1fr;
+  }
+  .monitor-card {
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-elev, transparent);
+  }
+  .monitor-card.up   { border-left: 3px solid #4ade80; }
+  .monitor-card.down { border-left: 3px solid #ef4444; }
+  .monitor-card.paused { border-left: 3px solid var(--text-muted); }
+  .monitor-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+  .monitor-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .monitor-card.up   .monitor-dot { background: #4ade80; }
+  .monitor-card.down .monitor-dot { background: #ef4444; }
+  .monitor-name { flex: 1; font-weight: 500; }
+  .monitor-status {
+    text-transform: uppercase; font-size: 0.7rem;
+    letter-spacing: 0.15em; color: var(--text-muted);
+  }
+  .monitor-ratios {
+    display: flex; gap: 1.5rem;
+    font-family: var(--font-mono); font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .monitor-ratios strong { color: var(--text); }
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+  }
+  .legal-updated {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+</style>
