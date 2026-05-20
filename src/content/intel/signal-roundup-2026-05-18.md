@@ -50,7 +50,7 @@ dataSources:
 
 ## Get Real-Time Signals
 
-This data is sourced from **n0brains.com Signals Pro**, which ingests from 10+ sources (Telegram, Twitter/X, news RSS, government feeds, CoinMarketCap, Binance funding & liquidations, Hyperliquid order books, whale tracking, and more) and fuses them into scored, corroborated signals with entry, stop-loss, and take-profit levels.
+This data is sourced from **n0brains.com Signals Pro**, which ingests from 10+ sources (Telegram, news RSS, government feeds, CoinMarketCap, Binance funding & liquidations, Hyperliquid order books, whale tracking, and more) and fuses them into scored, corroborated signals with entry, stop-loss, and take-profit levels.
 
 ```bash
 curl -H "X-API-Key: your_key" https://api.n0brains.com/signals

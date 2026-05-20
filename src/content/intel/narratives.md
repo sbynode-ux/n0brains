@@ -113,12 +113,11 @@ The n0brains 30-day performance tracker reveals which narratives actually produc
 
 | Source | Total | Wins | Avg PnL |
 |--------|-------|------|---------|
-| **Twitter** | 3 | 0 | **+0.12** |
 | News | 128 | 6 | -0.08 |
 | RSS | 19 | 0 | -0.11 |
 | Macro/TVL | 7 | 2 | -0.55 |
 
-**Key insight**: Twitter-sourced signals have the best average PnL (+0.12) despite zero wins — meaning the losses are small and controlled. News is the highest-volume source (128 signals) but barely breaks even. Macro/TVL signals have the worst PnL (-0.55) — confirming that macro timing is the hardest problem in crypto trading.
+**Key insight**: News is the highest-volume source (128 signals) but barely breaks even. Macro/TVL signals have the worst PnL (-0.55) — confirming that macro timing is the hardest problem in crypto trading.
 
 ## Narrative Rotation Map
 
