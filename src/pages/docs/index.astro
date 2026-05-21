@@ -14,9 +14,6 @@ const signalsResponse = JSON.stringify({
     action_hint: "monitor",
     corroborated: false,
     score: 0.90,
-    entry_price: null,
-    stop_loss: null,
-    take_profit: null,
     trade_quality_score: 0.61,
     trade_quality_band: "B",
     expected_move_pct: null,
@@ -338,9 +335,6 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore</td></tr>
           <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>source_weight x urgency_weight x confidence</td></tr>
-          <tr><td><code>entry_price</code></td><td>float|null</td><td>Nearest S/R level at time of signal (reference only, not trade advice)</td></tr>
-          <tr><td><code>stop_loss</code></td><td>float|null</td><td>Nearest support/structural level below entry (reference only)</td></tr>
-          <tr><td><code>take_profit</code></td><td>float|null</td><td>Nearest resistance level above entry (reference only)</td></tr>
           <tr><td><code>timestamp</code></td><td>int</td><td>Unix epoch (seconds)</td></tr>
           <tr><td><code>expires_at</code></td><td>int</td><td>When this signal expires</td></tr>
           <tr><td><code>sources</code></td><td>array</td><td>Pro only - Source names that contributed</td></tr>
