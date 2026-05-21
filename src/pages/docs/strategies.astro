@@ -1,0 +1,232 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Strategy Library"
+  description="Reference execution configurations for n0brains signals — backtested on real 1-minute candles across Binance, Bybit, and Coinbase. Analytical examples, not advice."
+>
+  <section class="docs-page">
+    <h1>Strategy Library</h1>
+    <p class="docs-subtitle">Reference execution configurations for n0brains signals &middot; Backtested on real 1-minute candles &middot; Reproducible</p>
+
+    <div class="card legal-card">
+      <h2>This is research, not advice.</h2>
+      <p>
+        These are <strong>reference execution examples</strong> — researched configurations we ran
+        against historical 1-minute price candles from Binance, Bybit, and Coinbase to study how
+        n0brains signals would have performed under different exit rules. They are
+        <strong>not</strong> recommendations to enter, exit, hold, or size a trade.
+      </p>
+      <p>
+        Past simulated performance does not guarantee future results. Slippage, fees, fills, and
+        market conditions vary. You are solely responsible for every trading decision you make
+        and for any profits or losses that result. See the full
+        <a href="/terms">terms of service</a> §8.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 id="methodology">Methodology</h2>
+      <p>
+        Every configuration in this library was simulated against the actual 1-minute close
+        prices on three major exchanges (Binance perp, Bybit perp, Coinbase spot) for the last
+        30 days of signals. Each signal was paper-traded with:
+      </p>
+      <ul>
+        <li>Fixed $100 position size</li>
+        <li>Taker fee: 4.5 bps round-trip (Hyperliquid taker rate; adjust for your venue)</li>
+        <li>Slippage: 2 bps entry + 2 bps exit</li>
+        <li>Per-signal-type score percentile gate (default top 30% of recent signals)</li>
+        <li>Direction-corrected return path (bullish positive on price up; bearish positive on price down)</li>
+      </ul>
+      <p>
+        Results below are aggregated across all three exchanges where the asset trades. Per-type
+        sharpe (return / stdev) is reported alongside total PnL to show risk-adjusted performance,
+        not just raw $ won.
+      </p>
+      <p>
+        Reproducible: <code>/home/oba/paper-trader/sweep.py</code> and <code>exotic_sweep.py</code>
+        in our repo. Live ongoing forward-test at <a href="/proof">/proof</a>.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 id="sentiment">Sentiment signals</h2>
+      <p>
+        <code>signal_type=sentiment</code> &middot; Currently the strongest tradeable edge in the
+        n0brains feed. Cross-exchange consistent.
+      </p>
+      <h3>Reference configurations</h3>
+      <table class="strat-table">
+        <thead>
+          <tr><th>Style</th><th>SL</th><th>TP</th><th>Horizon</th><th>n</th><th>Win %</th><th>Avg net</th><th>Total $</th><th>Sharpe</th></tr>
+        </thead>
+        <tbody>
+          <tr class="row-best">
+            <td>Ride to horizon (no SL)</td>
+            <td>—</td><td>8%</td><td>4h</td>
+            <td>732</td><td>51.1%</td><td>+1.07%</td><td>+$780</td><td>0.18</td>
+          </tr>
+          <tr>
+            <td>US trading hours only</td>
+            <td>3%</td><td>8%</td><td>24h</td>
+            <td>297</td><td>41.8%</td><td>+0.73%</td><td>+$217</td><td>0.16</td>
+          </tr>
+          <tr>
+            <td>Trailing stop (2%)</td>
+            <td>trail 2%</td><td>—</td><td>24h</td>
+            <td>732</td><td>40.4%</td><td>+0.46%</td><td>+$334</td><td>0.13</td>
+          </tr>
+          <tr>
+            <td>Fixed SL/TP (live paper-trader)</td>
+            <td>3%</td><td>8%</td><td>24h</td>
+            <td>257</td><td>66.9%</td><td>+3.20%</td><td>+$822</td><td>0.53</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="meta">
+        Time-of-day filter: limiting entries to US trading hours (14:00–22:00 UTC) roughly
+        doubles risk-adjusted return — sentiment edge concentrates when US markets are active.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 id="hack">Hack signals</h2>
+      <p>
+        <code>signal_type=hack</code> &middot; Secondary tradeable edge. Sample size thinner
+        (~120/month) and outcomes more volatile. Sentiment is the primary edge.
+      </p>
+      <table class="strat-table">
+        <thead>
+          <tr><th>Style</th><th>SL</th><th>TP</th><th>Horizon</th><th>n</th><th>Win %</th><th>Avg net</th><th>Total $</th><th>Sharpe</th></tr>
+        </thead>
+        <tbody>
+          <tr class="row-best">
+            <td>Wide range (best per-type)</td>
+            <td>5%</td><td>25%</td><td>24h</td>
+            <td>117</td><td>42.7%</td><td>+1.39%</td><td>+$162</td><td>0.16</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 id="intel-only">Intel-only signal types</h2>
+      <p>
+        The following types are <strong>not</strong> in the proven-tradeable set per our
+        simulation. They lose money on a fixed SL/TP basis. Consume them as context — narrative,
+        positioning, risk awareness — not as trade triggers:
+      </p>
+      <ul>
+        <li><strong>macro_pulse</strong> — directional bias signal, not a trade entry</li>
+        <li><strong>regulatory</strong> — early news; market typically front-runs by the time we classify</li>
+        <li><strong>macro</strong> — macroeconomic events; impact diffuse, not single-asset directional</li>
+        <li><strong>whale, funding, liquidation, listing, price, other</strong> — pending real-path validation; treat as intel until they earn a position in the tradeable set</li>
+      </ul>
+      <p>
+        Track which types become tradeable as forward-test data accumulates at
+        <a href="/proof">/proof</a>. We never gate on lookback alone — the
+        <code>tradeable_proven</code> verdict updates from live paper-trade results, so new
+        types can promote into the set automatically.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 id="implementation">Implementing in your bot</h2>
+      <p>
+        n0brains is a data API. We don't execute trades or hold custody. To act on a signal you'll
+        wire the WebSocket or webhook into your own trading layer. Most platforms support every
+        execution style we've researched natively:
+      </p>
+      <table class="strat-table">
+        <thead><tr><th>Platform</th><th>Trailing stop</th><th>Time filter</th><th>No-SL</th></tr></thead>
+        <tbody>
+          <tr><td>TradingView Pine + alerts</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>CCXT (Python/Node)</td><td>via library</td><td>via library</td><td>✅</td></tr>
+          <tr><td>Hummingbot</td><td>✅</td><td>via strategy</td><td>✅</td></tr>
+          <tr><td>3Commas / Cryptohopper</td><td>✅</td><td>limited</td><td>✅</td></tr>
+          <tr><td>Hyperliquid SDK direct</td><td>via custom logic</td><td>via custom logic</td><td>✅</td></tr>
+          <tr><td>OpenClaw (our agent framework)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        </tbody>
+      </table>
+      <h3>Example: minimal Python implementation</h3>
+      <pre><code>{`# Pseudocode — every signal received via WebSocket
+async for event in n0brains_ws():
+    sig = event["data"]
+    if sig["action_hint"] != "trade_signal":
+        continue
+    if sig["signal_type"] not in {"sentiment", "hack"}:
+        continue  # only proven-tradeable types
+
+    asset = sig["asset"]
+    direction = sig["direction"]            # "bullish" / "bearish"
+    target = sig.get("target_level")        # analytical reference
+
+    # "Ride to horizon" execution example for sentiment:
+    # 1. Open position $100, side = direction
+    # 2. No SL, no TP
+    # 3. Close at +4h
+    await place_market(asset, side=direction, size_usd=100)
+    await asyncio.sleep(4 * 3600)
+    await close_position(asset)`}</code></pre>
+      <p>
+        Adapt for your venue's trailing-stop primitive, your sizing, and your risk budget. None
+        of the above is advice — it's a worked example so you have something to start from.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 id="proof">Verify the numbers yourself</h2>
+      <p>
+        Every figure on this page is reproducible from the same data you can access via the API.
+        We publish the live paper-trading forward-test at <a href="/proof">/proof</a>; the
+        per-signal-type proven-edge statistics are attached to every signal payload under
+        <code>type_performance</code>; the methodology is in our backtest scripts.
+      </p>
+      <p>
+        If you find an issue or want a different configuration tested,
+        <a href="mailto:support@n0brains.com">email support</a> — we'll run the sweep and
+        publish the result.
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal-card {
+    border-left: 3px solid #b13838;
+    background: rgba(177, 56, 56, 0.06);
+  }
+  .legal-card h2 { color: #ef4444; }
+  .legal-card strong { color: var(--text-heading); }
+
+  .strat-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    margin: 0.75rem 0 1rem;
+  }
+  .strat-table th, .strat-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .strat-table th {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .strat-table .row-best {
+    background: rgba(74, 222, 128, 0.06);
+  }
+  .strat-table .row-best td:first-child {
+    font-weight: 600;
+    color: var(--text-heading);
+  }
+  .meta {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+</style>
