@@ -203,7 +203,7 @@ const macroPulseResponse = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebAPI",
     "name": "n0brains API",
-    "description": "REST + WebSocket + Webhook API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, macro bias, congress trades, and more. Each signal includes direction, urgency, confidence, and quality band. Analytical data only, not financial advice.",
+    "description": "REST + WebSocket + Webhook API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, macro bias, congress trades, X (Twitter) curated feed, and more. Each signal includes direction, urgency, confidence, and quality band. Analytical data only, not financial advice.",
     "url": "https://n0brains.com/docs/",
     "documentation": "https://n0brains.com/docs/",
     "termsOfService": "https://n0brains.com/terms",
@@ -439,6 +439,7 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
         <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
         <li><strong>Congress Trades</strong> - CapitolExposed API — every crypto trade disclosed by US Congress members. Bitcoin ETFs (IBIT, FBTC, BITB), crypto equities (COIN, MSTR), direct BTC/ETH. Conflict-scored. 34 tickers tracked.</li>
+        <li><strong>X (Twitter) API</strong> - Curated 11-account feed via official X API v2. Onchain primary (@lookonchain, @spotonchain, @arkham, @whale_alert), official exchange announcements (@binance, @coinbase, @CoinbaseAssets, @upbit_global), and newswire-speed macro (@DeItaone, @FirstSquawk, @DBdaily). 20s polling, retweets and replies filtered.</li>
       </ol>
 
       <h3>Source Weights</h3>
@@ -451,7 +452,15 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>congress_trades:high_conflict</td><td>1.2</td><td>High-conflict congressional trade (any asset)</td></tr>
           <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking</td></tr>
           <tr><td>telegram:investigations</td><td>1.2</td><td>High-signal hack/exploit intel</td></tr>
-          <tr><td>twitter:cz_binance</td><td>1.0</td><td>Exchange CEO, market-moving</td></tr>
+          <tr><td>x:lookonchain</td><td>1.3</td><td>Onchain wallet moves with tx hashes</td></tr>
+          <tr><td>x:binance / x:coinbase</td><td>1.3</td><td>Official exchange listing announcements</td></tr>
+          <tr><td>x:DeItaone</td><td>1.2</td><td>Newswire-speed macro headlines</td></tr>
+          <tr><td>x:spotonchain / x:arkham</td><td>1.2</td><td>Onchain analytics, labelled wallets</td></tr>
+          <tr><td>x:CoinbaseAssets</td><td>1.2</td><td>Coinbase listing roadmap leaks</td></tr>
+          <tr><td>x:FirstSquawk</td><td>1.1</td><td>Headline wire, fast macro</td></tr>
+          <tr><td>x:upbit_global</td><td>1.1</td><td>Korea listings, kimchi premium catalyst</td></tr>
+          <tr><td>x:DBdaily</td><td>0.9</td><td>Corporate adoption tracking</td></tr>
+          <tr><td>x:whale_alert</td><td>0.7</td><td>Auto-bot, mostly exchange↔cold storage noise</td></tr>
           <tr><td>whale_sol</td><td>1.0</td><td>SOL whale tracking</td></tr>
           <tr><td>binance_funding</td><td>1.0</td><td>Primary exchange data</td></tr>
           <tr><td>binance_liq</td><td>1.0</td><td>Liquidation data</td></tr>
@@ -462,13 +471,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>launchpad</td><td>0.8</td><td>New token launches</td></tr>
           <tr><td>rss:cointelegraph</td><td>0.7</td><td>General crypto news</td></tr>
           <tr><td>rss:decrypt</td><td>0.7</td><td>General crypto news</td></tr>
-          <tr><td>twitter:CryptoGodJohn</td><td>0.7</td><td>Trader sentiment</td></tr>
           <tr><td>market_open</td><td>0.6</td><td>Session opening prices</td></tr>
           <tr><td>macro_fearGreed</td><td>0.6</td><td>Sentiment index</td></tr>
           <tr><td>rss:reddit_crypto</td><td>0.5</td><td>r/CryptoCurrency community signal</td></tr>
           <tr><td>rss:reddit_btc</td><td>0.5</td><td>r/Bitcoin community signal</td></tr>
-          <tr><td>twitter:elonmusk</td><td>0.5</td><td>Noisy but market-moving</td></tr>
-          <tr><td>twitter_hashtag</td><td>0.4</td><td>Aggregated sentiment</td></tr>
           <tr><td>dexscreener</td><td>0.2</td><td>Enrichment only</td></tr>
           <tr><td>Default (unlisted)</td><td>0.5</td><td>-</td></tr>
         </tbody>
