@@ -249,6 +249,36 @@ const macroPulseResponse = JSON.stringify({
     <h1>API Reference</h1>
     <p class="docs-subtitle">Base URL: <code>https://api.n0brains.com</code> &middot; All responses are JSON &middot; Timestamps are Unix epoch (seconds)</p>
 
+    <div class="card legal-card">
+      <h2 id="not-advice">This is analysis. It is not financial advice.</h2>
+      <p>
+        <strong>Everything n0brains publishes — signals, scores, reference prices,
+        invalidation levels, target levels, paper-trading results, the
+        <code>trade_signal</code> action hint, the <a href="/proof">/proof</a>
+        page, all of it — is n0brains' own algorithmic analysis of public
+        market data.</strong> It is provided for informational purposes only.
+      </p>
+      <ul>
+        <li>It is <strong>not</strong> investment advice, a recommendation, a solicitation, a
+            personalized strategy, or any form of advisory service.</li>
+        <li>It is <strong>not</strong> tailored to your portfolio, risk tolerance, or
+            jurisdiction. The same data is published to every subscriber.</li>
+        <li>Reference levels are <strong>analytical pivots</strong> derived from order-book
+            S/R or models — not instructions to enter, exit, or stop a trade.</li>
+        <li>n0brains does <strong>not</strong> execute trades, hold custody of funds, or act
+            as a broker, adviser, or fiduciary.</li>
+        <li>Past performance — including the simulated results on
+            <a href="/proof">/proof</a> — does <strong>not</strong> guarantee future results.
+            Signals can and will be wrong.</li>
+      </ul>
+      <p>
+        <strong>You are solely responsible for every trading decision you make and
+        for any profits or losses that result.</strong> By using this API you accept
+        the full <a href="/terms">terms of service</a>, including the limitation
+        of liability in §8.
+      </p>
+    </div>
+
     <div class="card">
       <h2 id="quickstart">Quick Start</h2>
       <ol>
@@ -591,3 +621,14 @@ const macroPulseResponse = JSON.stringify({
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .legal-card {
+    border-left: 3px solid #b13838;
+    background: rgba(177, 56, 56, 0.06);
+  }
+  .legal-card h2 { color: #ef4444; }
+  .legal-card ul { margin: 0.75rem 0; padding-left: 1.25rem; }
+  .legal-card li { margin-bottom: 0.4rem; font-size: 0.92rem; }
+  .legal-card strong { color: var(--text-heading); }
+</style>
