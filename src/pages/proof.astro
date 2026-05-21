@@ -1,0 +1,157 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="proof"
+  description="n0brains paper-trading proof — per-signal-type simulated PnL against real Hyperliquid prices, refreshed live. Forward-tested, not advice."
+>
+  <section class="about-section">
+    <h1>proof</h1>
+    <p class="legal-updated">
+      Every signal type is paper-traded against real Hyperliquid mid prices —
+      2% stop, 4% target, 4h max hold, fees and slippage applied. Combines a
+      historical backfill with an ongoing live forward-test. Refreshed live.
+    </p>
+
+    <div id="proof-banner" class="proof-banner proof-loading">
+      <span class="dot"></span>
+      <span class="banner-text">loading results…</span>
+    </div>
+
+    <div id="proof-table"></div>
+
+    <p class="meta" id="proof-meta"></p>
+
+    <p class="legal-updated" style="margin-top: 32px;">
+      A type is marked <strong>tradeable</strong> only when its simulated record
+      clears 30+ trades, a positive average net return, and a 95% confidence
+      interval above zero. Tradeable types are the ones we flag
+      <code>trade_signal</code> in the API. Simulated results for informational
+      purposes only — not financial advice, and past performance does not
+      guarantee future results. See <a href="/terms">terms</a>.
+    </p>
+  </section>
+</BaseLayout>
+
+<script>
+  const ENDPOINT = "https://api.n0brains.com/proof";
+
+  function pct(v) {
+    if (v === null || v === undefined) return "—";
+    const n = Number(v) * 100;
+    return n.toFixed(1) + "%";
+  }
+  function pctRaw(v) {
+    if (v === null || v === undefined) return "—";
+    return (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%";
+  }
+  function usd(v) {
+    if (v === null || v === undefined) return "—";
+    const n = Number(v);
+    return (n >= 0 ? "+$" : "-$") + Math.abs(n).toFixed(2);
+  }
+
+  function render(data) {
+    const banner = document.getElementById("proof-banner");
+    const table  = document.getElementById("proof-table");
+    const meta   = document.getElementById("proof-meta");
+
+    if (!data || data.error || !data.types) {
+      banner.className = "proof-banner proof-unknown";
+      banner.querySelector(".banner-text").textContent =
+        "proof unavailable (" + (data?.error || "fetch failed") + ")";
+      return;
+    }
+
+    const tradeable = data.types.filter((t) => t.tradeable);
+    banner.className = "proof-banner proof-up";
+    banner.querySelector(".banner-text").textContent =
+      tradeable.length + " signal type" + (tradeable.length === 1 ? "" : "s") +
+      " proven tradeable";
+
+    let rows = "";
+    for (const t of data.types) {
+      const cls = t.tradeable ? "row-tradeable" : "row-untradeable";
+      const flag = t.tradeable
+        ? '<span class="badge badge-yes">tradeable</span>'
+        : '<span class="badge badge-no">intel only</span>';
+      const pnlCls = t.total_pnl_usd >= 0 ? "pos" : "neg";
+      rows += `
+        <tr class="${cls}">
+          <td class="type">${t.signal_type}</td>
+          <td>${t.n}</td>
+          <td>${pct(t.win_rate)}</td>
+          <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</td>
+          <td class="${pnlCls}">${usd(t.total_pnl_usd)}</td>
+          <td>${flag}</td>
+        </tr>`;
+    }
+    table.innerHTML = `
+      <table class="proof-table">
+        <thead>
+          <tr><th>type</th><th>trades</th><th>win rate</th>
+              <th>avg net / trade</th><th>total PnL</th><th></th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    if (data.types[0] && data.types[0].updated_at) {
+      const latest = Math.max(...data.types.map((t) => t.updated_at || 0));
+      meta.textContent = "Last updated " + new Date(latest * 1000).toISOString();
+    }
+  }
+
+  async function load() {
+    try {
+      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      render(await r.json());
+    } catch (e) {
+      render({ error: String(e) });
+    }
+  }
+
+  load();
+  setInterval(load, 60_000);
+</script>
+
+<style>
+  .proof-banner {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px; border-radius: 6px;
+    font-family: var(--font-mono); font-size: 0.9rem;
+    margin: 1.5rem 0 2rem; border: 1px solid var(--border);
+  }
+  .proof-banner .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--text-muted);
+  }
+  .proof-up { border-color: #2a7a2a; }
+  .proof-up .dot { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+  .proof-unknown { border-color: var(--border); }
+  .proof-loading .dot { background: var(--accent); }
+
+  .proof-table {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 0.88rem;
+  }
+  .proof-table th, .proof-table td {
+    padding: 10px 12px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .proof-table th { color: var(--text-muted); font-weight: 500; }
+  .proof-table td.type { font-weight: 600; }
+  .proof-table .pos { color: #4ade80; }
+  .proof-table .neg { color: #ef4444; }
+  .row-untradeable { opacity: 0.55; }
+
+  .badge {
+    font-size: 0.72rem; padding: 2px 8px; border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .badge-yes { color: #4ade80; border-color: #2a7a2a; }
+  .badge-no  { color: var(--text-muted); }
+
+  .meta { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;
+          font-family: var(--font-mono); }
+</style>
