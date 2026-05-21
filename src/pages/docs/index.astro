@@ -90,9 +90,8 @@ const webhookDeliveryResponse = JSON.stringify({
     summary: "Strategy buys 535 BTC for $43M",
     confidence: 0.95,
     score: 1.42,
-    entry_price: 81262.50,
-    stop_loss: 80871.00,
-    take_profit: 81385.50
+    trade_quality_band: "A",
+    regime_at_signal: "risk-on"
   }
 }, null, 2);
 
@@ -170,7 +169,7 @@ const errorResponses = `// 401 Unauthorized
 const websocketExample = `wss://api.n0brains.com/stream?api_key=intel_sk_...
 
 Signal received:
-{"type": "signal", "data": {"id": 195, "asset": "BTC", "signal_type": "whale", "direction": "bullish", "urgency": "high", "summary": "Strategy buys 535 BTC for $43M", "confidence": 0.95, "score": 1.42, "entry_price": 81262.50, "stop_loss": 80871.00, "take_profit": 81385.50}}
+{"type": "signal", "data": {"id": 195, "asset": "BTC", "signal_type": "whale", "direction": "bullish", "urgency": "high", "summary": "Strategy buys 535 BTC for $43M", "confidence": 0.95, "score": 1.42, "trade_quality_band": "A", "regime_at_signal": "risk-on"}}
 
 Ping/pong:
 send: "ping"
