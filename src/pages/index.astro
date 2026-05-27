@@ -30,7 +30,7 @@ const proFeatures = [
   "<strong>Semantic search</strong> — find similar signals by meaning",
   "<strong>Trust scoring</strong> — contract risk + rug probability per token",
   "<strong>Manipulation detection</strong> — coordinated pump + social burst flags",
-  "<strong>Wallet DNA</strong> — smart money classification (CEX, MM, MEV, institutional)",
+  "<strong>Wallet DNA</strong> — smart money classification + stealth-accumulation flag",
   "Email support",
 ];
 const freeFeatures = [
@@ -238,7 +238,7 @@ const freeFeatures = [
         <div class="source-card">
           <div class="chip-row"><MonoChip text="🧬" /></div>
           <h3>Wallet DNA</h3>
-          <p>Whale signals tagged with wallet archetype — CEX hot/cold, market maker, MEV bot, institutional, smart trader. 700+ verified labeled addresses across Ethereum, refreshed weekly from Etherscan label cloud and a live top-volume sweep. Stealth-accumulation detection (rolling 24h net inflow across ≥3 fragmented buys per wallet) on the roadmap.</p>
+          <p>Whale signals tagged with wallet archetype — CEX hot/cold, market maker, MEV bot, institutional, smart trader. 700+ verified labeled addresses across Ethereum, refreshed weekly from Etherscan label cloud and a live top-volume sweep. Stealth-accumulation flag fires when a tracked wallet receives a token in ≥3 fragmented buys totaling ≥$500K within 24h — catches quiet accumulation before it shows up in whale-alert feeds.</p>
         </div>
         <div class="source-card">
           <div class="chip-row"><MonoChip text="🛡" /></div>
