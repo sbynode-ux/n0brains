@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
 const signalsResponse = JSON.stringify({
-  count: 2,
+  count: 3,
   signals: [{
     id: 195,
     asset: null,
@@ -43,7 +43,43 @@ const signalsResponse = JSON.stringify({
     target_level: 3081.60,
     levels_basis: "model",
     type_performance: {excess_pct: 4.96, hit_rate: 0.61, proven: true, n: 1016},
+    historical_edge: {
+      cell: "sentiment|bearish|risk-off",
+      sample_n: 36, win_rate: 0.97, avg_pnl_pct: 7.19, median_pnl_pct: 6.90,
+      as_of: "2026-05-27T02:09:02+00:00"
+    },
     disclaimer: "Analytical reference levels for informational purposes only. Not a recommendation to buy or sell, and not financial advice."
+  }, {
+    id: 197,
+    asset: "BTC",
+    signal_type: "regulatory",
+    direction: "bullish",
+    urgency: "medium",
+    summary: "Industry group endorses ETF approval extension; broader institutional access expected.",
+    confidence: 0.45,
+    action_hint: "alert",
+    corroborated: true,
+    score: 0.81,
+    trade_quality_score: 0.52,
+    trade_quality_band: "C",
+    regime_at_signal: "squeeze",
+    timestamp: 1778556100,
+    expires_at: 1778570500,
+    type_performance: {excess_pct: -2.10, hit_rate: 0.04, proven: false, n: 352},
+    historical_edge: {
+      cell: "regulatory|bullish|squeeze",
+      sample_n: 128, win_rate: 0.00, avg_pnl_pct: -4.91, median_pnl_pct: -4.65,
+      as_of: "2026-05-27T02:09:02+00:00"
+    },
+    paired_inverse: {
+      direction: "bearish",
+      basis: "historical_anti_predictive_cell",
+      implied_avg_pnl_pct: 4.91,
+      flipped_cell_stats: {n: 14, win_rate: 0.93, avg_pnl_pct: 3.92},
+      advisory_text: "Historical 0% win rate (128 samples) on bullish regulatory in squeeze regime suggests fade. Not a recommendation — informational only.",
+      citation: "De Bondt & Thaler 1985 JoF; Tetlock 2007 JoF; Chan 2003. Short-term overreaction to dramatic news reverses on horizon of days–weeks. Crypto: PLOS One 2024."
+    },
+    disclaimer: "Analytical data only. Not financial advice."
   }],
   market_opens: {
     tokyo: {BTC: 81150.00, ETH: 3200.50, SOL: 96.30, timestamp: 1778539200},
@@ -387,7 +423,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
-          <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — Platt-scaled per signal type from closed-trade outcomes (not a raw LLM score)</td></tr>
+          <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — per-signal-type binned empirical win rate from closed-trade outcomes (not a raw LLM score). Updated weekly.</td></tr>
           <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore. <strong>trade_signal</strong> is data-driven: it fires only on signal types proven profitable in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution</td></tr>
           <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>IC-weighted composite: source_weight x urgency x calibrated_confidence x signal-type information coefficient</td></tr>
@@ -411,8 +447,17 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>trust_score</code></td><td>float|null</td><td>Launchpad/token signals — composite contract trust (0.0–1.0)</td></tr>
           <tr><td><code>rug_probability</code></td><td>float|null</td><td>Launchpad/token signals — estimated rug/scam probability (0.0–1.0)</td></tr>
           <tr><td><code>is_honeypot</code></td><td>bool|null</td><td>Launchpad/token signals — GoPlus honeypot flag</td></tr>
+          <tr><td><code>historical_edge</code></td><td>object|null</td><td>Descriptive stats for this signal's <code>(signal_type × direction × regime_at_signal)</code> cell from closed paper trades. Object: <code>{'{'}cell, sample_n, win_rate, avg_pnl_pct, median_pnl_pct, as_of{'}'}</code>. Refreshed weekly. Null when regime or type is missing.</td></tr>
+          <tr><td><code>paired_inverse</code></td><td>object|null</td><td>Contrarian-direction advisory. Present only when the historical cell is empirically anti-predictive (n ≥ 30, win_rate ≤ 30%, avg_pnl ≤ -2%). Object: <code>{'{'}direction, basis, implied_avg_pnl_pct, flipped_cell_stats, advisory_text, citation{'}'}</code>. Cites peer-reviewed short-term reversal literature (De Bondt &amp; Thaler 1985, Tetlock 2007, Chan 2003, PLOS One 2024). Informational; never a trade recommendation.</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="card">
+      <h2 id="historical-edge">Historical Edge &amp; Paired Inverse</h2>
+      <p>Every signal carries a <code>historical_edge</code> object describing the closed-paper-trade outcomes of past signals in the same <code>(signal_type × direction × regime_at_signal)</code> cell. Stats are refreshed weekly. The fields are descriptive — they do not gate, size, or recommend.</p>
+      <p>When a cell is empirically anti-predictive (n ≥ 30 closed trades, win rate ≤ 30%, average PnL ≤ -2%), the signal also carries a <code>paired_inverse</code> object. It surfaces the contrarian-direction reading of the same event alongside a citation to peer-reviewed short-term reversal literature (De Bondt &amp; Thaler 1985, Tetlock 2007, Chan 2003, PLOS One 2024). It is presented as data, not a recommendation: the <code>flipped_cell_stats</code> field shows how the opposite-direction cell has actually performed historically, which is often weaker than the <code>implied_avg_pnl_pct</code> would suggest in pure-inversion terms.</p>
+      <p>Use these fields to interpret signal quality in context. A signal with a strong <code>historical_edge</code> (high win_rate, large avg_pnl_pct, large sample_n) is more reliable than the same signal in a cell where the edge is weak or inverted. The cell stats and any paired-inverse advisory are intended for your own analysis — they are not trade recommendations, and we do not suggest position sizes or leverage.</p>
     </div>
 
     <div class="card">
