@@ -8,13 +8,14 @@ const sources = [
   { chip: "MP",  title: "Macro Pulse",            desc: "Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive." },
   { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
   { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
-  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges. Inflows lead selling pressure; outflows lead accumulation." },
+  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Inflows lead selling pressure; outflows lead accumulation." },
+  { chip: "SOL", title: "Solana Whale Tracking",  desc: "Solana CEX flow tracking via Alchemy — Binance, OKX, Coinbase, Bybit, Kraken hot/cold wallet balance shifts above 10K SOL." },
   { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
   { chip: "SR",  title: "S/R Levels",             desc: "Real-time support/resistance from the Hyperliquid order book. Shapes entries and stops; rejects trades near adverse levels." },
   { chip: "TG",  title: "Telegram Channels",      desc: "WatcherGuru, ZachXBT Investigations, and more. Fastest source for hacks and breaking events — high speed, needs corroboration." },
   { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
-  { chip: "🏛️", title: "Congress Trades",         desc: "CapitolExposed API — every crypto trade disclosed by US Congress members. Bitcoin ETFs, crypto equities, direct BTC/ETH. Conflict-scored. The ultimate insider signal." },
+  { chip: "🏛️", title: "Congress Trades",         desc: "CapitolExposed disclosure feed — fires when US Congress members report crypto-adjacent trades (BTC ETFs, crypto equities, direct BTC/ETH). Conflict-scored. Sparse by design — disclosure cadence is slow." },
 ];
 
 const proFeatures = [
@@ -29,7 +30,7 @@ const proFeatures = [
   "<strong>Semantic search</strong> — find similar signals by meaning",
   "<strong>Trust scoring</strong> — contract risk + rug probability per token",
   "<strong>Manipulation detection</strong> — coordinated pump + social burst flags",
-  "<strong>Wallet DNA</strong> — smart money classification + stealth accumulation",
+  "<strong>Wallet DNA</strong> — smart money classification (CEX, MM, MEV, institutional)",
   "Email support",
 ];
 const freeFeatures = [
@@ -197,7 +198,7 @@ const freeFeatures = [
     <!-- What we watch -->
     <section class="sources-section">
       <h2>What we watch</h2>
-      <p class="subtitle">Telegram, whales, positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias. Ten data sources. One API.</p>
+      <p class="subtitle">Telegram, whales (ETH + BTC + SOL), positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias. Over 30 data sources. One API.</p>
       <div class="sources-grid">
         {sources.map((s) => (
           <div class="source-card">
@@ -237,7 +238,7 @@ const freeFeatures = [
         <div class="source-card">
           <div class="chip-row"><MonoChip text="🧬" /></div>
           <h3>Wallet DNA</h3>
-          <p>Whale signals tagged with wallet archetype — VC/institutional, market maker, MEV arb, smart whale, government, sniper. Credibility scores evolve from tracked outcomes. Stealth accumulation flag fires when the same wallet buys quietly across multiple transactions.</p>
+          <p>Whale signals tagged with wallet archetype — CEX hot/cold, market maker, MEV bot, institutional, smart trader. 700+ verified labeled addresses across Ethereum, refreshed weekly from Etherscan label cloud and a live top-volume sweep. Stealth-accumulation detection (rolling 24h net inflow across ≥3 fragmented buys per wallet) on the roadmap.</p>
         </div>
         <div class="source-card">
           <div class="chip-row"><MonoChip text="🛡" /></div>
@@ -288,7 +289,7 @@ const freeFeatures = [
           <div class="badge">Popular</div>
           <div class="tier-name">Pro</div>
           <div class="price">$19.99<span class="period">/mo</span></div>
-          <p class="desc">For active traders. Ten data sources. One subscription.</p>
+          <p class="desc">For active traders. Over 30 data sources. One subscription.</p>
           <ul>
             {proFeatures.map((f) => (
               <li><span class="check" aria-hidden="true">✓</span><span set:html={f}></span></li>
