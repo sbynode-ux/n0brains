@@ -539,8 +539,9 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>Binance</strong> - Funding rates, liquidation cascades (WebSocket)</li>
         <li><strong>Market Opens</strong> - BTC/ETH/SOL prices at Tokyo, Shanghai, Hong Kong, London, NY session opens</li>
         <li><strong>Launchpad</strong> - Pump.fun WebSocket, Raydium new pairs, Binance/Bybit new listings</li>
-        <li><strong>Smart Money</strong> - Blockchair ETH address dashboards, blockchain.com BTC, burn tracking</li>
-        <li><strong>Whale Tracking</strong> - Hyperliquid leaderboard (ETH/BTC on-chain), SOL whale wallets via Helius (exchanges, funds, validators — real-time accountSubscribe + REST polling)</li>
+        <li><strong>Smart Money</strong> - Alchemy ETH WebSocket (alchemy_pendingTransactions) on 408 curated wallets + Etherscan V2 confirmed-tx fallback. 700+ verified labeled addresses (CEX hot/cold, market maker, institutional, smart trader) auto-refreshed weekly from Etherscan label cloud + Alchemy top-volume sweep. MEV bots filtered.</li>
+        <li><strong>Stealth Accumulation</strong> - Background scanner pulls Etherscan V2 <code>tokentx</code> per tracked wallet every 30 min. Flags wallet receiving same ERC20 in ≥3 fragmented buys totaling ≥$500K within 24 h — catches quiet accumulation before whale-alert feeds.</li>
+        <li><strong>On-Chain Whale Tracking</strong> - Large ETH transfers to/from exchanges via Alchemy WebSocket (threshold 1000 ETH); large BTC transfers via mempool.space WebSocket on tracked cold wallets (threshold 100 BTC). Hyperliquid leaderboard consensus from top traders. SOL CEX flow via Alchemy Solana <code>accountSubscribe</code> on 12 hot/cold wallets (threshold 10000 SOL).</li>
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
         <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
@@ -556,7 +557,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>congress_trades:crypto</td><td>1.3</td><td>Verified congressional crypto disclosures</td></tr>
           <tr><td>congress_trades:crypto_conflict</td><td>1.5</td><td>Crypto trade + conflict of interest</td></tr>
           <tr><td>congress_trades:high_conflict</td><td>1.2</td><td>High-conflict congressional trade (any asset)</td></tr>
-          <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking</td></tr>
+          <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking (Alchemy + Etherscan, 408 wallets)</td></tr>
+          <tr><td>stealth_accumulation</td><td>1.4</td><td>Fragmented quiet buys (≥3 tx, ≥$500K, 24h window)</td></tr>
+          <tr><td>whale_eth</td><td>1.1</td><td>Large ETH transfers (Alchemy WS, ≥1000 ETH)</td></tr>
+          <tr><td>whale_btc</td><td>1.0</td><td>Large BTC transfers (mempool.space WS, ≥100 BTC)</td></tr>
           <tr><td>telegram:investigations</td><td>1.2</td><td>High-signal hack/exploit intel</td></tr>
           <tr><td>x:lookonchain</td><td>1.5</td><td>Onchain wallet moves with tx hashes — leading indicator</td></tr>
           <tr><td>x:binance / x:coinbase</td><td>1.5</td><td>Official exchange listing announcements</td></tr>
