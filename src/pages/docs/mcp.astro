@@ -85,7 +85,7 @@ Content-Type: application/json</code></pre>
     <ul>
       <li>Rate limit: 600 requests/minute (shared with REST).</li>
       <li>Per-tool <code>limit</code> hard-capped at 100; use the <code>cursor</code> field to paginate.</li>
-      <li>Streaming subscriptions (<code>notify_when</code>) coming in v2 — for now use <code>get_signals_since</code> or the native <code>/stream</code> WebSocket.</li>
+      <li>For streaming, use <code>get_signals_since</code> as a polling alternative or subscribe to the native <code>/stream</code> WebSocket.</li>
     </ul>
 
     <h2>Errors</h2>
@@ -97,11 +97,5 @@ Content-Type: application/json</code></pre>
         <tr><td>HTTP 429</td><td>Rate limit exceeded — honor <code>Retry-After</code>.</td></tr>
       </tbody>
     </table>
-
-    <h2>Coming soon (v2)</h2>
-    <ul>
-      <li><code>notify_when(criteria)</code> — push subscription stored server-side, delivered via webhook.</li>
-      <li>OAuth2 flow for interactive clients that prefer it over API-key Bearer.</li>
-    </ul>
   </main>
 </BaseLayout>
