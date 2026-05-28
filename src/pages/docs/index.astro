@@ -262,7 +262,7 @@ const macroPulseResponse = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebAPI",
     "name": "n0brains API",
-    "description": "REST + WebSocket + Webhook API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, macro bias, congress trades, X (Twitter) curated feed, and more. Each signal includes direction, urgency, confidence, and quality band. Analytical data only, not financial advice.",
+    "description": "REST + WebSocket + Webhook + MCP server API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, macro bias, congress trades, X (Twitter) curated feed, and more. Each signal includes direction, urgency, confidence, and quality band. MCP endpoint drops into Claude Desktop, Cursor, Cline. Analytical data only, not financial advice.",
     "url": "https://n0brains.com/docs/",
     "documentation": "https://n0brains.com/docs/",
     "termsOfService": "https://n0brains.com/terms",
@@ -273,7 +273,7 @@ const macroPulseResponse = JSON.stringify({
     },
     "offers": [
       { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier — 60 req/min, REST only, 15-min delay" },
-      { "@type": "Offer", "price": "19.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks" }
+      { "@type": "Offer", "price": "19.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks + MCP server (12 tools, Claude Desktop / Cursor / Cline)" }
     ],
     "potentialAction": {
       "@type": "SearchAction",
@@ -345,8 +345,8 @@ const macroPulseResponse = JSON.stringify({
       <table>
         <thead><tr><th>Tier</th><th>Requests/min</th><th>Signal Delay</th><th>Access</th></tr></thead>
         <tbody>
-          <tr><td>Free</td><td>60</td><td>15 minutes</td><td>REST API only, limited fields</td></tr>
-          <tr><td>Pro</td><td>600</td><td>Real-time</td><td>REST + WebSocket + Webhooks, full fields</td></tr>
+          <tr><td>Free</td><td>60</td><td>15 minutes</td><td>REST API only, limited fields. MCP <code>tools/list</code> open for catalog discovery.</td></tr>
+          <tr><td>Pro</td><td>600</td><td>Real-time</td><td>REST + WebSocket + Webhooks + <a href="/docs/mcp">MCP server</a>, full fields</td></tr>
         </tbody>
       </table>
       <p>Rate limit exceeded returns <code>429</code> with a message pointing to the upgrade page.</p>
@@ -379,6 +379,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-post">POST</span></td><td><code>/webhooks</code></td><td>Pro</td><td>Register webhook</td></tr>
           <tr><td><span class="method method-del">DEL</span></td><td><code>/webhooks/{'{id}'}</code></td><td>Pro</td><td>Remove webhook</td></tr>
           <tr><td><span class="method method-ws">WS</span></td><td><code>/stream</code></td><td>Pro</td><td>Real-time signal stream</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/mcp/</code></td><td>Pro (tools/call); open (tools/list)</td><td>MCP server — 12 read-only tools for Claude Desktop, Cursor, Cline. See <a href="/docs/mcp">/docs/mcp</a>.</td></tr>
         </tbody>
       </table>
     </div>

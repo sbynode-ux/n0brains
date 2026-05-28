@@ -21,7 +21,8 @@ const sources = [
 const proFeatures = [
   "600 requests / minute",
   "<strong>Real-time</strong> signals — no delay",
-  "REST + WebSocket + Webhooks",
+  "REST + WebSocket + Webhooks + <strong><a href=\"/docs/mcp\">MCP server</a></strong>",
+  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (12 tools, Bearer auth)",
   "Full source &amp; channel detail",
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
@@ -310,7 +311,7 @@ const freeFeatures = [
         "name": "What is n0brains?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro calendar, congress trades — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, or Webhook. Built for autonomous trading agents and systematic strategies."
+          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro calendar, congress trades — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, Webhook, or MCP server (for Claude Desktop, Cursor, Cline). Built for autonomous trading agents and systematic strategies."
         }
       },
       {
@@ -326,7 +327,7 @@ const freeFeatures = [
         "name": "What does the Pro tier include?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks, full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
+          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (12 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
         }
       },
       {
@@ -351,6 +352,14 @@ const freeFeatures = [
         "acceptedAnswer": {
           "@type": "Answer",
           "text": "Yes, on the Pro tier. Connect to wss://api.n0brains.com/stream with your API key to receive every new signal in milliseconds — whale moves, liquidation cascades, and funding extremes pushed in real-time before headlines appear."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does n0brains have an MCP server for Claude Desktop / Cursor / Cline?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, on the Pro tier. Point your MCP-capable agent at https://api.n0brains.com/mcp with Authorization: Bearer <your_api_key>. 12 read-only tools cover signals, S/R levels, macro bias, performance, anti-predictive cells, and liveness. tools/list is open so unauthenticated discovery works; tools/call requires Pro. See /docs/mcp for config snippets."
         }
       },
       {

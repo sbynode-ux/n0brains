@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const title = "MCP Server (Pro) — n0brains";
+const claudeDesktopConfig = JSON.stringify({
+  mcpServers: {
+    n0brains: {
+      url: "https://api.n0brains.com/mcp",
+      headers: { "Authorization": "Bearer YOUR_PRO_API_KEY" }
+    }
+  }
+}, null, 2);
+---
+
+<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 12 read-only tools.">
+  <main class="prose mx-auto py-12 px-4">
+    <h1>MCP Server</h1>
+    <p class="lead">
+      Use n0brains directly inside Claude Desktop, Cursor, Cline, Continue,
+      and any other MCP-compatible agent. No glue code, no polling loops —
+      your model calls signals like a native tool.
+    </p>
+
+    <div class="callout callout-pro">
+      <strong>Pro tier required.</strong> Tool discovery (<code>tools/list</code>)
+      is open; tool invocation (<code>tools/call</code>) requires an active Pro
+      subscription. <a href="/billing">Upgrade →</a>
+    </div>
+
+    <h2>Endpoint</h2>
+    <pre><code>POST https://api.n0brains.com/mcp
+Authorization: Bearer &lt;your_api_key&gt;
+Content-Type: application/json</code></pre>
+
+    <p>Get your API key from <a href="/dashboard/api-keys">/dashboard/api-keys</a>.
+    Pro tier is gated by your Stripe subscription status; downgrade to Free
+    locks <code>tools/call</code> with JSON-RPC error <code>-32001</code> and an upgrade link in
+    <code>error.data.upgrade_url</code>.</p>
+
+    <h2>Claude Desktop</h2>
+    <p>Edit <code>~/.config/Claude/claude_desktop_config.json</code> (Linux),
+    <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS),
+    or <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows):</p>
+    <pre><code>{claudeDesktopConfig}</code></pre>
+    <p>Restart Claude Desktop. The 12 tools appear in the MCP indicator.</p>
+
+    <h2>Cursor</h2>
+    <p>Settings → MCP → Add server. URL <code>https://api.n0brains.com/mcp</code>,
+    Header <code>Authorization: Bearer YOUR_PRO_API_KEY</code>.</p>
+
+    <h2>Cline / Continue</h2>
+    <p>Both honor the same <code>mcpServers</code> shape as Claude Desktop.
+    Add the block to their respective config files.</p>
+
+    <h2>Tools</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Returns</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>list_signals</code></td><td>SignalListOut</td><td>Filters: asset, signal_type, since, limit (max 100), cursor.</td></tr>
+        <tr><td><code>get_signal</code></td><td>SignalOut</td><td>Full enrichment incl. historical_edge, paired_inverse.</td></tr>
+        <tr><td><code>get_levels</code></td><td>LevelsOut</td><td>Support/resistance for a coin.</td></tr>
+        <tr><td><code>get_macro</code></td><td>MacroOut</td><td>BTC + ETH macro bias, daily/weekly.</td></tr>
+        <tr><td><code>get_performance</code></td><td>PerformanceOut</td><td>Backtest stats over N days.</td></tr>
+        <tr><td><code>get_market_opens</code></td><td>MarketOpensOut</td><td>TradFi market schedules.</td></tr>
+        <tr><td><code>get_actionable_signals</code></td><td>SignalListOut</td><td>Pre-filtered by production trade-gate (score, conf, percentile).</td></tr>
+        <tr><td><code>get_macro_aligned_signals</code></td><td>SignalListOut</td><td>Same macro-veto rule as the internal pipeline.</td></tr>
+        <tr><td><code>get_signals_since</code></td><td>SignalListOut</td><td>Polling alternative to <code>/stream</code>.</td></tr>
+        <tr><td><code>get_signal_with_context</code></td><td>composite dict</td><td>Signal + levels + macro + dedup cluster, single round trip.</td></tr>
+        <tr><td><code>get_anti_predictive_cells</code></td><td>AntiPredictiveCellsOut</td><td>Cells where empirical edge inverted.</td></tr>
+        <tr><td><code>health</code></td><td>HealthOut</td><td>Liveness, recent signal count, regime.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Signal payload reference</h2>
+    <p>Every signal-returning tool emits the same shape as our REST <code>/signals</code>
+    endpoint, including the May 2026 additions:</p>
+    <ul>
+      <li><code>historical_edge</code> — empirical win-rate cell, sample size, PnL stats</li>
+      <li><code>paired_inverse</code> — round-trip-cost-aware inverse-trade advisory</li>
+      <li><code>calibration_inverted_in_cell</code> — when <code>true</code>, <code>confidence</code> is null (suppressed by design)</li>
+      <li><code>signal_latency_secs</code> + <code>latency_quality</code> — freshness telemetry</li>
+      <li><code>priced_in_score</code> + <code>priced_in_*</code> — how much the market already moved</li>
+    </ul>
+
+    <h2>Limits</h2>
+    <ul>
+      <li>Rate limit: 600 requests/minute (shared with REST).</li>
+      <li>Per-tool <code>limit</code> hard-capped at 100; use the <code>cursor</code> field to paginate.</li>
+      <li>Streaming subscriptions (<code>notify_when</code>) coming in v2 — for now use <code>get_signals_since</code> or the native <code>/stream</code> WebSocket.</li>
+    </ul>
+
+    <h2>Errors</h2>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>-32000</code></td><td>Unauthorized — missing or invalid API key.</td></tr>
+        <tr><td><code>-32001</code></td><td>Pro tier required — see <code>error.data.upgrade_url</code>.</td></tr>
+        <tr><td>HTTP 429</td><td>Rate limit exceeded — honor <code>Retry-After</code>.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Coming soon (v2)</h2>
+    <ul>
+      <li><code>notify_when(criteria)</code> — push subscription stored server-side, delivered via webhook.</li>
+      <li>OAuth2 flow for interactive clients that prefer it over API-key Bearer.</li>
+    </ul>
+  </main>
+</BaseLayout>
