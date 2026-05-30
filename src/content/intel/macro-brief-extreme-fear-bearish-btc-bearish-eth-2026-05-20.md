@@ -40,7 +40,7 @@ dataSources:
         [n0brains](https://n0brains.com) solves the timing problem. The **Macro Pulse** layer of our signal API anchors every on-chain signal to the current macro bias — in this case, **Bearish**. A whale moving coins off an exchange during an **Extreme Fear** regime triggers a confidence-adjusted signal that accounts for the macro reality.
         Traders don't have to guess whether a signal is worth acting on. The API fuses the **FOMC Minutes** risk, the sentiment data, and the on-chain event into a single scored output.
         This is the edge. Not more screens. One decision.
-        Get the signal in real time with a **Pro subscription**. Think less. Trade more.
+        Get the signal in real time with a **Pro subscription**. Think less. Ship more.
 
         ## Takeaway
 

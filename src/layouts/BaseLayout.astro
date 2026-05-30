@@ -25,7 +25,7 @@ const {
 
 const url        = canonicalURL ?? Astro.url;
 const siteUrl    = "https://n0brains.com";
-const fullTitle  = homepage ? "n0brains — Think Less, Trade More" : `${title} — n0brains`;
+const fullTitle  = homepage ? "n0brains — Think Less, Ship More" : `${title} — n0brains`;
 const absoluteOg = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
 const year       = new Date().getFullYear();
 
@@ -147,7 +147,7 @@ const softwareAppLd = homepage ? {
         </a>
         {homepage && (
           <span class="header-hero-text" id="header-hero-text" aria-hidden="true">
-            // Think Less. Trade More.
+            // Think Less. Ship More.
           </span>
         )}
         <nav aria-label="Primary">
@@ -169,7 +169,7 @@ const softwareAppLd = homepage ? {
 
     <footer>
       <div class="inner">
-        <p>© {year} <a href="https://n0brains.com">n0brains.com</a> — Think Less, Trade More.</p>
+        <p>© {year} <a href="https://n0brains.com">n0brains.com</a> — Think Less, Ship More.</p>
         <p class="footer-links">
           <a href="/privacy">privacy</a>
           <a href="/terms">terms</a>

@@ -45,7 +45,7 @@ dataSources:
     **## The Signal**
     This is the exact moment the data-to-execution gap matters most. A trader reading the headlines is already late. The edge is owning the connection between the macro release and the immediate order book reaction.
     n0brains automates this connection. Our **Macro Pulse** layer anchors every signal to the high-impact calendar. The moment **Core PCE** or **Prelim GDP** hits the wire, the on-device LLM classifies the event, cross-references it against on-chain liquidation clusters and exchange order flow, and scores the signal for confidence. Direction, entry zone, stop, and take — delivered via REST, WebSocket, or Webhook.
-    We call it "Think Less, Trade More." The data doesn't stop at the headline. It goes straight to the action.
+    We call it "Think Less, Ship More." The data doesn't stop at the headline. It goes straight to the action.
 
     **## Closing**
     The vacuum breaks on May 28. The market is positioned defensively, which makes the squeeze potential real, but the structural setup (strong GDP, sticky PCE) favors the bears. Don't trade the narrative spin. Trade the signal.

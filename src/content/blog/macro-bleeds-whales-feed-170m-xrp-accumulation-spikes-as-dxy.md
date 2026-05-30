@@ -30,4 +30,4 @@ A tanking dollar, massive exchange outflows, and a defended **$1.40** zone form 
 
 For autonomous agents and traders alike: fuse the layers, or trade blind. Confluence is the only edge that matters.
 
-Think less. Trade more.
+Think less. Ship more.
