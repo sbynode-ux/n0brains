@@ -425,7 +425,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
           <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — per-signal-type binned empirical win rate from closed-trade outcomes (not a raw LLM score). Updated weekly.</td></tr>
-          <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore. <strong>trade_signal</strong> is data-driven: it fires only on signal types proven profitable in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution</td></tr>
+          <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore. <strong>trade_signal</strong> is data-driven: it fires only on signal types whose forward-return record clears our statistical bar in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution</td></tr>
           <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>IC-weighted composite: source_weight x urgency x calibrated_confidence x signal-type information coefficient</td></tr>
           <tr><td><code>timestamp</code></td><td>int</td><td>Unix epoch (seconds)</td></tr>
