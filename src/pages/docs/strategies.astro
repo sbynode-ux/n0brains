@@ -62,40 +62,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       </p>
       <table class="strat-table">
         <thead>
-          <tr><th>Type</th><th>SL</th><th>TP</th><th>Horizon</th><th>Trail</th><th>n</th><th>Win %</th><th>Avg net</th><th>Total $</th><th>Sharpe</th></tr>
+          <tr><th>Type</th><th>SL</th><th>TP</th><th>Horizon</th><th>Trail</th><th>n</th><th>Win %</th><th>Avg net</th><th>Total $</th><th></th></tr>
         </thead>
-        <tbody>
-          <tr class="row-best">
-            <td><code>listing</code></td>
-            <td>none</td><td>5%</td><td>1h</td><td>—</td>
-            <td>156</td><td>92.3%</td><td>+10.5%</td><td>+$1639</td><td>1.61</td>
-          </tr>
-          <tr class="row-best">
-            <td><code>sentiment</code></td>
-            <td>5%</td><td>12%</td><td>24h</td><td>3%</td>
-            <td>715</td><td>79.2%</td><td>+2.99%</td><td>+$2137</td><td>0.70</td>
-          </tr>
-          <tr class="row-best">
-            <td><code>macro_pulse</code></td>
-            <td>2%</td><td>5%</td><td>24h</td><td>—</td>
-            <td>56</td><td>60.7%</td><td>+0.82%</td><td>+$46</td><td>0.41</td>
-          </tr>
-          <tr class="row-best">
-            <td><code>hack</code></td>
-            <td>none</td><td>20%</td><td>72h</td><td>—</td>
-            <td>117</td><td>42.7%</td><td>+2.87%</td><td>+$336</td><td>0.32</td>
-          </tr>
-          <tr class="row-best">
-            <td><code>whale</code></td>
-            <td>1%</td><td>8%</td><td>24h</td><td>—</td>
-            <td>366</td><td>32.8%</td><td>+0.85%</td><td>+$313</td><td>0.24</td>
-          </tr>
+        <tbody id="strat-rows">
+          <tr><td colspan="10" class="strat-loading">loading live verdicts…</td></tr>
         </tbody>
       </table>
-      <p class="meta">
-        30 days of binance 1-minute candles. Score-percentile gate per type (sentiment p50,
-        whale p70, etc — see the methodology section). Fee 4.5 bps round-trip, slippage 2 bps
-        each side. Sharpe is per-trade return / per-trade stdev.
+      <p class="meta" id="strat-meta">
+        Exit configs (SL / TP / horizon / trail) are the per-type backtested presets; win rate,
+        sample size, and PnL are pulled <strong>live</strong> from the ongoing forward-test at
+        <a href="/proof">/proof</a> so this table never drifts from what the system actually
+        trades. Fee 4.5 bps round-trip, slippage 2 bps each side.
       </p>
     </div>
 
@@ -113,9 +90,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           <tr><th>Tier</th><th>Filter</th><th>SL scale</th><th>TP scale</th><th>Size scale</th><th>Includes</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>1 · conservative</code></td><td>win ≥ 70%, Sharpe ≥ 1.0</td><td>0.7×</td><td>0.8×</td><td>0.5×</td><td><code>listing</code></td></tr>
-          <tr><td><code>2 · balanced</code></td><td>win ≥ 50%, Sharpe ≥ 0.3</td><td>1.0×</td><td>1.0×</td><td>1.0×</td><td><code>listing</code>, <code>sentiment</code>, <code>macro_pulse</code></td></tr>
-          <tr><td><code>3 · aggressive</code></td><td>win ≥ 30%, Sharpe ≥ 0.0</td><td>1.2×</td><td>1.3×</td><td>1.5×</td><td>all 5 tradeable types</td></tr>
+          <tr><td><code>1 · conservative</code></td><td>win ≥ 70%</td><td>0.7×</td><td>0.8×</td><td>0.5×</td><td id="tier1-includes">—</td></tr>
+          <tr><td><code>2 · balanced</code></td><td>win ≥ 50%</td><td>1.0×</td><td>1.0×</td><td>1.0×</td><td id="tier2-includes">—</td></tr>
+          <tr><td><code>3 · aggressive</code></td><td>all tradeable</td><td>1.2×</td><td>1.3×</td><td>1.5×</td><td id="tier3-includes">—</td></tr>
         </tbody>
       </table>
       <p class="meta">
@@ -285,6 +262,97 @@ async for event in n0brains_ws():
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  // The per-type exit configs (SL/TP/horizon/trail) are stable backtested
+  // presets — kept here. Win rate / sample size / PnL / tradeable flag are
+  // pulled live from /proof so the table can never advertise a demoted type
+  // as a winner (it previously hardcoded whale + macro_pulse as tradeable).
+  const ENDPOINT = "https://api.n0brains.com/proof";
+  const EXIT_CONFIG = {
+    listing:     { sl: "none", tp: "5%",  horizon: "1h",  trail: "—"  },
+    sentiment:   { sl: "5%",   tp: "12%", horizon: "24h", trail: "3%" },
+    hack:        { sl: "none", tp: "20%", horizon: "72h", trail: "—"  },
+    whale:       { sl: "1%",   tp: "8%",  horizon: "24h", trail: "—"  },
+    macro_pulse: { sl: "2%",   tp: "5%",  horizon: "24h", trail: "—"  },
+    price:       { sl: "3%",   tp: "9%",  horizon: "24h", trail: "—"  },
+  };
+
+  const pct  = (v) => (v == null ? "—" : (Number(v) * 100).toFixed(1) + "%");
+  const pctR = (v) => (v == null ? "—" : (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%");
+  const usd  = (v) => (v == null ? "—" : (Number(v) >= 0 ? "+$" : "-$") + Math.abs(Number(v)).toFixed(2));
+  const code = (s) => "<code>" + s + "</code>";
+
+  function renderStrategies(data) {
+    const body = document.getElementById("strat-rows");
+    if (!data || data.error || !data.types) {
+      body.innerHTML = '<tr><td colspan="10" class="strat-loading">live verdicts unavailable — see <a href="/proof">/proof</a></td></tr>';
+      return;
+    }
+    // Sort tradeable first, then by win rate desc.
+    const types = [...data.types].sort((a, b) =>
+      (b.tradeable - a.tradeable) || (b.win_rate - a.win_rate));
+    let rows = "";
+    for (const t of types) {
+      const cfg = EXIT_CONFIG[t.signal_type] || { sl: "—", tp: "—", horizon: "—", trail: "—" };
+      const cls = t.tradeable ? "row-best" : "row-intel";
+      const flag = t.tradeable
+        ? '<span class="badge badge-yes">tradeable</span>'
+        : '<span class="badge badge-no">intel only</span>';
+      rows += `
+        <tr class="${cls}">
+          <td>${code(t.signal_type)}</td>
+          <td>${cfg.sl}</td><td>${cfg.tp}</td><td>${cfg.horizon}</td><td>${cfg.trail}</td>
+          <td>${t.n}</td>
+          <td>${pct(t.win_rate)}</td>
+          <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctR(t.avg_net_pct)}</td>
+          <td class="${t.total_pnl_usd >= 0 ? "pos" : "neg"}">${usd(t.total_pnl_usd)}</td>
+          <td>${flag}</td>
+        </tr>`;
+    }
+    body.innerHTML = rows;
+
+    // Risk tiers: derive "includes" from the live tradeable set + win rate.
+    const tradeable = types.filter((t) => t.tradeable);
+    const fill = (id, list) => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = list.length
+        ? list.map((t) => code(t.signal_type)).join(", ")
+        : "<em>none currently</em>";
+    };
+    fill("tier1-includes", tradeable.filter((t) => t.win_rate >= 0.70));
+    fill("tier2-includes", tradeable.filter((t) => t.win_rate >= 0.50));
+    fill("tier3-includes", tradeable);
+
+    const meta = document.getElementById("strat-meta");
+    const latest = Math.max(...types.map((t) => t.updated_at || 0));
+    if (meta && latest) {
+      meta.insertAdjacentHTML("beforeend",
+        ` <span class="strat-asof">Verdicts as of ${new Date(latest * 1000).toISOString().slice(0, 10)}.</span>`);
+    }
+  }
+
+  async function loadStrategies() {
+    try {
+      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      renderStrategies(await r.json());
+    } catch (e) {
+      renderStrategies({ error: String(e) });
+    }
+  }
+  loadStrategies();
+</script>
+
+<style>
+  .strat-loading { text-align: center; opacity: 0.6; padding: 1rem; }
+  .row-intel { opacity: 0.6; }
+  .strat-table .badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
+  .strat-table .badge-yes { background: rgba(40, 200, 120, 0.18); color: #28c878; }
+  .strat-table .badge-no { background: rgba(150, 150, 150, 0.15); color: #999; }
+  .strat-table .pos { color: #28c878; }
+  .strat-table .neg { color: #e05555; }
+  .strat-asof { opacity: 0.7; }
+</style>
 
 <style>
   .legal-card {
