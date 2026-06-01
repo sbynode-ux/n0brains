@@ -615,6 +615,13 @@ class PodcastPublisher(Gtk.Window):
             ['git', 'commit', '-m', f'publish: {display_title}'],
             cwd=str(SITE_DIR), check=True, capture_output=True
         )
+        self._append_log("→ Syncing with remote…\n")
+        rebase = subprocess.run(
+            ['git', 'pull', '--rebase', 'origin', 'main'],
+            cwd=str(SITE_DIR), capture_output=True, text=True
+        )
+        if rebase.returncode != 0:
+            raise RuntimeError(f"git pull --rebase failed:\n{rebase.stderr}")
         self._append_log("→ Pushing to GitHub…\n")
         push = subprocess.run(
             ['git', 'push', 'origin', 'main'],
