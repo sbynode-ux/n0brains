@@ -265,7 +265,7 @@ const macroPulseResponse = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebAPI",
     "name": "n0brains API",
-    "description": "REST + WebSocket + Webhook + MCP server API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, macro bias, congress trades, X (Twitter) curated feed, and more. Each signal includes direction, urgency, confidence, and quality band. MCP endpoint drops into Claude Desktop, Cursor, Cline. Analytical data only, not financial advice.",
+    "description": "REST + WebSocket + Webhook + MCP server API delivering scored crypto intelligence signals — whales, funding, liquidations, on-chain flows, options + ETF + stablecoin flows, macro bias, security feeds, X (Twitter) curated feed, and more. Each signal includes direction, urgency, confidence, and quality band. MCP endpoint drops into Claude Desktop, Cursor, Cline. Analytical data only, not financial advice.",
     "url": "https://n0brains.com/docs/",
     "documentation": "https://n0brains.com/docs/",
     "termsOfService": "https://n0brains.com/terms",
@@ -550,7 +550,6 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
         <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
-        <li><strong>Congress Trades</strong> - CapitolExposed API — every crypto trade disclosed by US Congress members. Bitcoin ETFs (IBIT, FBTC, BITB), crypto equities (COIN, MSTR), direct BTC/ETH. Conflict-scored. 34 tickers tracked.</li>
         <li><strong>X (Twitter) API</strong> - Curated 11-account feed via official X API v2. Onchain primary (@lookonchain, @spotonchain, @arkham, @whale_alert), official exchange announcements (@binance, @coinbase, @CoinbaseAssets, @upbit_global), and newswire-speed macro (@DeItaone, @FirstSquawk, @DBdaily). 20s polling, retweets and replies filtered.</li>
       </ol>
 
@@ -559,9 +558,6 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Source</th><th>Weight</th><th>Rationale</th></tr></thead>
         <tbody>
           <tr><td>gov_news</td><td>1.3</td><td>Market-moving regulatory/policy events</td></tr>
-          <tr><td>congress_trades:crypto</td><td>1.3</td><td>Verified congressional crypto disclosures</td></tr>
-          <tr><td>congress_trades:crypto_conflict</td><td>1.5</td><td>Crypto trade + conflict of interest</td></tr>
-          <tr><td>congress_trades:high_conflict</td><td>1.2</td><td>High-conflict congressional trade (any asset)</td></tr>
           <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking (Alchemy + Etherscan, 408 wallets)</td></tr>
           <tr><td>stealth_accumulation</td><td>1.4</td><td>Fragmented quiet buys (≥3 tx, ≥$500K, 24h window)</td></tr>
           <tr><td>whale_eth</td><td>1.1</td><td>Large ETH transfers (Alchemy WS, ≥1000 ETH)</td></tr>
@@ -576,7 +572,6 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>x:FirstSquawk</td><td>1.2</td><td>Headline wire, fast macro</td></tr>
           <tr><td>x:DBdaily</td><td>0.9</td><td>Corporate adoption tracking</td></tr>
           <tr><td>x:whale_alert</td><td>0.7</td><td>Auto-bot, mostly exchange↔cold storage noise</td></tr>
-          <tr><td>whale_sol</td><td>1.0</td><td>SOL whale tracking</td></tr>
           <tr><td>binance_funding</td><td>1.0</td><td>Primary exchange data</td></tr>
           <tr><td>binance_liq</td><td>1.0</td><td>Liquidation data</td></tr>
           <tr><td>cmc_price</td><td>0.9</td><td>CoinMarketCap price alerts</td></tr>

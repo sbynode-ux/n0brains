@@ -9,7 +9,6 @@ const sources = [
   { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
   { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
   { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Inflows lead selling pressure; outflows lead accumulation." },
-  { chip: "SOL", title: "Solana Whale Tracking",  desc: "Solana CEX flow tracking via Alchemy — Binance, OKX, Coinbase, Bybit, Kraken hot/cold wallet balance shifts above 10K SOL." },
   { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
   { chip: "OPT", title: "Options Flow",           desc: "Deribit options positioning — put/call open-interest ratio, max-pain magnets, and large smart-money block trades on BTC + ETH. Surfaces institutional positioning the crowd-sentiment feeds miss." },
   { chip: "ETF", title: "ETF Flows",              desc: "US spot BTC + ETH ETF daily net flows. Sustained inflows = institutional accumulation, outflows = distribution — the cleanest read on institutional capital, timed right after the US close settles." },
@@ -19,7 +18,6 @@ const sources = [
   { chip: "SEC", title: "Security & Exploits",    desc: "Dedicated exploit feed — DefiLlama hacks database (amount, technique, chain) plus rekt.news post-mortems. Structured, first-mover coverage of protocol drains and bridge hacks." },
   { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
-  { chip: "CT",  title: "Congress Trades",         desc: "CapitolExposed disclosure feed — fires when US Congress members report crypto-adjacent trades (BTC ETFs, crypto equities, direct BTC/ETH). Conflict-scored. Sparse by design — disclosure cadence is slow." },
   { chip: "LP",  title: "Launchpads & Listings",  desc: "New-token launch detection across Pump.fun (Solana) and major IDO/IEO/launchpad platforms. Catches listings and launches as they go live." },
   { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves. No paid APIs." },
   { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain activity and momentum on decentralized exchanges. Enrichment context, lightly weighted." },
@@ -311,11 +309,11 @@ const computeLayerCount = 10;
       <div class="contrast-grid">
         <div class="contrast-col others">
           <div class="ctag">Others</div>
-          <p>Whale data from one API. Funding from another. News from three more. L/S ratios, on-chain flows, congress disclosures, macro calendar — each a separate subscription, separate key, separate rate limit. You duct-tape them together and still do all the synthesis yourself.</p>
+          <p>Whale data from one API. Funding from another. News from three more. L/S ratios, on-chain flows, options positioning, ETF flows, macro calendar — each a separate subscription, separate key, separate rate limit. You duct-tape them together and still do all the synthesis yourself.</p>
         </div>
         <div class="contrast-col us">
           <div class="ctag">n0brains</div>
-          <p>All of it — one endpoint. Telegram, whales, funding, liquidations, on-chain, L/S ratios, news, congress trades, macro calendar — fused, corroborated, and scored. Plus narrative momentum, manipulation detection, wallet DNA, token trust scoring, and semantic signal search baked in. One API key. One bill. Raw classified intel your agent can filter, route, and act on directly.</p>
+          <p>All of it — one endpoint. Telegram, whales, funding, liquidations, on-chain, L/S ratios, options flow, ETF + stablecoin flows, news, security feeds, macro calendar — fused, corroborated, and scored. Plus narrative momentum, manipulation detection, wallet DNA, token trust scoring, and semantic signal search baked in. One API key. One bill. Raw classified intel your agent can filter, route, and act on directly.</p>
         </div>
       </div>
     </section>
@@ -362,7 +360,7 @@ const computeLayerCount = 10;
         "name": "What is n0brains?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro calendar, congress trades — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, Webhook, or MCP server (for Claude Desktop, Cursor, Cline). Built for autonomous trading agents and systematic strategies."
+          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 15+ sources — whales, funding, liquidations, on-chain flows, options flow, ETF + stablecoin flows, security feeds, news, macro calendar — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, Webhook, or MCP server (for Claude Desktop, Cursor, Cline). Built for autonomous trading agents and systematic strategies."
         }
       },
       {
