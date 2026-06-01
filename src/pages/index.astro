@@ -116,6 +116,18 @@ const freeFeatures = [
       background: var(--bg-alt); padding: 1.5rem;
       transition: background 0.2s ease;
     }
+    /* Filler tile shown only when the source count is odd, so the 2-col grid
+       never ends on a dead cell. Links to the docs instead of empty space. */
+    .source-card.source-filler {
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center; text-align: center; text-decoration: none;
+      color: var(--text); gap: 0.3rem;
+    }
+    .source-card.source-filler:hover { background: var(--bg-hover); }
+    .source-card.source-filler .filler-arrow {
+      font-size: 1.1rem; color: var(--accent); font-weight: 700;
+    }
+    .source-card.source-filler .filler-sub { font-size: 0.8rem; opacity: 0.7; }
     .source-card:hover { background: var(--bg-hover); }
     .source-card .chip-row { margin-bottom: 0.75rem; }
     .source-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-heading); }
@@ -212,6 +224,12 @@ const freeFeatures = [
             <p>{s.desc}</p>
           </div>
         ))}
+        {sources.length % 2 === 1 && (
+          <a class="source-card source-filler" href="/docs">
+            <span class="filler-arrow">See the docs →</span>
+            <span class="filler-sub">full source list &amp; data model</span>
+          </a>
+        )}
       </div>
     </section>
 
