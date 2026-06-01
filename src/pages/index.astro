@@ -20,6 +20,10 @@ const sources = [
   { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
   { chip: "CT",  title: "Congress Trades",         desc: "CapitolExposed disclosure feed — fires when US Congress members report crypto-adjacent trades (BTC ETFs, crypto equities, direct BTC/ETH). Conflict-scored. Sparse by design — disclosure cadence is slow." },
+  { chip: "LP",  title: "Launchpads & Listings",  desc: "New-token launch detection across Pump.fun (Solana) and major IDO/IEO/launchpad platforms. Catches listings and launches as they go live." },
+  { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves. No paid APIs." },
+  { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain activity and momentum on decentralized exchanges. Enrichment context, lightly weighted." },
+  { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of vetted on-chain trackers, exchanges, and analysts — Lookonchain, Arkham, WuBlockchain, official exchange handles, and more." },
 ];
 
 const proFeatures = [
@@ -45,6 +49,10 @@ const freeFeatures = [
   "Limited signal detail",
   "Community support",
 ];
+
+// "What we compute" cards are inline below; keep this in sync if you add/remove
+// a layer. Drives the odd-count filler tile (same logic as the sources grid).
+const computeLayerCount = 10;
 ---
 
 <BaseLayout
@@ -236,7 +244,7 @@ const freeFeatures = [
     <!-- Intelligence Layers -->
     <section class="sources-section">
       <h2>What we compute</h2>
-      <p class="subtitle">Raw signals are just the start. Seven intelligence layers run on every event before it reaches your API key.</p>
+      <p class="subtitle">Raw signals are just the start. Ten intelligence layers run on every event before it reaches your API key.</p>
       <div class="sources-grid">
         <div class="source-card">
           <div class="chip-row"><MonoChip text="∿" /></div>
@@ -273,6 +281,27 @@ const freeFeatures = [
           <h3>Semantic Signal Search</h3>
           <p>BGE-M3 embeddings on every signal, stored in a vector database. Find signals by meaning, not just keywords. Semantic deduplication suppresses near-duplicate events before they reach the feed.</p>
         </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="ML" /></div>
+          <h3>ML Outcome Models</h3>
+          <p>Four models score every directional signal: a logistic win-probability, q10/q50/q90 PnL quantiles, a Cox survival model for median hold time, and an HMM market-regime detector — all trained on tracked forward returns. Sub-10ms inference; degrade gracefully when a model is cold.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="∮" /></div>
+          <h3>Historical Edge</h3>
+          <p>Each signal's (type × direction × regime) cell carries its empirical track record. When a cell is anti-predictive (n≥30, win rate ≤30%, avg PnL ≤−2%) we attach a labeled <code>paired_inverse</code> advisory — short-term reversal literature, never silently flipping your signal.</p>
+        </div>
+        <div class="source-card">
+          <div class="chip-row"><MonoChip text="≈" /></div>
+          <h3>Binned Calibration</h3>
+          <p>Confidence is mapped to empirical win rate per signal type, per raw-confidence bin. Win-rate is non-monotonic and type-dependent (higher confidence means higher win for sentiment, lower for whale) — a single curve can't capture that, so we bin it.</p>
+        </div>
+        {computeLayerCount % 2 === 1 && (
+          <a class="source-card source-filler" href="/docs">
+            <span class="filler-arrow">See the docs →</span>
+            <span class="filler-sub">how each layer scores a signal</span>
+          </a>
+        )}
       </div>
     </section>
 
