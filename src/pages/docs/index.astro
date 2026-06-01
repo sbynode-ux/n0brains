@@ -11,7 +11,8 @@ const signalsResponse = JSON.stringify({
     urgency: "medium",
     summary: "Senate Banking Committee scheduled to vote on the Clarity Act crypto bill.",
     confidence: 0.15,
-    action_hint: "monitor",
+    conviction: "watch",
+    action_hint: "monitor", // deprecated alias of conviction
     corroborated: false,
     score: 0.27,
     trade_quality_score: 0.61,
@@ -30,7 +31,8 @@ const signalsResponse = JSON.stringify({
     urgency: "high",
     summary: "Sharp negative social shift on ETH as funding flips and large holders trim.",
     confidence: 0.71,
-    action_hint: "trade_signal",
+    conviction: "strong",
+    action_hint: "trade_signal", // deprecated alias of conviction
     corroborated: true,
     score: 1.38,
     trade_quality_score: 0.74,
@@ -57,7 +59,8 @@ const signalsResponse = JSON.stringify({
     urgency: "medium",
     summary: "Industry group endorses ETF approval extension; broader institutional access expected.",
     confidence: 0.45,
-    action_hint: "alert",
+    conviction: "notable",
+    action_hint: "alert", // deprecated alias of conviction
     corroborated: true,
     score: 0.81,
     trade_quality_score: 0.52,
@@ -403,7 +406,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>band</code></td><td>string</td><td>Filter by trade quality band: A+, A, B, C, D</td></tr>
           <tr><td><code>min_trade_quality</code></td><td>float</td><td>Minimum trade quality score (0.0–1.0, default 0.0)</td></tr>
           <tr><td><code>proven_only</code></td><td>bool</td><td>Only signal types proven to beat buy-and-hold (default false)</td></tr>
-          <tr><td><code>tradeable_only</code></td><td>bool</td><td>Only signals with action_hint=trade_signal (default false)</td></tr>
+          <tr><td><code>tradeable_only</code></td><td>bool</td><td>Only <code>conviction=strong</code> signals (default false)</td></tr>
         </tbody>
       </table>
       <h3>Response - Free Tier</h3>
@@ -425,7 +428,8 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
           <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — per-signal-type binned empirical win rate from closed-trade outcomes (not a raw LLM score). Updated weekly.</td></tr>
-          <tr><td><code>action_hint</code></td><td>string</td><td>trade_signal, alert, monitor, ignore. <strong>trade_signal</strong> is data-driven: it fires only on signal types whose forward-return record clears our statistical bar in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution</td></tr>
+          <tr><td><code>conviction</code></td><td>string</td><td><code>strong</code>, <code>notable</code>, <code>watch</code>, <code>none</code> — our analytical rating of a signal's strength (not a trade instruction). <strong>strong</strong> is data-driven: it applies only to signal types whose forward-return record clears our statistical bar in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution. Use this field.</td></tr>
+          <tr><td><code>action_hint</code></td><td>string</td><td><em>Deprecated</em> — the prior name for <code>conviction</code> (<code>trade_signal</code>↔strong, <code>alert</code>↔notable, <code>monitor</code>↔watch, <code>ignore</code>↔none). Still emitted this release for backward compatibility; will be removed. Migrate to <code>conviction</code>.</td></tr>
           <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>IC-weighted composite: source_weight x urgency x calibrated_confidence x signal-type information coefficient</td></tr>
           <tr><td><code>timestamp</code></td><td>int</td><td>Unix epoch (seconds)</td></tr>
