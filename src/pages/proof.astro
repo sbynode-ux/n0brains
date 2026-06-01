@@ -9,9 +9,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   <section class="about-section">
     <h1>proof</h1>
     <p class="legal-updated">
-      Every signal type is paper-traded against real Hyperliquid mid prices —
-      2% stop, 4% target, 4h max hold, fees and slippage applied. Combines a
-      historical backfill with an ongoing live forward-test. Refreshed live.
+      Every signal type is paper-traded against real exchange prices —
+      Hyperliquid mids, with CoinMarketCap / DexScreener fallback for tokens not
+      on Hyperliquid — 2% stop, 4% target, 4h max hold, fees and slippage
+      applied. Stops and targets resolve against 1-minute candle highs/lows, so
+      an intrabar wick through a stop counts as a stop-out. Combines a historical
+      backfill with an ongoing live forward-test. Refreshed live.
     </p>
 
     <div id="proof-banner" class="proof-banner proof-loading">
@@ -51,12 +54,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <p class="meta" id="tier-meta"></p>
 
     <p class="legal-updated" style="margin-top: 32px;">
-      A type is marked <strong>tradeable</strong> only when its simulated record
-      clears 30+ trades, a positive average net return, and a 95% confidence
-      interval above zero. Tradeable types are the ones we flag
-      <code>trade_signal</code> in the API. Simulated results for informational
-      purposes only — not financial advice, and past performance does not
-      guarantee future results. See <a href="/terms">terms</a>.
+      A type is shown as <strong>paper-tested profitable</strong> only when its
+      simulated record clears 30+ trades, a positive average net return, and a
+      95% confidence interval above zero. These are the types we flag
+      <code>conviction: strong</code> in the API. Simulated results for
+      informational purposes only — not financial advice, and past performance
+      does not guarantee future results. See <a href="/terms">terms</a>.
     </p>
   </section>
 </BaseLayout>
@@ -95,7 +98,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     banner.className = "proof-banner proof-up";
     banner.querySelector(".banner-text").textContent =
       tradeable.length + " signal type" + (tradeable.length === 1 ? "" : "s") +
-      " proven tradeable";
+      " paper-tested profitable";
 
     let rows = "";
     for (const t of data.types) {
