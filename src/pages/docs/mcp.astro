@@ -23,7 +23,7 @@ const claudeDesktopConfig = JSON.stringify({
     <div class="callout callout-pro">
       <strong>Pro tier required.</strong> Tool discovery (<code>tools/list</code>)
       is open; tool invocation (<code>tools/call</code>) requires an active Pro
-      subscription. <a href="/billing">Upgrade →</a>
+      subscription. <a href="/#pricing">Upgrade →</a>
     </div>
 
     <h2>Endpoint</h2>
@@ -31,10 +31,10 @@ const claudeDesktopConfig = JSON.stringify({
 Authorization: Bearer &lt;your_api_key&gt;
 Content-Type: application/json</code></pre>
 
-    <p>Get your API key from <a href="/dashboard/api-keys">/dashboard/api-keys</a>.
-    Pro tier is gated by your Stripe subscription status; downgrade to Free
-    locks <code>tools/call</code> with JSON-RPC error <code>-32001</code> and an upgrade link in
-    <code>error.data.upgrade_url</code>.</p>
+    <p>Get your API key when you <a href="/signup">sign up</a> — it is shown once,
+    so copy it then. Pro tier is gated by your Stripe subscription status;
+    downgrade to Free locks <code>tools/call</code> with JSON-RPC error
+    <code>-32001</code> and an upgrade link in <code>error.data.upgrade_url</code>.</p>
 
     <h2>Claude Desktop</h2>
     <p>Edit <code>~/.config/Claude/claude_desktop_config.json</code> (Linux),
