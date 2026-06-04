@@ -54,12 +54,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <p class="meta" id="tier-meta"></p>
 
     <p class="legal-updated" style="margin-top: 32px;">
-      A type is shown as <strong>paper-tested profitable</strong> only when its
-      simulated record clears 30+ trades, a positive average net return, and a
-      95% confidence interval above zero. These are the types we flag
-      <code>conviction: strong</code> in the API. Simulated results for
-      informational purposes only — not financial advice, and past performance
-      does not guarantee future results. See <a href="/terms">terms</a>.
+      A type is shown as <strong>forward-return proven</strong> only when its
+      live post-signal price record clears 30+ measured signals AND both beats
+      buy-and-hold and is profitable on its own, with a 95% confidence interval
+      above zero. (Beating buy-and-hold alone isn't enough — a type that only
+      looks good by being short in a downtrend, while still losing money, does
+      not qualify.) These are the types we flag <code>conviction: strong</code>
+      in the API. Measured on real prices for informational purposes only — not
+      financial advice, and past performance does not guarantee future results.
+      See <a href="/terms">terms</a>.
     </p>
   </section>
 </BaseLayout>
@@ -98,7 +101,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     banner.className = "proof-banner proof-up";
     banner.querySelector(".banner-text").textContent =
       tradeable.length + " signal type" + (tradeable.length === 1 ? "" : "s") +
-      " paper-tested profitable";
+      " forward-return proven";
 
     let rows = "";
     for (const t of data.types) {

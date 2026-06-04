@@ -116,12 +116,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <div class="card">
       <h2 id="type-detail">Detail on each tradeable type</h2>
-      <h3><code>listing</code> &middot; Strongest edge in the feed</h3>
+      <h3><code>listing</code> &middot; High win rate, but tracks market beta — not alpha</h3>
       <p>
         New listing announcements (CEX listings, ETF approvals, etc) trigger immediate buying
-        pressure that spikes price within minutes. Best setup: <strong>no stop, take profit at
-        +5%, exit at 1 hour</strong>. 92% win rate, sharpe 1.61. Pump-and-fade nature — get out
-        fast on the spike, don't hold for more.
+        pressure that spikes price within minutes. The headline win rate is high (~92%), but on
+        our live measurement listing's <strong>excess return over simply buying and holding is
+        ~0%</strong> — the wins largely reflect the broader market moving up, not an edge in the
+        signal itself. For that reason listing is <strong>not</strong> flagged as a proven
+        (<code>conviction: strong</code>) type. We surface it as intel, not as a trade call.
       </p>
 
       <h3><code>sentiment</code> &middot; Largest tradeable inventory</h3>
@@ -196,9 +198,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         too few samples for a confident verdict. They'll be re-tested as more accumulate.
       </p>
       <p>
-        The <code>tradeable_proven</code> set updates from live paper-trade results, so a type
-        listed here today could promote into the tradeable set if its forward-test record
-        clears the bar. Track changes at <a href="/proof">/proof</a>.
+        The proven set updates from live forward-return results (real post-signal price action),
+        so a type listed here today could promote into the proven set if its forward-return record
+        clears the bar — both beating buy-and-hold and being profitable on its own. Track changes
+        at <a href="/proof">/proof</a>.
       </p>
     </div>
 
