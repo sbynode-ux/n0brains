@@ -11,7 +11,7 @@ const claudeDesktopConfig = JSON.stringify({
 }, null, 2);
 ---
 
-<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 19 read-only tools.">
+<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 21 read-only tools.">
   <main class="prose mx-auto py-12 px-4">
     <h1>MCP Server</h1>
     <p class="lead">
@@ -69,6 +69,8 @@ Content-Type: application/json</code></pre>
         <tr><td><code>get_liquidation_map</code></td><td>LiquidationMapOut</td><td>Estimated liquidation-cluster zones (modeled from OI + leverage tiers).</td></tr>
         <tr><td><code>get_correlation</code></td><td>CorrelationCoinOut</td><td>Correlation + beta of a coin to BTC/ETH + peers.</td></tr>
         <tr><td><code>get_rotation</code></td><td>RotationOut</td><td>Altseason/rotation read — into_alts / into_btc / neutral.</td></tr>
+        <tr><td><code>get_options</code></td><td>OptionsOut</td><td>Options analytics — ATM IV, skew, term structure, max-pain (BTC/ETH).</td></tr>
+        <tr><td><code>get_sentiment</code></td><td>SentimentOut</td><td>Aggregate sentiment — net lean, volume, velocity (curated sources).</td></tr>
         <tr><td><code>list_recommended_strategies</code></td><td>StrategyListOut</td><td>Reference execution configs (tier-scaled SL/TP/size).</td></tr>
         <tr><td><code>get_recommended_strategy</code></td><td>StrategyOut</td><td>One strategy by signal_type.</td></tr>
         <tr><td><code>compare_strategy_tiers</code></td><td>composite dict</td><td>Same strategy across all 3 risk tiers.</td></tr>
