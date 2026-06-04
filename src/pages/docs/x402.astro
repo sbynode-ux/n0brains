@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const title = "x402 Pay-Per-Call — n0brains";
+const routes = [
+  ["GET /x402/signals", "$0.005", "Classified signals"],
+  ["GET /x402/rotation", "$0.002", "Altseason/rotation read"],
+  ["GET /x402/correlation/{coin}", "$0.005", "Correlation + beta to BTC/ETH"],
+  ["GET /x402/liquidation-map/{coin}", "$0.005", "Estimated liquidation zones"],
+  ["GET /x402/levels/{coin}", "$0.001", "Support/resistance"],
+  ["GET /x402/macro", "$0.002", "Daily BTC/ETH macro bias"],
+];
+const flow = `# 1. Agent requests a resource (no key, no account)
+GET https://api.n0brains.com/x402/rotation
+# 2. Server replies 402 with payment terms (USDC on Base)
+HTTP 402  payment-required: <base64 terms>
+# 3. Agent signs a USDC transfer authorization and retries
+GET https://api.n0brains.com/x402/rotation
+X-PAYMENT: <signed payload>
+# 4. Facilitator verifies + settles on Base; the data is returned`;
+---
+
+<BaseLayout title={title} description="n0brains x402 pay-per-call — autonomous agents pay per request in USDC on Base, no account or API key. Permissionless via the xpay facilitator.">
+  <main class="prose mx-auto py-12 px-4">
+    <h1>x402 Pay-Per-Call</h1>
+    <p class="lead">
+      Autonomous agents can call n0brains and <strong>pay per request in USDC on
+      Base</strong> — no account, no API key, no subscription. Built on the
+      <a href="https://x402.org">x402</a> HTTP-native payment standard.
+    </p>
+
+    <div class="callout">
+      <strong>For agents that don't have (or don't want) an account.</strong> If
+      you're a human or a long-running bot, the <a href="/docs">API key</a> tier
+      ($19.99/mo Pro, real-time + WebSocket + MCP) is cheaper at volume. x402 is
+      for one-off, per-call, no-signup access.
+    </div>
+
+    <h2>How it works</h2>
+    <pre><code>{flow}</code></pre>
+    <p>
+      Settlement runs through the permissionless <a href="https://xpay.sh">xpay</a>
+      facilitator — no Coinbase or any account required, zero protocol fees, gas
+      sponsored. Payment is the authorization: a valid USDC payment returns the
+      data, no key needed.
+    </p>
+
+    <h2>Payable endpoints</h2>
+    <table>
+      <thead><tr><th>Endpoint</th><th>Price / call</th><th>Returns</th></tr></thead>
+      <tbody>
+        {routes.map(([r, p, d]) => (
+          <tr><td><code>{r}</code></td><td>{p}</td><td>{d}</td></tr>
+        ))}
+      </tbody>
+    </table>
+    <p>
+      Network: <strong>Base mainnet</strong> (<code>eip155:8453</code>). Asset:
+      <strong>USDC</strong> (<code>0x8335…2913</code>). Scheme:
+      <code>exact</code>. Any x402-compatible client works — point it at
+      <code>https://api.n0brains.com/x402/…</code>.
+    </p>
+
+    <h2>Same data, three surfaces</h2>
+    <p>
+      x402 serves the same intelligence as the <a href="/docs">keyed REST API</a>,
+      the <a href="/docs/mcp">MCP server</a>, and the <a href="/docs/cli">CLI</a> —
+      pick the access model that fits: per-call (x402), subscription (API key), or
+      agent-native (MCP). Data publisher, not adviser — you own the trade decision.
+    </p>
+  </main>
+</BaseLayout>
