@@ -22,7 +22,7 @@ Most traders get whipsawed here. They buy the macro narrative on Monday, sell th
 
 You need a system that can ingest a bearish on-chain spike, a bullish macro policy announcement, a neutral funding rate, and a bearish EMA cross — then compress them into one actionable directional score with an entry price, a stop loss, and a take profit target.
 
-This is exactly the kind of cross-referenced signal [n0brains](https://n0brains.com) automates. Dozens of watchers monitor Telegram, blockchains, exchanges, and government filings around the clock. An on-device LLM classifies every event into one of 13 signal types, cross-references across sources, and scores it for confidence. The Macro Pulse layer anchors every per-event signal to a daily BTC and ETH directional bias derived from the upcoming high-impact macro calendar. Traders and autonomous agents get the signal — direction, entry, stop, take — via REST API, WebSocket, or Webhook. Think Less, Trade More.
+This is exactly the kind of cross-referenced signal [n0brains](https://n0brains.com) automates. Dozens of watchers monitor Telegram, blockchains, exchanges, and government filings around the clock. An on-device LLM classifies every event into one of 13 signal types, cross-references across sources, and scores it for confidence. The Macro Pulse layer anchors every per-event signal to a daily BTC and ETH directional bias derived from the upcoming high-impact macro calendar. Traders and autonomous agents get the signal — direction, entry, stop, take — via REST API, WebSocket, or Webhook. Think Less, Ship More.
 
 ## Market Context
 

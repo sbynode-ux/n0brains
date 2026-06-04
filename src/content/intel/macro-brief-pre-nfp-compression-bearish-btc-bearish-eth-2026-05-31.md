@@ -76,7 +76,7 @@ dataSources:
 
 *   **Final checks against task requirements:**
     - Writing for n0brains.com: Yes.
-    - Tagline "Think Less, Trade More": Yes, implied throughout the article, but particularly in "The Signal".
+    - Tagline "Think Less, Ship More": Yes, implied throughout the article, but particularly in "The Signal".
     - Voice: Direct, confident, no hedging. Short sentences, varying rhythm. "We" for builders/traders. Dry humor ("Vibes are terrible. Next week gives us facts. We suspect facts will confirm the vibes."). No "$" on the intro? Yes, "vibes" was used. "Vibes" is ok, a bit of dry humor. Let's make the intro hook stronger.
     - Product mention: "This is exactly the kind of cross-referenced signal n0brains automates...". Seamless.
     - Structure: Hook, The Setup, BTC, ETH, Calendar Risks, The Signal, Closing.

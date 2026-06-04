@@ -50,11 +50,11 @@ dataSources:
             *   "Our **Macro Pulse** layer isn't just a daily timestamp. It actively scores the divergence between the economic print and the market's reaction. When the GDP printed **2.0%** and prices didn't budge, the algorithm downgraded the bullish bias to neutral, then to bearish as sentiment hit **22**."
             *   "Subscribers don't have to reconcile the macro data with the order book. The n0brains API fuses the on-chain flow (whale movements, exchange net flows) with the macro calendar context and spits out a single, actionable signal: direction, entry, stop, and take profit."
             *   "In a week with no catalysts, the signal API prioritizes risk management. It knows when to step aside."
-            *   (Check: This perfectly aligns with "Think Less, Trade More." and the product philosophy).
+            *   (Check: This perfectly aligns with "Think Less, Ship More." and the product philosophy).
 
             *   "The data was good. The reaction was bad. We trust the reaction."
             *   "Position for the grind. Size for the stop-out. The signal is bearish until the Fear & Greed breaks back above **30**."
-            *   "Think Less, Trade More."
+            *   "Think Less, Ship More."
 
         *   **Refining the Language & Voice:**
             *   "We aren't fighting the tape. The tape is heavy, and the calendar is empty."
