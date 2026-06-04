@@ -276,7 +276,7 @@ const macroPulseResponse = JSON.stringify({
     },
     "offers": [
       { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier — 60 req/min, REST only, 15-min delay" },
-      { "@type": "Offer", "price": "19.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks + MCP server (21 tools, Claude Desktop / Cursor / Cline)" }
+      { "@type": "Offer", "price": "19.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks + MCP server (23 tools, Claude Desktop / Cursor / Cline)" }
     ],
     "potentialAction": {
       "@type": "SearchAction",
@@ -374,6 +374,8 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/rotation</code></td><td>API Key</td><td>Altseason/rotation read — into_alts / into_btc / neutral</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/options/{'{coin}'}</code></td><td>API Key</td><td>Options analytics (BTC/ETH): ATM IV, skew, term structure, max-pain</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/sentiment/{'{coin}'}</code></td><td>API Key</td><td>Aggregate sentiment — net lean, volume, velocity (curated sources)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/mindshare</code></td><td>API Key</td><td>Attention-share leaderboard — each asset's share + velocity (rising/falling)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/mindshare/{'{coin}'}</code></td><td>API Key</td><td>One coin's mindshare share, rank, velocity</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
