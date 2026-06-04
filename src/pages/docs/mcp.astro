@@ -11,7 +11,7 @@ const claudeDesktopConfig = JSON.stringify({
 }, null, 2);
 ---
 
-<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 12 read-only tools.">
+<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 19 read-only tools.">
   <main class="prose mx-auto py-12 px-4">
     <h1>MCP Server</h1>
     <p class="lead">
@@ -41,7 +41,7 @@ Content-Type: application/json</code></pre>
     <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS),
     or <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows):</p>
     <pre><code>{claudeDesktopConfig}</code></pre>
-    <p>Restart Claude Desktop. The 12 tools appear in the MCP indicator.</p>
+    <p>Restart Claude Desktop. The tools appear in the MCP indicator.</p>
 
     <h2>Cursor</h2>
     <p>Settings → MCP → Add server. URL <code>https://api.n0brains.com/mcp</code>,
@@ -66,6 +66,13 @@ Content-Type: application/json</code></pre>
         <tr><td><code>get_signals_since</code></td><td>SignalListOut</td><td>Polling alternative to <code>/stream</code>.</td></tr>
         <tr><td><code>get_signal_with_context</code></td><td>composite dict</td><td>Signal + levels + macro + dedup cluster, single round trip.</td></tr>
         <tr><td><code>get_anti_predictive_cells</code></td><td>AntiPredictiveCellsOut</td><td>Cells where empirical edge inverted.</td></tr>
+        <tr><td><code>get_liquidation_map</code></td><td>LiquidationMapOut</td><td>Estimated liquidation-cluster zones (modeled from OI + leverage tiers).</td></tr>
+        <tr><td><code>get_correlation</code></td><td>CorrelationCoinOut</td><td>Correlation + beta of a coin to BTC/ETH + peers.</td></tr>
+        <tr><td><code>get_rotation</code></td><td>RotationOut</td><td>Altseason/rotation read — into_alts / into_btc / neutral.</td></tr>
+        <tr><td><code>list_recommended_strategies</code></td><td>StrategyListOut</td><td>Reference execution configs (tier-scaled SL/TP/size).</td></tr>
+        <tr><td><code>get_recommended_strategy</code></td><td>StrategyOut</td><td>One strategy by signal_type.</td></tr>
+        <tr><td><code>compare_strategy_tiers</code></td><td>composite dict</td><td>Same strategy across all 3 risk tiers.</td></tr>
+        <tr><td><code>get_tier_performance</code></td><td>TierPerformanceOut</td><td>Per-tier paper-trade rollup.</td></tr>
         <tr><td><code>health</code></td><td>HealthOut</td><td>Liveness, recent signal count, regime.</td></tr>
       </tbody>
     </table>
