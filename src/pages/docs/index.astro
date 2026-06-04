@@ -368,6 +368,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/manipulation/{'{coin}'}</code></td><td>Pro</td><td>Manipulation score for asset</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/trust/{'{coin}'}</code></td><td>Pro</td><td>Trust &amp; scam score for token</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-map/{'{coin}'}</code></td><td>API Key</td><td>Estimated liquidation-cluster zones (modeled from OI + leverage tiers)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/correlation</code></td><td>API Key</td><td>Cross-asset return-correlation matrix (7d). <code>?vs=BTC</code>, <code>?coins=…</code></td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/correlation/{'{coin}'}</code></td><td>API Key</td><td>One coin's correlation + beta to BTC/ETH + peers</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/rotation</code></td><td>API Key</td><td>Altseason/rotation read — into_alts / into_btc / neutral</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
@@ -382,9 +386,15 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-post">POST</span></td><td><code>/webhooks</code></td><td>Pro</td><td>Register webhook</td></tr>
           <tr><td><span class="method method-del">DEL</span></td><td><code>/webhooks/{'{id}'}</code></td><td>Pro</td><td>Remove webhook</td></tr>
           <tr><td><span class="method method-ws">WS</span></td><td><code>/stream</code></td><td>Pro</td><td>Real-time signal stream</td></tr>
-          <tr><td><span class="method method-post">POST</span></td><td><code>/mcp/</code></td><td>Pro (tools/call); open (tools/list)</td><td>MCP server — 12 read-only tools for Claude Desktop, Cursor, Cline. See <a href="/docs/mcp">/docs/mcp</a>.</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/mcp/</code></td><td>Pro (tools/call); open (tools/list)</td><td>MCP server — read-only tools for Claude Desktop, Cursor, Cline. See <a href="/docs/mcp">/docs/mcp</a>.</td></tr>
         </tbody>
       </table>
+
+      <p style="margin-top:1rem">
+        Prefer the command line? The <a href="/docs/cli">n0brains CLI</a> wraps every
+        endpoint as a zero-dependency command that prints JSON — built for trading
+        agents and shell pipelines.
+      </p>
     </div>
 
     <div class="card">

@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const title = "CLI — n0brains";
+const install = `pip install n0brains-cli
+export N0BRAINS_API_KEY=intel_sk_...   # get one at n0brains.com`;
+const examples = `# Only proven-edge signals, as JSON
+n0brains signals --proven-only --limit 10
+
+# Is it altseason? one-line answer
+n0brains rotation | jq -r .regime
+
+# Where are BTC liquidation magnets?
+n0brains liquidation-map BTC | jq '.densest_long_liq_zone, .densest_short_liq_zone'
+
+# Live forward-return proof
+n0brains proof
+
+# Stream proven strong-conviction signals into a bot (needs: pip install websockets)
+n0brains stream | jq -c 'select(.conviction=="strong")'`;
+---
+
+<BaseLayout title={title} description="n0brains CLI — zero-dependency command-line access to the crypto intelligence API. JSON on stdout, built for trading agents and shell pipelines.">
+  <main class="prose mx-auto py-12 px-4">
+    <h1>CLI</h1>
+    <p class="lead">
+      Every endpoint as a command that prints JSON to stdout — pipe it into
+      <code>jq</code>, an LLM, or a bot. Zero third-party dependencies (Python
+      3.8+ stdlib only). Built for trading agents and shell pipelines.
+    </p>
+
+    <h2>Why a CLI when there's an MCP server?</h2>
+    <p>
+      The <a href="/docs/mcp">MCP server</a> is for agents inside Claude Desktop,
+      Cursor, and Cline. The CLI is the better fit when you're driving a
+      <strong>bot or shell pipeline</strong>: plain JSON with no protocol envelope
+      is more token-efficient, it composes with Unix tools, and it runs anywhere
+      <code>curl</code> does. Same data, both surfaces.
+    </p>
+
+    <h2>Install</h2>
+    <pre><code>{install}</code></pre>
+    <p>
+      Public endpoints (like <code>proof</code>) work without a key. Everything
+      else reads <code>N0BRAINS_API_KEY</code> (or <code>--api-key</code>).
+    </p>
+
+    <h2>Commands</h2>
+    <table>
+      <thead><tr><th>Command</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td><code>signals</code></td><td>Active classified signals (<code>--proven-only</code>, <code>--tradeable-only</code>, <code>--asset</code>, <code>--type</code>, <code>--limit</code>)</td></tr>
+        <tr><td><code>signal &lt;id&gt;</code></td><td>One signal with full context</td></tr>
+        <tr><td><code>similar &lt;query&gt;</code></td><td>Semantic similarity search (pro)</td></tr>
+        <tr><td><code>levels &lt;coin&gt;</code></td><td>Support/resistance</td></tr>
+        <tr><td><code>liquidation-map &lt;coin&gt;</code></td><td>Estimated liquidation-cluster zones</td></tr>
+        <tr><td><code>correlation [coin]</code></td><td>Correlation matrix, or one coin's corr+beta (<code>--vs</code>, <code>--coins</code>)</td></tr>
+        <tr><td><code>rotation</code></td><td>Altseason/rotation read</td></tr>
+        <tr><td><code>macro</code></td><td>Daily BTC/ETH macro bias</td></tr>
+        <tr><td><code>narrative &lt;coin&gt;</code></td><td>Narrative context</td></tr>
+        <tr><td><code>trust &lt;coin&gt;</code></td><td>Trust/rug score</td></tr>
+        <tr><td><code>manipulation &lt;coin&gt;</code></td><td>Manipulation score</td></tr>
+        <tr><td><code>proof [--equity]</code></td><td>Live forward-return proof per signal type (+ equity curve)</td></tr>
+        <tr><td><code>performance [--days N] [--tier N]</code></td><td>Backtest stats</td></tr>
+        <tr><td><code>stream</code></td><td>Live signal stream over WebSocket (pro)</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Examples</h2>
+    <pre><code>{examples}</code></pre>
+    <p>
+      Exit code is <code>2</code> on an API error (so scripts can detect
+      failures), <code>0</code> on success. For agent frameworks, the
+      <code>SKILL.md</code> shipped with the CLI describes each tool and how to
+      use the proven-edge gate.
+    </p>
+  </main>
+</BaseLayout>
