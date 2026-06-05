@@ -262,8 +262,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         const r = retFor(s);
         const rv = (r === null || r === undefined) ? "" :
           `<b class="${r >= 0 ? "pos" : "neg"}">${pctRaw(r)}</b>`;
+        // Fully inline the swatch styles: this span is injected via innerHTML, so
+        // Astro's SCOPED CSS (.eq-swatch[data-astro-cid-…]) never matches it —
+        // the dimensions/border must live on the element itself, not in <style>.
+        const sw = `display:inline-block;width:14px;height:14px;border-radius:3px;`
+          + `flex:0 0 auto;border:1px solid rgba(255,255,255,0.25);background:${s.color};`;
         return `<span class="eq-leg-item">` +
-          `<span class="eq-swatch" style="background:${s.color}"></span>` +
+          `<span class="eq-swatch" style="${sw}"></span>` +
           `<span class="eq-leg-name">${s.name}</span>${rv}</span>`;
       }).join("");
 
@@ -445,24 +450,27 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     margin-top: 1rem;
   }
   .equity-chart { width: 100%; }
-  .eq-svg { width: 100%; height: auto; display: block; }
-  .eq-grid { stroke: var(--border); stroke-width: 1; opacity: 0.35; }
-  .eq-base { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
-  .eq-axis { fill: var(--text-muted); font-family: var(--font-mono); font-size: 10px; }
+  /* SVG injected via chart.innerHTML -> :global (scoped selectors miss it). */
+  :global(.eq-svg) { width: 100%; height: auto; display: block; }
+  :global(.eq-grid) { stroke: var(--border); stroke-width: 1; opacity: 0.35; }
+  :global(.eq-base) { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
+  :global(.eq-axis) { fill: var(--text-muted); font-family: var(--font-mono); font-size: 10px; }
   .equity-legend {
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
     font-family: var(--font-mono); font-size: 0.82rem;
     margin-bottom: 0.9rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border);
   }
-  .eq-leg-title { color: var(--text-muted); text-transform: uppercase;
+  /* These elements are injected via innerHTML at runtime, so they must be
+     styled with :global() — Astro's default scoped selectors (which add a
+     data-astro-cid attribute) never match JS-created nodes. Swatch size/color
+     is also inlined in the JS as a belt-and-suspenders. */
+  :global(.eq-leg-title) { color: var(--text-muted); text-transform: uppercase;
     font-size: 0.7rem; letter-spacing: 0.06em; margin-right: 2px; }
-  .eq-leg-item { display: inline-flex; align-items: center; gap: 7px; }
-  /* solid colored chip — unmistakable; faint border so a white/light swatch
-     still shows against the legend background */
-  .eq-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block;
-    flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.25); }
-  .eq-leg-name { color: var(--text); }
-  .equity-legend b { font-weight: 600; }
-  .equity-legend .pos { color: #4ade80; }
-  .equity-legend .neg { color: #ef4444; }
+  :global(.eq-leg-item) { display: inline-flex; align-items: center; gap: 7px; }
+  :global(.eq-swatch) { width: 14px; height: 14px; border-radius: 3px;
+    display: inline-block; flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.25); }
+  :global(.eq-leg-name) { color: var(--text); }
+  :global(.equity-legend b) { font-weight: 600; }
+  :global(.equity-legend .pos) { color: #4ade80; }
+  :global(.equity-legend .neg) { color: #ef4444; }
 </style>
