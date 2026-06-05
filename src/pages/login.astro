@@ -18,6 +18,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
       <button type="submit" class="btn btn-primary" id="submit-btn">Log In</button>
       <p class="auth-error" id="error-msg"></p>
+      <p class="forgot-link"><a href="/forgot">Forgot password?</a></p>
     </form>
 
     <div id="success-panel" class="success-panel" style="display:none;">
@@ -197,6 +198,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .auth-footer a {
     color: var(--accent);
   }
+
+  .forgot-link {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+  }
+  .forgot-link a { color: var(--text-muted); }
+  .forgot-link a:hover { color: var(--accent); }
 
   #upgrade-btn { display: none; }
 </style>
