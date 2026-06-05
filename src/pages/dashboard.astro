@@ -42,6 +42,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <p class="auth-subtle">Pay-per-call without an account? See <a href="/docs/x402">x402</a>.</p>
       </div>
 
+      <!-- Credits -->
+      <div class="dash-section">
+        <h2 class="dash-h2">pay-per-call credits</h2>
+        <div class="kv"><span>balance</span><strong id="c-balance">—</strong></div>
+        <p class="auth-subtle">1 credit = 1 data API call beyond your tier's included rate limit. Within your rate limit, calls are free.</p>
+        <div id="credit-packs" class="dash-actions"></div>
+        <div id="credit-history" class="credit-history"></div>
+      </div>
+
       <!-- API keys -->
       <div class="dash-section">
         <h2 class="dash-h2">api keys</h2>
@@ -154,6 +163,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .usage-endpoints { margin-top: 0.75rem; }
   .usage-ep { display: flex; justify-content: space-between; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.2rem 0; }
   .usage-ep strong { color: var(--text); }
+
+  /* credits */
+  #c-balance { color: var(--accent); }
+  .credit-pack-btn { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.6rem 1rem; }
+  .credit-pack-btn .cp-credits { font-size: 0.9rem; }
+  .credit-pack-btn .cp-price { font-size: 0.65rem; color: var(--text-muted); }
+  .credit-history { margin-top: 1rem; }
+  .credit-row { display: flex; justify-content: space-between; font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.25rem 0; border-bottom: 1px solid var(--border); }
+  .credit-row:last-child { border-bottom: none; }
+  .credit-row .cr-delta-pos { color: var(--accent); }
+  .credit-row .cr-delta-neg { color: var(--text-faint); }
 
   /* terms gate */
   .terms-gate {
@@ -345,6 +365,53 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       loadUsage(tab.dataset.period);
     }));
 
+  // ── Credits ─────────────────────────────────────────────────────
+  function fmtDelta(d) {
+    return d > 0 ? `+${d}` : `${d}`;
+  }
+  async function loadCredits() {
+    // balance + history
+    const resp = await api('/credits');
+    const data = await resp.json();
+    $('c-balance').textContent = `${data.balance} credit${data.balance === 1 ? '' : 's'}`;
+
+    const hist = $('credit-history');
+    hist.innerHTML = '';
+    (data.transactions || []).slice(0, 8).forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'credit-row';
+      const label = t.reason === 'spend' ? (t.endpoint || 'call') : t.reason;
+      const cls = t.delta > 0 ? 'cr-delta-pos' : 'cr-delta-neg';
+      row.innerHTML = `<span>${fmtDate(t.created_at)} · ${label}</span><span class="${cls}">${fmtDelta(t.delta)}</span>`;
+      hist.appendChild(row);
+    });
+
+    // buy buttons from configured packs
+    const packsResp = await api('/billing/credit-packs');
+    const packsData = await packsResp.json();
+    const wrap = $('credit-packs');
+    wrap.innerHTML = '';
+    const packs = (packsData.packs || []).sort((a, b) => a.credits - b.credits);
+    if (packs.length === 0) {
+      wrap.innerHTML = '<p class="auth-subtle" style="margin:0;">Credit purchases are not available yet — check back soon.</p>';
+      return;
+    }
+    packs.forEach((p) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary credit-pack-btn';
+      btn.innerHTML = `<span class="cp-credits">${p.credits.toLocaleString()} credits</span>`;
+      btn.addEventListener('click', () => buyCredits(p.price_id, btn));
+      wrap.appendChild(btn);
+    });
+  }
+  async function buyCredits(priceId, btn) {
+    btn.disabled = true;
+    const resp = await api('/billing/buy-credits', { method: 'POST', body: JSON.stringify({ price_id: priceId }) });
+    const data = await resp.json();
+    if (data.url) window.location.href = data.url;
+    else { alert(data.detail || 'Could not start checkout'); btn.disabled = false; }
+  }
+
   // ── Terms gate ──────────────────────────────────────────────────
   $('accept-terms-btn').addEventListener('click', async () => {
     $('accept-terms-btn').disabled = true;
@@ -372,6 +439,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     renderKeys(me.api_keys || []);
     renderBilling(me);
     loadUsage('7d');
+    loadCredits();
   }
 
   $('logout-btn').addEventListener('click', logout);
