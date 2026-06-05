@@ -1,0 +1,238 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+/* -----------------------------------------------------------------------
+   /docs/quickstart — copy-paste prompts users hand their agents to make
+   them market-aware with n0brains. No SDK, no install. Two tracks:
+   FREE/REST (any agent, one-line integration) and PRO/MCP (config block +
+   a full real-time agent prompt with the real MCP tool names + strategy
+   modes). Every tool name + endpoint below is verified against the live API.
+   ---------------------------------------------------------------------- */
+
+const KEY = "intel_sk_your_key";
+
+// ── FREE / REST track ─────────────────────────────────────────────────
+const oneLiner =
+`Use the n0brains API at https://api.n0brains.com with header X-API-Key: ${KEY}
+It returns scored crypto intelligence signals. Before answering any market
+question, GET /signals (filter with ?asset=BTC&signal_type=whale&urgency=high)
+and cite what you find. Trust the "conviction" field: strong > notable > watch
+> none — only "strong" has cleared our forward-return bar. Analysis, not
+financial advice — never place trades.`;
+
+const tradeAware =
+`You are my crypto research assistant. You have the n0brains API:
+  base URL: https://api.n0brains.com
+  auth header: X-API-Key: ${KEY}
+
+Before answering any "should I buy/sell/hold X" question, ALWAYS:
+  1. GET /signals?asset=<COIN>  — read direction, conviction, score, summary.
+     conviction: strong > notable > watch > none. Only "strong" is tradeable grade.
+  2. GET /levels/<COIN>          — nearest support/resistance for entry/stop framing.
+  3. GET /macro                  — current BTC/ETH regime + bias for context.
+
+Then give a structured read: bias, the signals behind it, key levels, and what
+would invalidate it. End with "Analysis only, not financial advice." Never
+recommend a position size or leverage, and never execute a trade.`;
+
+const macroBrief =
+`Each morning, build me a crypto macro brief from the n0brains API
+(https://api.n0brains.com, header X-API-Key: ${KEY}):
+  1. GET /macro            — BTC + ETH bias, regime, key levels, calendar risks.
+  2. GET /rotation         — is capital rotating into alts or into BTC?
+  3. GET /signals?urgency=high&limit=10  — the day's highest-urgency events.
+Summarize in 5 bullets: regime, BTC bias, ETH bias, rotation read, top catalyst.
+Append the calendar_risks from /macro. Analysis only, not financial advice.`;
+
+const tokenSafety =
+`Before I touch any token, screen it with the n0brains API
+(https://api.n0brains.com, header X-API-Key: ${KEY}):
+  GET /trust/<TICKER>   — returns trust_score, rug_probability, is_honeypot,
+                          is_mintable, sell_tax, low_liquidity, flags.
+If rug_probability > 0.5, is_honeypot is true, or "honeypot"/"high_sell_tax" is
+in flags, warn me loudly and tell me NOT to proceed. Otherwise summarize the
+risk. Analytical scam-screening, not a guarantee of safety.`;
+
+// ── PRO / MCP track ───────────────────────────────────────────────────
+const mcpConfig = JSON.stringify({
+  mcpServers: {
+    n0brains: {
+      url: "https://api.n0brains.com/mcp",
+      headers: { Authorization: "Bearer PASTE_YOUR_PRO_KEY_HERE" },
+    },
+  },
+}, null, 2);
+
+const proPrompt =
+`═══════════════════════════════════════════════════════════════════
+  n0brains — PRO TIER agent (MCP)
+  SETUP:
+    1. Add the n0brains MCP server to your client (config block above)
+       with your Pro API key. Real-time, all tools, no delay.
+    2. Choose your mode:
+         • TRADE for me? Keep ONE strategy block, delete the other two.
+         • SIGNALS ONLY? Delete the WHOLE strategy section.
+    3. Paste this prompt into your agent. Done.
+═══════════════════════════════════════════════════════════════════
+
+You are a real-time crypto intelligence agent. Your data comes from the
+n0brains MCP server (connected as "n0brains"). You do NOT need any website
+or docs — discover every tool from the MCP server itself; it self-describes.
+
+── TOOLS (via n0brains MCP) ────────────────────────────────────────
+• get_actionable_signals    → signals pre-filtered by the production trade-gate. START HERE.
+• get_macro_aligned_signals → signals that already pass the Macro-Pulse veto.
+• get_signal_with_context   → signal + levels + macro + dedup in one call.
+• get_macro                 → Macro Pulse daily BTC+ETH bias (full payload on Pro).
+• get_levels                → support/resistance for entry/stop.
+• list_recommended_strategies / get_recommended_strategy / compare_strategy_tiers
+                            → exit configs (SL/TP/size) per risk tier.
+• get_tier_performance      → live paper-traded results per tier.
+• get_anti_predictive_cells → setups where the edge historically INVERTED (fade).
+• list_signals / get_signal / get_rotation / get_sentiment / get_options /
+  get_liquidation_map / get_correlation / get_mindshare / get_performance → deeper context.
+
+── READ A SIGNAL ───────────────────────────────────────────────────
+• conviction=strong → only tradeable grade. notable/watch/none = context only.
+• score = sort key (not probability). trade_quality_band = A+/A/B/C/D.
+• reference_price / invalidation_level / target_level → on strong signals only.
+• historical_edge → past performance of this exact cell.
+• paired_inverse → if present, FADE the signal, don't follow it.
+• Respect expires_at.
+
+── CORE RULES ──────────────────────────────────────────────────────
+1. n0brains is intelligence, not execution. YOU act on it.
+2. Before deciding: get_macro_aligned_signals (or get_macro + signals) + get_levels.
+3. Skip trades that contradict a high-conviction Macro Pulse call.
+4. End every output with: "Not financial advice."
+
+═══════════════════════════════════════════════════════════════════
+  STRATEGY — keep ONE block, delete the other two.
+  Keep a block = TRADING MODE (real trades via your connected exchange/tool).
+  Delete this WHOLE section = SIGNAL-ONLY MODE.
+  (Multipliers scale SL distance / TP distance / position SIZE relative to the
+   balanced base — they are NOT leverage.)
+═══════════════════════════════════════════════════════════════════
+
+▶ STRATEGY: CONSERVATIVE  (capital preservation · tier 1)
+  • Source from get_actionable_signals; only conviction=strong, proven, band A+.
+  • Use list_recommended_strategies(tier=1).  Stop ×0.7 · Target ×0.8 · Size ×0.5.
+  • Skip anything against Macro Pulse. When unsure, stay flat.
+
+▶ STRATEGY: BALANCED  (base · tier 2)
+  • Source from get_macro_aligned_signals (conviction=strong).
+  • Use list_recommended_strategies(tier=2).  Stop ×1.0 · Target ×1.0 · Size ×1.0.
+
+▶ STRATEGY: AGGRESSIVE  (max opportunity · tier 3)
+  • Source from list_signals + get_actionable_signals, wider net.
+  • Use list_recommended_strategies(tier=3).  Stop ×1.2 · Target ×1.3 · Size ×1.5.
+  • Takes band C when macro strongly agrees. Higher variance.
+═══════════════════════════════════════════════════════════════════`;
+
+const restPrompts = [
+  { id: "oneliner", title: "The one-liner",                 sub: "Drop this into any agent's instructions. The whole integration in a few lines.", code: oneLiner },
+  { id: "research", title: "Market-aware research assistant", sub: "Makes an agent check signals, levels, and regime before answering any market question.", code: tradeAware },
+  { id: "macro",    title: "Daily macro brief",             sub: "A morning routine: regime, BTC/ETH bias, rotation, top catalysts.", code: macroBrief },
+  { id: "safety",   title: "Token safety screen",           sub: "Screen any token for honeypot / rug risk before touching it.", code: tokenSafety },
+];
+---
+
+<BaseLayout
+  title="Quickstart — prompts for your agent"
+  description="Copy-paste prompts that make any AI agent market-aware with the n0brains API. A free-tier one-liner for any agent over REST, and a full Pro-tier MCP prompt with real-time tools and selectable trading strategy modes. No SDK required."
+>
+  <section class="docs-page">
+    <h1>Quickstart: prompts for your agent</h1>
+    <p class="docs-subtitle">
+      n0brains is a plain API — no SDK, no install. To make any agent market-aware,
+      hand it the base URL, your key, and a goal. Copy a prompt, swap in your real key,
+      paste it into the agent. Two tracks below: <strong>Free</strong> (REST, any agent)
+      and <strong>Pro</strong> (MCP, real-time, all tools).
+    </p>
+
+    <div class="card">
+      <h2 id="before">Before you start</h2>
+      <ol>
+        <li><a href="/signup">Create a free account</a> — your API key appears instantly (also in your <a href="/dashboard">dashboard</a>).</li>
+        <li>Replace <code>intel_sk_your_key</code> (or <code>PASTE_YOUR_PRO_KEY_HERE</code>) with your real key.</li>
+        <li>Base URL <code>https://api.n0brains.com</code>, header <code>X-API-Key</code> (REST) or <code>Authorization: Bearer</code> (MCP).</li>
+      </ol>
+      <p class="docs-tip">Free is 60 req/min with a 15-min signal delay; MCP <code>tools/call</code> and real-time need Pro. Over your rate limit? Buy <a href="/dashboard">pay-per-call credits</a>, or use <a href="/docs/x402">x402</a> for walletless USDC per call.</p>
+    </div>
+
+    <h2 class="track-head" id="free">Free tier — REST, any agent</h2>
+    {restPrompts.map((p) => (
+      <div class="card">
+        <h2 id={p.id}>{p.title}</h2>
+        <p>{p.sub}</p>
+        <div class="prompt-block">
+          <button class="copy-btn" data-copy={p.code} aria-label="copy prompt">copy</button>
+          <pre><code>{p.code}</code></pre>
+        </div>
+      </div>
+    ))}
+
+    <h2 class="track-head" id="pro">Pro tier — MCP, real-time, all tools</h2>
+    <div class="card">
+      <h2 id="pro-config">1. Add the MCP server</h2>
+      <p>Paste this into your MCP client's config (Claude Desktop, Cursor, Cline, OpenClaw — they share the same <code>mcpServers</code> shape). Full per-client setup is on the <a href="/docs/mcp">MCP page</a>.</p>
+      <div class="prompt-block">
+        <button class="copy-btn" data-copy={mcpConfig} aria-label="copy config">copy</button>
+        <pre><code>{mcpConfig}</code></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h2 id="pro-prompt">2. Paste the agent prompt</h2>
+      <p>A complete real-time agent: it discovers every tool from the MCP server, knows how to read a signal, respects the Macro-Pulse veto, and has three selectable strategy modes. Keep one strategy block to let it trade, or delete the whole strategy section for signals-only.</p>
+      <div class="prompt-block">
+        <button class="copy-btn" data-copy={proPrompt} aria-label="copy prompt">copy</button>
+        <pre><code>{proPrompt}</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="more">Going further</h2>
+      <ul>
+        <li><strong>Full MCP setup + tool reference:</strong> <a href="/docs/mcp">/docs/mcp</a> (per-client config, every tool, error codes).</li>
+        <li><strong>Shell pipeline or bot?</strong> The <a href="/docs/cli">CLI</a> prints JSON to stdout for <code>jq</code> and pipes.</li>
+        <li><strong>No account at all?</strong> <a href="/docs/x402">x402</a> — pay per request in USDC on Base, no signup.</li>
+        <li><strong>Prefer a structured skill file?</strong> <code>curl -O https://n0brains.com/openclaw/n0brains-signals.md</code> packages every tool, auth, and behaviour rule.</li>
+        <li><strong>Full endpoint + field reference:</strong> the <a href="/docs">API docs</a>. Backtested exit rules: the <a href="/docs/strategies">Strategy Library</a>.</li>
+      </ul>
+      <p class="docs-tip">Everything n0brains returns is analytical data on public markets — not financial advice. Keep a human in the loop; an agent should never be told to place trades unattended. See <a href="/terms">terms</a> §8.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .track-head {
+    font-family: var(--font-display); font-size: 1.6rem; font-weight: 400;
+    color: var(--accent); letter-spacing: 0.04em;
+    margin: 2.5rem 0 1rem; padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .prompt-block { position: relative; }
+  .prompt-block pre { margin: 0; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    font-family: var(--font-mono); font-size: 0.62rem; color: var(--text);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 3px; padding: 4px 9px; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+</style>
+
+<script>
+  document.querySelectorAll(".copy-btn").forEach((b) => {
+    b.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy || "");
+        const orig = b.textContent;
+        b.textContent = "copied";
+        setTimeout(() => { b.textContent = orig; }, 1500);
+      } catch { /* ignore */ }
+    });
+  });
+</script>
