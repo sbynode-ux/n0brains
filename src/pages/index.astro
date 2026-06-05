@@ -215,6 +215,12 @@ const computeLayerCount = 10;
       font-size: 0.9rem; margin-bottom: 0.6rem; color: var(--text);
     }
     .pricing-card li .check { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+    .payg-note {
+      text-align: center; max-width: 640px; margin: 2rem auto 0;
+      font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;
+    }
+    .payg-note strong { color: var(--text-heading); }
+    .payg-note a { color: var(--accent); }
 
     /* Honesty comparison */
     .honesty-section { padding: 4rem 0; border-top: 1px solid var(--border); }
@@ -465,6 +471,12 @@ const computeLayerCount = 10;
           <button data-checkout="pro" class="btn btn-primary" style="width: 100%; justify-content: center;">Get Pro</button>
         </div>
       </div>
+      <p class="payg-note">
+        Need more than your rate limit allows? Buy <strong>pay-per-call credits</strong> —
+        one-time packs from $5, spent only on calls beyond your tier's included rate.
+        Manage them in your <a href="/dashboard">account</a>. No account at all?
+        Pay per request in USDC via <a href="/docs/x402">x402</a>.
+      </p>
     </section>
 
   </div>

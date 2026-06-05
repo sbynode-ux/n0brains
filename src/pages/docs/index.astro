@@ -326,8 +326,62 @@ const macroPulseResponse = JSON.stringify({
         <li>Hit <code>GET /signals</code> — you are done</li>
       </ol>
       <pre><code>curl -H "X-API-Key: intel_sk_your_key" https://api.n0brains.com/signals</code></pre>
-      <p class="docs-tip">Running an OpenClaw agent? Just hand it your API key and the base URL — it will figure out the rest. Tell it: <em>"Use the n0brains API at https://api.n0brains.com with X-API-Key intel_sk_your_key"</em> and let it trade. More — including an optional skill file — on the <a href="/agents/">agents page</a>.</p>
       <p class="docs-tip">Want to know how the signals have performed under different exit rules (trailing stop, no-SL, US-hours-only, etc.)? See the <a href="/docs/strategies">Strategy Library</a> — backtested reference configurations on real 1-minute candles across three exchanges.</p>
+    </div>
+
+    <div class="card">
+      <h2 id="agents">For Agents</h2>
+      <p>n0brains is a plain HTTP API — no SDK, no install step. Point any agent
+        (Claude Code, OpenClaw, LangChain, a custom orchestrator) at it by handing it
+        the base URL and your key. One line in the agent's instructions:</p>
+      <pre><code>Use the n0brains API at https://api.n0brains.com with X-API-Key intel_sk_your_key</code></pre>
+      <p>Swap in your real key and that's the whole integration — the agent discovers the
+        endpoints implicitly from the API's shape (full reference below). Base URL
+        <code>https://api.n0brains.com</code>, auth header <code>X-API-Key</code>.</p>
+
+      <h3>Optional: a structured skill file</h3>
+      <p>Some runtimes prefer a structured skill file over a one-line instruction.
+        <code>n0brains-signals.md</code> packages the same thing — frontmatter, every tool
+        with examples, auth, error handling, behaviour rules — as a single Markdown file
+        you drop in. The one-liner works just as well; this is for when you want it codified.</p>
+      <pre><code>curl -O https://n0brains.com/openclaw/n0brains-signals.md</code></pre>
+      <p><a href="/openclaw/n0brains-signals.md" download>Download n0brains-signals.md ↓</a></p>
+      <table>
+        <thead><tr><th>Runtime</th><th>Where it goes</th><th>Auth</th></tr></thead>
+        <tbody>
+          <tr><td>OpenClaw</td><td>drop <code>n0brains-signals.md</code> into your agent's skills dir</td><td>env <code>NB_API_KEY</code></td></tr>
+          <tr><td>Claude Code</td><td>copy to <code>~/.claude/skills/n0brains-signals/SKILL.md</code></td><td>env <code>NB_API_KEY</code></td></tr>
+          <tr><td>Custom orchestrator</td><td>load the <code>.md</code> as system context, or just use the one-liner</td><td>your secret store, key <code>n0brains_api_key</code></td></tr>
+          <tr><td>Direct HTTP / TS client</td><td>skip the skill — use the endpoints below or the <a href="https://github.com/sbynode-ux/n0brains-ts">n0brains-ts</a> client</td><td>header <code>X-API-Key</code></td></tr>
+        </tbody>
+      </table>
+      <p class="docs-tip">Prefer typed calls? The optional TypeScript client
+        <a href="https://github.com/sbynode-ux/n0brains-ts">n0brains-ts</a>
+        (<code>@n0brains/client</code>) wraps every endpoint. Or the
+        <a href="/docs/cli">CLI</a> for the shell, and the
+        <a href="/docs/mcp">MCP server</a> for Claude Desktop / Cursor / Cline.</p>
+    </div>
+
+    <div class="card">
+      <h2 id="billing">Plans &amp; Credits</h2>
+      <p>Free and Pro are the two subscription tiers (rate limits above). Beyond your
+        tier's included rate, you have two pay-as-you-go options:</p>
+      <table>
+        <thead><tr><th>Option</th><th>How it works</th><th>Account?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Pay-per-call credits</strong></td>
+              <td>One-time packs (from $5). A credit is spent only on a data call made
+                  beyond your tier's included rate limit — within your rate, calls stay free.
+                  Buy and track them in your <a href="/dashboard">account dashboard</a>.</td>
+              <td>Yes — card via Stripe</td></tr>
+          <tr><td><strong>x402</strong></td>
+              <td>Pay per request in USDC on Base, no signup. See <a href="/docs/x402">/docs/x402</a>.</td>
+              <td>No — walletless</td></tr>
+        </tbody>
+      </table>
+      <p class="docs-tip">When you're out of credits and over your rate limit, data
+        endpoints return <code>402</code> with a link to buy more. Within your rate limit,
+        nothing is charged.</p>
     </div>
 
     <div class="card">
@@ -385,7 +439,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/auth/me</code></td><td>API Key</td><td>User profile</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/api-keys</code></td><td>API Key</td><td>Generate new API key</td></tr>
           <tr><td><span class="method method-del">DEL</span></td><td><code>/auth/api-keys/{'{id}'}</code></td><td>API Key</td><td>Revoke API key</td></tr>
-          <tr><td><span class="method method-post">POST</span></td><td><code>/billing/checkout</code></td><td>API Key</td><td>Stripe checkout session</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/billing/checkout</code></td><td>API Key</td><td>Stripe subscription checkout (Pro)</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/billing/buy-credits</code></td><td>API Key</td><td>Stripe one-time checkout for a credit pack</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/billing/credit-packs</code></td><td>API Key</td><td>List purchasable credit packs</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/credits</code></td><td>API Key</td><td>Credit balance + transaction history</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/billing/portal</code></td><td>API Key</td><td>Stripe customer portal</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/webhooks</code></td><td>Pro</td><td>Register webhook</td></tr>
           <tr><td><span class="method method-del">DEL</span></td><td><code>/webhooks/{'{id}'}</code></td><td>Pro</td><td>Remove webhook</td></tr>

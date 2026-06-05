@@ -8,4 +8,8 @@ export default defineConfig({
   build: {
     format: "directory",
   },
+  // /agents was folded into the docs page. Keep old links alive.
+  redirects: {
+    "/agents": "/docs/#agents",
+  },
 });
