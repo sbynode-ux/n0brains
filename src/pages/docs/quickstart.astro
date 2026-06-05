@@ -53,6 +53,38 @@ If rug_probability > 0.5, is_honeypot is true, or "honeypot"/"high_sell_tax" is
 in flags, warn me loudly and tell me NOT to proceed. Otherwise summarize the
 risk. Analytical scam-screening, not a guarantee of safety.`;
 
+const liqHunt =
+`You map liquidation magnets with the n0brains API
+(https://api.n0brains.com, header X-API-Key: ${KEY}). When I name a coin:
+  GET /liquidation-map/<COIN>  — returns nearest_long_liq_zone (price below, where
+    longs get flushed) and nearest_short_liq_zone (price above, where shorts get
+    squeezed), plus zones[] sorted by est_notional_usd.
+Tell me: the nearest magnet on each side, which is heavier (bigger est_notional_usd),
+and therefore which direction price is more likely to get pulled. Pair with
+GET /levels/<COIN> so the magnet lines up against real support/resistance.
+These are modeled liquidity zones, not certainties — analysis only, not advice.`;
+
+const rotationRebal =
+`You track capital rotation with the n0brains API
+(https://api.n0brains.com, header X-API-Key: ${KEY}). On request:
+  1. GET /rotation         — regime is "into_alts", "into_btc", or "neutral",
+                             with a rotation_score for strength.
+  2. GET /correlation?vs=BTC  — which assets move WITH vs INDEPENDENT of BTC.
+  3. GET /macro            — confirm the regime read against macro bias.
+If regime=into_alts, surface low-BTC-correlation names as the rotation candidates;
+if into_btc, flag alts as the funding source; if neutral, say so and stand down.
+This is a heuristic regime read, not a rebalancing instruction — analysis only.`;
+
+const sentDivergence =
+`You hunt sentiment/price divergences with the n0brains API
+(https://api.n0brains.com, header X-API-Key: ${KEY}). For a coin I name:
+  GET /sentiment/<COIN>  — returns lean (bullish/bearish/mixed), net_sentiment,
+    volume, velocity (recent vs older chatter), accelerating, top_sources.
+Flag a DIVERGENCE when sentiment lean is strongly one way and accelerating, but
+the asset's recent signals (GET /signals?asset=<COIN>) point the other way — a
+possible crowd-vs-flow mismatch. Report lean, velocity, the contradicting signal,
+and which side has the on-chain/flow evidence. Analysis only, not financial advice.`;
+
 // ── PRO / MCP track ───────────────────────────────────────────────────
 const mcpConfig = JSON.stringify({
   mcpServers: {
@@ -116,17 +148,22 @@ or docs — discover every tool from the MCP server itself; it self-describes.
 
 ▶ STRATEGY: CONSERVATIVE  (capital preservation · tier 1)
   • Source from get_actionable_signals; only conviction=strong, proven, band A+.
-  • Use list_recommended_strategies(tier=1).  Stop ×0.7 · Target ×0.8 · Size ×0.5.
+  • list_recommended_strategies(tier=1) — keeps only strategy types with
+    win ≥ 70% AND sharpe ≥ 1.0.  Scales Stop ×0.7 · Target ×0.8 · Size ×0.5.
   • Skip anything against Macro Pulse. When unsure, stay flat.
 
 ▶ STRATEGY: BALANCED  (base · tier 2)
   • Source from get_macro_aligned_signals (conviction=strong).
-  • Use list_recommended_strategies(tier=2).  Stop ×1.0 · Target ×1.0 · Size ×1.0.
+  • list_recommended_strategies(tier=2) — win ≥ 50% AND sharpe ≥ 0.3.
+    Base params, unscaled: Stop ×1.0 · Target ×1.0 · Size ×1.0.
 
 ▶ STRATEGY: AGGRESSIVE  (max opportunity · tier 3)
   • Source from list_signals + get_actionable_signals, wider net.
-  • Use list_recommended_strategies(tier=3).  Stop ×1.2 · Target ×1.3 · Size ×1.5.
+  • list_recommended_strategies(tier=3) — win ≥ 30% (sharpe floor 0).
+    Scales Stop ×1.2 · Target ×1.3 · Size ×1.5.
   • Takes band C when macro strongly agrees. Higher variance.
+
+(Check live tier results anytime with get_tier_performance / compare_strategy_tiers.)
 ═══════════════════════════════════════════════════════════════════`;
 
 const restPrompts = [
@@ -134,6 +171,9 @@ const restPrompts = [
   { id: "research", title: "Market-aware research assistant", sub: "Makes an agent check signals, levels, and regime before answering any market question.", code: tradeAware },
   { id: "macro",    title: "Daily macro brief",             sub: "A morning routine: regime, BTC/ETH bias, rotation, top catalysts.", code: macroBrief },
   { id: "safety",   title: "Token safety screen",           sub: "Screen any token for honeypot / rug risk before touching it.", code: tokenSafety },
+  { id: "liqhunt",  title: "Liquidation-magnet hunter",     sub: "Find where leveraged positions get flushed — which side is heavier and pulls price.", code: liqHunt },
+  { id: "rotation", title: "Rotation / rebalance scout",    sub: "Is capital flowing into alts or into BTC? Surface the rotation candidates.", code: rotationRebal },
+  { id: "sentiment",title: "Sentiment-divergence finder",   sub: "Spot crowd-vs-flow mismatches: sentiment one way, on-chain signals the other.", code: sentDivergence },
 ];
 ---
 
