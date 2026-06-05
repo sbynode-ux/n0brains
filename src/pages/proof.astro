@@ -457,9 +457,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .eq-leg-title { color: var(--text-muted); text-transform: uppercase;
     font-size: 0.7rem; letter-spacing: 0.06em; margin-right: 2px; }
   .eq-leg-item { display: inline-flex; align-items: center; gap: 7px; }
-  /* swatch = a short line segment matching the drawn line, not a square */
-  .eq-swatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block;
-    flex: 0 0 auto; }
+  /* solid colored chip — unmistakable; faint border so a white/light swatch
+     still shows against the legend background */
+  .eq-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block;
+    flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.25); }
   .eq-leg-name { color: var(--text); }
   .equity-legend b { font-weight: 600; }
   .equity-legend .pos { color: #4ade80; }
