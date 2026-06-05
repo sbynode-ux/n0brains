@@ -41,8 +41,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       returns, not a live-traded or guaranteed account.</strong>
     </p>
     <div id="equity-wrap">
-      <div id="equity-chart" class="equity-chart">loading…</div>
       <div id="equity-legend" class="equity-legend"></div>
+      <div id="equity-chart" class="equity-chart">loading…</div>
     </div>
     <p class="meta" id="equity-meta"></p>
 
@@ -208,11 +208,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const W = 720, H = 300, padL = 48, padR = 16, padT = 16, padB = 28;
     const w = W - padL - padR, h = H - padT - padB;
 
-    // Series: combined + each proven type.
-    const series = [{ name: "all proven", points: d.combined, color: "#e5e7eb", width: 2.2 }];
+    // Series: combined + each proven type. "All proven" gets a bright, thick
+    // white line so it reads as the headline series vs the thinner per-type lines.
+    const COMBINED_COLOR = "#ffffff";
+    const series = [{ name: "All proven (combined)", points: d.combined, color: COMBINED_COLOR, width: 2.6 }];
     const types = Object.keys(d.by_type || {});
     types.forEach((t, i) => {
-      series.push({ name: t, points: d.by_type[t], color: TYPE_COLORS[i % TYPE_COLORS.length], width: 1.4 });
+      series.push({ name: t, points: d.by_type[t], color: TYPE_COLORS[i % TYPE_COLORS.length], width: 1.6 });
     });
 
     let tMin = Infinity, tMax = -Infinity, eqMin = Infinity, eqMax = -Infinity;
@@ -246,15 +248,24 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         ${paths}
       </svg>`;
 
-    // Legend with each series' final return.
-    const ret = d.combined_return_pct;
+    // Legend built straight from `series` so colors + labels always match the
+    // chart lines exactly. Swatch is a short line segment (matching the drawn
+    // line), not a square, so "this color = this line" is unambiguous. Each
+    // entry shows the series' final return.
     const byRet = d.by_type_return_pct || {};
-    let leg = `<span class="eq-leg-item"><span class="eq-swatch" style="background:#e5e7eb"></span>all proven <b class="${ret >= 0 ? "pos" : "neg"}">${pctRaw(ret)}</b></span>`;
-    types.forEach((t, i) => {
-      const r = byRet[t];
-      leg += `<span class="eq-leg-item"><span class="eq-swatch" style="background:${TYPE_COLORS[i % TYPE_COLORS.length]}"></span>${t} <b class="${r >= 0 ? "pos" : "neg"}">${pctRaw(r)}</b></span>`;
-    });
-    legend.innerHTML = leg;
+    const retFor = (s) => s.name.startsWith("All proven")
+      ? d.combined_return_pct
+      : byRet[s.name];
+    legend.innerHTML =
+      `<span class="eq-leg-title">Lines</span>` +
+      series.map((s) => {
+        const r = retFor(s);
+        const rv = (r === null || r === undefined) ? "" :
+          `<b class="${r >= 0 ? "pos" : "neg"}">${pctRaw(r)}</b>`;
+        return `<span class="eq-leg-item">` +
+          `<span class="eq-swatch" style="background:${s.color}"></span>` +
+          `<span class="eq-leg-name">${s.name}</span>${rv}</span>`;
+      }).join("");
 
     if (meta) {
       meta.textContent =
@@ -439,12 +450,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .eq-base { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.6; }
   .eq-axis { fill: var(--text-muted); font-family: var(--font-mono); font-size: 10px; }
   .equity-legend {
-    display: flex; flex-wrap: wrap; gap: 14px;
-    font-family: var(--font-mono); font-size: 0.8rem;
-    margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+    font-family: var(--font-mono); font-size: 0.82rem;
+    margin-bottom: 0.9rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--border);
   }
-  .eq-leg-item { display: inline-flex; align-items: center; gap: 6px; }
-  .eq-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .eq-leg-title { color: var(--text-muted); text-transform: uppercase;
+    font-size: 0.7rem; letter-spacing: 0.06em; margin-right: 2px; }
+  .eq-leg-item { display: inline-flex; align-items: center; gap: 7px; }
+  /* swatch = a short line segment matching the drawn line, not a square */
+  .eq-swatch { width: 18px; height: 3px; border-radius: 2px; display: inline-block;
+    flex: 0 0 auto; }
+  .eq-leg-name { color: var(--text); }
+  .equity-legend b { font-weight: 600; }
   .equity-legend .pos { color: #4ade80; }
   .equity-legend .neg { color: #ef4444; }
 </style>
