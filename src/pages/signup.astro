@@ -16,6 +16,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <label for="password">password</label>
         <input type="password" id="password" name="password" required minlength="8" placeholder="8+ characters" autocomplete="new-password" />
       </div>
+      <label class="terms-check">
+        <input type="checkbox" id="terms" required />
+        <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</span>
+      </label>
       <button type="submit" class="btn btn-primary" id="submit-btn">Create Account</button>
       <p class="auth-error" id="error-msg"></p>
     </form>
@@ -27,8 +31,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <code id="api-key-display"></code>
         <button class="btn btn-secondary" id="copy-btn" onclick="copyKey()">copy</button>
       </div>
-      <p class="auth-subtle">Free tier: 60 req/min, 15-min delay. <a href="/#pricing">Upgrade to Pro</a> for real-time signals.</p>
-      <a href="/#pricing" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">View Plans</a>
+      <p class="auth-subtle">Free tier: 60 req/min, 15-min delay. Manage your account, keys, and billing from your dashboard.</p>
+      <a href="/dashboard" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">Go to Dashboard</a>
     </div>
 
     <p class="auth-footer">Already have an account? <a href="/login">Log in</a></p>
@@ -203,6 +207,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .auth-footer a {
     color: var(--accent);
   }
+
+  .terms-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    cursor: pointer;
+  }
+
+  .terms-check input {
+    margin-top: 0.2rem;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .terms-check a {
+    color: var(--accent);
+  }
 </style>
 
 <script>
@@ -222,12 +246,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    const termsAccepted = document.getElementById('terms').checked;
 
     try {
       const resp = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, terms_accepted: termsAccepted }),
       });
 
       const data = await resp.json();
@@ -236,9 +261,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         throw new Error(data.detail || 'Registration failed');
       }
 
-      // Store API key
+      // Store API key + session token
       localStorage.setItem('api_key', data.api_key);
       localStorage.setItem('tier', data.tier);
+      if (data.token) localStorage.setItem('auth_token', data.token);
 
       // Show success panel
       form.style.display = 'none';
