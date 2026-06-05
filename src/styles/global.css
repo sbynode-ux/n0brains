@@ -234,6 +234,10 @@ footer .inner { max-width: var(--max-width); margin: 0 auto; }
 footer a { color: var(--text-muted); }
 footer a:hover { color: var(--accent); }
 footer .footer-links { margin-top: 8px; display: flex; gap: 16px; justify-content: center; }
+footer .footer-socials { margin-top: 12px; display: flex; gap: 18px; justify-content: center; align-items: center; }
+footer .footer-socials a { color: var(--text-muted); display: inline-flex; transition: color 0.15s ease, transform 0.15s ease; }
+footer .footer-socials a:hover { color: var(--accent); transform: translateY(-1px); }
+footer .footer-socials svg { display: block; }
 
 /* ─── Home Hero ─── */
 .hero {
