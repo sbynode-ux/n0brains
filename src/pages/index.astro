@@ -28,7 +28,7 @@ const proFeatures = [
   "600 requests / minute",
   "<strong>Real-time</strong> signals — no delay",
   "REST + WebSocket + Webhooks + <strong><a href=\"/docs/mcp\">MCP server</a></strong>",
-  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (12 tools, Bearer auth)",
+  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (23 tools, Bearer auth)",
   "Full source &amp; channel detail",
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
@@ -96,6 +96,24 @@ const computeLayerCount = 10;
     .btn-primary:hover   { background: #fff; }
     .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Live proof strip — above the fold, always current from /proof */
+    .proof-strip {
+      display: inline-flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;
+      justify-content: center; margin: 2.25rem auto 0; padding: 0.6rem 1.1rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg-alt); text-decoration: none;
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--text);
+      transition: border-color 0.2s ease;
+    }
+    .proof-strip:hover { border-color: var(--accent); }
+    .proof-strip-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite; flex-shrink: 0;
+    }
+    .proof-strip-text { color: var(--text-heading); }
+    .proof-strip-text .ps-pos { color: #4ade80; }
+    .proof-strip-cta { color: var(--accent); font-weight: 700; }
 
     /* Sources */
     .sources-section, .pricing-section, .stats-section, .contrast-section {
@@ -198,6 +216,39 @@ const computeLayerCount = 10;
     }
     .pricing-card li .check { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
 
+    /* Honesty comparison */
+    .honesty-section { padding: 4rem 0; border-top: 1px solid var(--border); }
+    .honesty-section h2 {
+      font-family: var(--font-display); font-size: 2.4rem; font-weight: 400;
+      color: var(--text-heading); letter-spacing: 0.04em; text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .honesty-sub { text-align: center; max-width: 640px; margin: 0 auto 2.5rem; }
+    .honesty-wrap { overflow-x: auto; max-width: 900px; margin: 0 auto; }
+    .honesty-table {
+      width: 100%; border-collapse: collapse; font-size: 0.9rem;
+      border: 1px solid var(--border);
+    }
+    .honesty-table th, .honesty-table td {
+      padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .honesty-table thead th {
+      font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-muted); background: var(--bg-alt);
+    }
+    .honesty-table td { color: var(--text); }
+    .honesty-table td:first-child { color: var(--text-heading); font-weight: 500; }
+    .honesty-table .us-col { background: var(--bg-hover); }
+    .honesty-table thead .us-col { color: var(--accent); }
+    .honesty-table .yes { color: #4ade80; font-weight: 600; }
+    .honesty-table .yes a { color: #4ade80; text-decoration: underline; }
+    .honesty-table .no { color: var(--text-muted); }
+    .honesty-foot {
+      max-width: 760px; margin: 1.5rem auto 0; text-align: center;
+      font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+    }
+    .honesty-foot strong { color: var(--text); }
 
   </style>
 
@@ -207,15 +258,23 @@ const computeLayerCount = 10;
       <p style="font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1.5rem;">
         <span class="live-dot"></span>Live Signal Feed Active
       </p>
-      <h1>AI-POWERED<br /><span class="accent">CRYPTO</span><br />INTELLIGENCE</h1>
+      <h1>SIGNALS THAT<br /><span class="accent">PROVE</span><br />THEIR EDGE</h1>
       <p class="lede">
-        Events from across the market, machine-classified, cross-corroborated, and scored. Type, direction, urgency, and a <strong>calibrated</strong> confidence — plus <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Every signal carries its type's measured track record, and the highest-conviction calls are flagged <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record both beats buy-and-hold and is profitable on its own (95% CI lower bound above zero)</a>. Pipe it into your agent, strategy, or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, or <strong>Webhook</strong>.
+        We measure every signal type against real post-signal price action and flag a call <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record both beats buy-and-hold and is profitable on its own (95% CI lower bound above zero)</a> — and we publicly demote our own weak signals. Every event is machine-classified, cross-corroborated, and scored with a <strong>calibrated</strong> confidence, anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent, strategy, or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, <strong>Webhook</strong>, <strong>MCP</strong>, or pay-per-call <strong>x402</strong>.
       </p>
       <div class="cta-row">
         <a href="/signup" class="btn btn-primary">Start Free →</a>
         <a href="/proof" class="btn btn-secondary">See the proof ↗</a>
         <a href="/docs/" class="btn btn-secondary">API Docs ↗</a>
       </div>
+
+      <!-- Live proof strip — pulls the same /proof endpoint the scoreboard renders,
+           so the above-the-fold claim can never exceed what we actually prove. -->
+      <a id="proof-strip" class="proof-strip" href="/proof" aria-label="See the live win-rate scoreboard">
+        <span class="proof-strip-dot"></span>
+        <span class="proof-strip-text">loading live win-rate…</span>
+        <span class="proof-strip-cta">live scoreboard →</span>
+      </a>
     </section>
 
     <!-- What we watch -->
@@ -318,6 +377,64 @@ const computeLayerCount = 10;
       </div>
     </section>
 
+    <!-- We publish our win-rate. They don't. (honesty comparison) -->
+    <section class="honesty-section">
+      <h2>We publish our win-rate. They don't.</h2>
+      <p class="subtitle honesty-sub">
+        Most of the industry asks you to trust a backtest you can't audit. We measure
+        every signal type on real prices, publish the result, and demote our own weak
+        signals in the open. The edge here is honesty — not a bigger pile of data.
+      </p>
+      <div class="honesty-wrap">
+        <table class="honesty-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th class="us-col">n0brains</th>
+              <th>Nansen</th>
+              <th>Glassnode</th>
+              <th>Typical TG "call" group</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Publishes live per-signal win-rate</td>
+              <td class="us-col"><span class="yes">Yes — <a href="/proof">/proof</a></span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">No</span></td>
+            </tr>
+            <tr>
+              <td>Demotes its own weak signals publicly</td>
+              <td class="us-col"><span class="yes">Yes</span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">Never</span></td>
+            </tr>
+            <tr>
+              <td>Forward-return vs buy-and-hold, with 95% CI</td>
+              <td class="us-col"><span class="yes">Yes</span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">No</span></td>
+              <td><span class="no">No</span></td>
+            </tr>
+            <tr>
+              <td>Price</td>
+              <td class="us-col"><span class="yes">$19.99/mo</span></td>
+              <td>$49/mo</td>
+              <td>$999/mo (Pro)</td>
+              <td>"lifetime $$$"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="honesty-foot">
+        Comparison reflects publicly published methodology as of mid-2026. We're thinner
+        than the big dashboards on raw data volume — we compete on <strong>edge quality you
+        can audit</strong>, not data quantity. Not financial advice.
+      </p>
+    </section>
+
     <!-- Pricing -->
     <section class="pricing-section" id="pricing">
       <h2>Choose your tier.</h2>
@@ -376,7 +493,7 @@ const computeLayerCount = 10;
         "name": "What does the Pro tier include?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (12 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
+          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (23 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
         }
       },
       {
@@ -408,7 +525,7 @@ const computeLayerCount = 10;
         "name": "Does n0brains have an MCP server for Claude Desktop / Cursor / Cline?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes, on the Pro tier. Point your MCP-capable agent at https://api.n0brains.com/mcp with Authorization: Bearer <your_api_key>. 12 read-only tools cover signals, S/R levels, macro bias, performance, anti-predictive cells, and liveness. tools/list is open so unauthenticated discovery works; tools/call requires Pro. See /docs/mcp for config snippets."
+          "text": "Yes, on the Pro tier. Point your MCP-capable agent at https://api.n0brains.com/mcp with Authorization: Bearer <your_api_key>. 23 read-only tools cover signals, S/R levels, macro bias, rotation, correlation, liquidation maps, options, sentiment, mindshare, performance, anti-predictive cells, and liveness. tools/list is open so unauthenticated discovery works; tools/call requires Pro. See /docs/mcp for config snippets."
         }
       },
       {
@@ -429,4 +546,34 @@ const computeLayerCount = 10;
       }
     ]
   })}</script>
+
+  <script>
+    // Live proof strip: same /proof endpoint as the scoreboard. Keeps the
+    // above-the-fold claim honest and current — never asserts more than /proof shows.
+    (() => {
+      const strip = document.getElementById("proof-strip");
+      if (!strip) return;
+      const textEl = strip.querySelector(".proof-strip-text");
+      fetch("https://api.n0brains.com/proof", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data || !Array.isArray(data.types)) throw new Error("no types");
+          const proven = data.types.filter((t) => t.tradeable);
+          if (!proven.length) {
+            textEl.textContent = "live win-rate scoreboard";
+            return;
+          }
+          const parts = proven
+            .slice(0, 3)
+            .map((t) => `${t.signal_type} <span class="ps-pos">${(Number(t.win_rate) * 100).toFixed(1)}%</span>`);
+          const n = proven.length;
+          textEl.innerHTML =
+            `${n} signal type${n === 1 ? "" : "s"} forward-return proven · ` + parts.join(" · ");
+        })
+        .catch(() => {
+          // On failure, fall back to a static honest label (no invented numbers).
+          textEl.textContent = "live win-rate scoreboard";
+        });
+    })();
+  </script>
 </BaseLayout>
