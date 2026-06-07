@@ -47,33 +47,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </div>
     <p class="meta" id="equity-meta"></p>
 
-    <h2 class="tier-heading">Risk-tier performance</h2>
-    <p class="tier-blurb">
-      The same signals can be run with different stop-loss, take-profit, and
-      sizing rules depending on how aggressive you want to be. Below are the
-      paper-traded results for three reference tiers — conservative (1),
-      balanced (2), and aggressive (3) — over the last 30 days. Source:
-      <code>/performance?tier=N</code>. Each tier filters the strategy set
-      AND scales SL/TP/size from a base config.
-    </p>
-
-    <div id="tier-cards" class="tier-cards">
-      <div class="tier-card" data-tier="1">
-        <h3>1 · Conservative</h3>
-        <div class="tier-body">loading…</div>
-      </div>
-      <div class="tier-card" data-tier="2">
-        <h3>2 · Balanced</h3>
-        <div class="tier-body">loading…</div>
-      </div>
-      <div class="tier-card" data-tier="3">
-        <h3>3 · Aggressive</h3>
-        <div class="tier-body">loading…</div>
-      </div>
-    </div>
-
-    <p class="meta" id="tier-meta"></p>
-
     <p class="legal-updated" style="margin-top: 32px;">
       A type is shown as <strong>forward-return proven</strong> only when its
       live post-signal price record clears 30+ measured signals AND both beats
@@ -291,84 +264,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   }
   loadEquity();
   setInterval(loadEquity, 120_000);
-
-  // Risk-tier performance — fetch /performance?tier=N for N in {1,2,3}.
-  const TIER_LABELS = { 1: "Conservative", 2: "Balanced", 3: "Aggressive" };
-
-  function renderTier(tier, data) {
-    const card = document.querySelector(`.tier-card[data-tier="${tier}"] .tier-body`);
-    if (!card) return;
-    const tp = data && data.tier_performance;
-    if (!tp) {
-      card.innerHTML = "<div class='tier-err'>no data</div>";
-      return;
-    }
-    const totalCls = tp.total_pnl_usd >= 0 ? "pos" : "neg";
-    const sharpe = tp.sharpe === null || tp.sharpe === undefined
-      ? "—"
-      : Number(tp.sharpe).toFixed(2);
-    const contributors = (tp.top_contributors || []).join(", ") || "—";
-    let strategyRows = "";
-    const byStrat = tp.by_strategy || {};
-    for (const [name, s] of Object.entries(byStrat)) {
-      const pnlCls = s.total_pnl_usd >= 0 ? "pos" : "neg";
-      strategyRows += `
-        <tr>
-          <td>${name}</td>
-          <td>${s.n}</td>
-          <td>${Number(s.win_pct).toFixed(1)}%</td>
-          <td class="${pnlCls}">${usd(s.total_pnl_usd)}</td>
-          <td>${s.sharpe === null || s.sharpe === undefined ? "—" : Number(s.sharpe).toFixed(2)}</td>
-        </tr>`;
-    }
-    card.innerHTML = `
-      <div class="tier-summary">
-        <div><span class="muted">n</span> ${tp.n}</div>
-        <div><span class="muted">win</span> ${Number(tp.win_pct).toFixed(1)}%</div>
-        <div><span class="muted">total</span> <span class="${totalCls}">${usd(tp.total_pnl_usd)}</span></div>
-        <div><span class="muted">sharpe</span> ${sharpe}</div>
-      </div>
-      <table class="tier-table">
-        <thead><tr><th>strategy</th><th>n</th><th>win</th><th>PnL</th><th>sharpe</th></tr></thead>
-        <tbody>${strategyRows || "<tr><td colspan='5' class='muted'>none qualifying</td></tr>"}</tbody>
-      </table>
-      <div class="tier-foot muted">top: ${contributors}</div>
-    `;
-  }
-
-  async function loadTier(tier) {
-    try {
-      const r = await fetch(
-        `https://api.n0brains.com/performance?days=30&tier=${tier}`,
-        { cache: "no-store" }
-      );
-      renderTier(tier, await r.json());
-    } catch (e) {
-      const card = document.querySelector(`.tier-card[data-tier="${tier}"] .tier-body`);
-      if (card) card.innerHTML = `<div class="tier-err">load failed: ${e}</div>`;
-    }
-  }
-
-  async function loadAllTiers() {
-    await Promise.all([loadTier(1), loadTier(2), loadTier(3)]);
-    const meta = document.getElementById("tier-meta");
-    if (meta) {
-      try {
-        const r = await fetch(
-          "https://api.n0brains.com/performance?days=30&tier=1",
-          { cache: "no-store" }
-        );
-        const d = await r.json();
-        if (d?.tier_performance?.generated_at) {
-          meta.textContent =
-            "tier rollup generated " + d.tier_performance.generated_at +
-            " · " + (d.tier_performance.methodology || "");
-        }
-      } catch {}
-    }
-  }
-  loadAllTiers();
-  setInterval(loadAllTiers, 60_000);
 </script>
 
 <style>

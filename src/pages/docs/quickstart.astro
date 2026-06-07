@@ -5,8 +5,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
    /docs/quickstart — copy-paste prompts users hand their agents to make
    them market-aware with n0brains. No SDK, no install. Two tracks:
    FREE/REST (any agent, one-line integration) and PRO/MCP (config block +
-   a full real-time agent prompt with the real MCP tool names + strategy
-   modes). Every tool name + endpoint below is verified against the live API.
+   a full real-time agent prompt with the real MCP tool names). Every tool
+   name + endpoint below is verified against the live API.
    ---------------------------------------------------------------------- */
 
 const KEY = "intel_sk_your_key";
@@ -101,10 +101,7 @@ const proPrompt =
   SETUP:
     1. Add the n0brains MCP server to your client (config block above)
        with your Pro API key. Real-time, all tools, no delay.
-    2. Choose your mode:
-         • TRADE for me? Keep ONE strategy block, delete the other two.
-         • SIGNALS ONLY? Delete the WHOLE strategy section.
-    3. Paste this prompt into your agent. Done.
+    2. Paste this prompt into your agent. Done.
 ═══════════════════════════════════════════════════════════════════
 
 You are a real-time crypto intelligence agent. Your data comes from the
@@ -117,9 +114,6 @@ or docs — discover every tool from the MCP server itself; it self-describes.
 • get_signal_with_context   → signal + levels + macro + dedup in one call.
 • get_macro                 → Macro Pulse daily BTC+ETH bias (full payload on Pro).
 • get_levels                → support/resistance for entry/stop.
-• list_recommended_strategies / get_recommended_strategy / compare_strategy_tiers
-                            → exit configs (SL/TP/size) per risk tier.
-• get_tier_performance      → live paper-traded results per tier.
 • get_anti_predictive_cells → setups where the edge historically INVERTED (fade).
 • list_signals / get_signal / get_rotation / get_sentiment / get_options /
   get_liquidation_map / get_correlation / get_mindshare / get_performance → deeper context.
@@ -137,33 +131,6 @@ or docs — discover every tool from the MCP server itself; it self-describes.
 2. Before deciding: get_macro_aligned_signals (or get_macro + signals) + get_levels.
 3. Skip trades that contradict a high-conviction Macro Pulse call.
 4. End every output with: "Not financial advice."
-
-═══════════════════════════════════════════════════════════════════
-  STRATEGY — keep ONE block, delete the other two.
-  Keep a block = TRADING MODE (real trades via your connected exchange/tool).
-  Delete this WHOLE section = SIGNAL-ONLY MODE.
-  (Multipliers scale SL distance / TP distance / position SIZE relative to the
-   balanced base — they are NOT leverage.)
-═══════════════════════════════════════════════════════════════════
-
-▶ STRATEGY: CONSERVATIVE  (capital preservation · tier 1)
-  • Source from get_actionable_signals; only conviction=strong, proven, band A+.
-  • list_recommended_strategies(tier=1) — keeps only strategy types with
-    win ≥ 70% AND sharpe ≥ 1.0.  Scales Stop ×0.7 · Target ×0.8 · Size ×0.5.
-  • Skip anything against Macro Pulse. When unsure, stay flat.
-
-▶ STRATEGY: BALANCED  (base · tier 2)
-  • Source from get_macro_aligned_signals (conviction=strong).
-  • list_recommended_strategies(tier=2) — win ≥ 50% AND sharpe ≥ 0.3.
-    Base params, unscaled: Stop ×1.0 · Target ×1.0 · Size ×1.0.
-
-▶ STRATEGY: AGGRESSIVE  (max opportunity · tier 3)
-  • Source from list_signals + get_actionable_signals, wider net.
-  • list_recommended_strategies(tier=3) — win ≥ 30% (sharpe floor 0).
-    Scales Stop ×1.2 · Target ×1.3 · Size ×1.5.
-  • Takes band C when macro strongly agrees. Higher variance.
-
-(Check live tier results anytime with get_tier_performance / compare_strategy_tiers.)
 ═══════════════════════════════════════════════════════════════════`;
 
 const restPrompts = [
@@ -179,7 +146,7 @@ const restPrompts = [
 
 <BaseLayout
   title="Quickstart — prompts for your agent"
-  description="Copy-paste prompts that make any AI agent market-aware with the n0brains API. A free-tier one-liner for any agent over REST, and a full Pro-tier MCP prompt with real-time tools and selectable trading strategy modes. No SDK required."
+  description="Copy-paste prompts that make any AI agent market-aware with the n0brains API. A free-tier one-liner for any agent over REST, and a full Pro-tier MCP prompt with real-time tools. No SDK required."
 >
   <section class="docs-page">
     <h1>Quickstart: prompts for your agent</h1>
@@ -223,7 +190,7 @@ const restPrompts = [
     </div>
     <div class="card">
       <h2 id="pro-prompt">2. Paste the agent prompt</h2>
-      <p>A complete real-time agent: it discovers every tool from the MCP server, knows how to read a signal, respects the Macro-Pulse veto, and has three selectable strategy modes. Keep one strategy block to let it trade, or delete the whole strategy section for signals-only.</p>
+      <p>A complete real-time agent: it discovers every tool from the MCP server, knows how to read a signal, and respects the Macro-Pulse veto. It surfaces intelligence for your agent to act on — n0brains is data, not execution.</p>
       <div class="prompt-block">
         <button class="copy-btn" data-copy={proPrompt} aria-label="copy prompt">copy</button>
         <pre><code>{proPrompt}</code></pre>
