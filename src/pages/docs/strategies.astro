@@ -3,359 +3,45 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="Strategy Library"
-  description="Reference execution configurations for n0brains signals — backtested on real 1-minute candles across Binance, Bybit, and Coinbase. Analytical examples, not advice."
+  title="Strategy Library — under revision"
+  description="The n0brains Strategy Library is temporarily offline while we rebuild it on properly forward-tested results. The signal feed and /proof are unaffected."
 >
   <section class="docs-page">
     <h1>Strategy Library</h1>
-    <p class="docs-subtitle">Reference execution configurations for n0brains signals &middot; Backtested on real 1-minute candles &middot; Reproducible</p>
+    <p class="docs-subtitle">Temporarily offline &middot; under revision</p>
 
     <div class="card legal-card">
-      <h2>This is research, not advice.</h2>
+      <h2>This page is being rebuilt.</h2>
       <p>
-        These are <strong>reference execution examples</strong> — researched configurations we ran
-        against historical 1-minute price candles from Binance, Bybit, and Coinbase to study how
-        n0brains signals would have performed under different exit rules. They are
-        <strong>not</strong> recommendations to enter, exit, hold, or size a trade.
+        We've taken the reference strategy configurations down. The exit rules we
+        had published (fixed take-profit / stop-loss / horizon per signal type)
+        were derived from a historical backtest that did not hold up under live
+        forward-testing — most positions closed on the time horizon rather than at
+        their target, so the configurations were not a fair representation of how
+        the signals actually perform.
       </p>
       <p>
-        Past simulated performance does not guarantee future results. Slippage, fees, fills, and
-        market conditions vary. You are solely responsible for every trading decision you make
-        and for any profits or losses that result. See the full
-        <a href="/terms">terms of service</a> §8.
+        Rather than leave up numbers we no longer stand behind, we're rebuilding
+        this library from <strong>live, forward-tested results only</strong>. We'll
+        republish a configuration here when — and only when — it has proven itself
+        on real, going-forward signals.
       </p>
     </div>
 
     <div class="card">
-      <h2 id="methodology">Methodology</h2>
-      <p>
-        Every configuration in this library was simulated against the actual 1-minute close
-        prices on three major exchanges (Binance perp, Bybit perp, Coinbase spot) for the last
-        30 days of signals. Each signal was paper-traded with:
-      </p>
+      <h2>What's unaffected</h2>
       <ul>
-        <li>Fixed $100 position size</li>
-        <li>Taker fee: 4.5 bps round-trip (Hyperliquid taker rate; adjust for your venue)</li>
-        <li>Slippage: 2 bps entry + 2 bps exit</li>
-        <li>Per-signal-type score percentile gate (default top 30% of recent signals)</li>
-        <li>Direction-corrected return path (bullish positive on price up; bearish positive on price down)</li>
+        <li>The <a href="/docs">signal API</a> and live WebSocket feed — fully operational.</li>
+        <li>Our live, ongoing performance numbers at <a href="/proof">/proof</a> — these are the real forward-test, untouched.</li>
+        <li>Per-signal-type forward returns (1h / 4h / 24h) continue to be recorded.</li>
       </ul>
       <p>
-        Results below are aggregated across all three exchanges where the asset trades. Per-type
-        sharpe (return / stdev) is reported alongside total PnL to show risk-adjusted performance,
-        not just raw $ won.
-      </p>
-      <p>
-        Reproducible: <code>/home/oba/paper-trader/sweep.py</code> and <code>exotic_sweep.py</code>
-        in our repo. Live ongoing forward-test at <a href="/proof">/proof</a>.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2 id="per-type">Per-signal-type winning configurations</h2>
-      <p>
-        We searched 1,728 parameter combinations (SL × TP × horizon × trailing × score
-        percentile) per signal_type against real 1-minute candles. Each type has its own
-        optimal exit rule — no single config wins across all types. The table below shows
-        the empirical best per type. Tradeable types are highlighted; types where no config
-        flips positive are listed below as intel-only.
-      </p>
-      <table class="strat-table">
-        <thead>
-          <tr><th>Type</th><th>SL</th><th>TP</th><th>Horizon</th><th>Trail</th><th>n</th><th>Win %</th><th>Avg net</th><th>Total $</th><th></th></tr>
-        </thead>
-        <tbody id="strat-rows">
-          <tr><td colspan="10" class="strat-loading">loading live verdicts…</td></tr>
-        </tbody>
-      </table>
-      <p class="meta" id="strat-meta">
-        Exit configs (SL / TP / horizon / trail) are the per-type backtested presets; win rate,
-        sample size, and PnL are pulled <strong>live</strong> from the ongoing forward-test at
-        <a href="/proof">/proof</a> so this table never drifts from what the system actually
-        trades. Fee 4.5 bps round-trip, slippage 2 bps each side.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2 id="risk-tiers">Risk tiers (1 / 2 / 3)</h2>
-      <p>
-        The same strategies above can be run at three reference risk presets.
-        Each tier <strong>filters</strong> the strategy set (by minimum win
-        rate and Sharpe) AND <strong>scales</strong> the stop, take-profit,
-        and position size relative to the base config. Use them as starting
-        points — pick the tier that fits your risk budget, then adjust.
-      </p>
-      <table class="strat-table">
-        <thead>
-          <tr><th>Tier</th><th>Filter</th><th>SL scale</th><th>TP scale</th><th>Size scale</th><th>Includes</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>1 · conservative</code></td><td>win ≥ 70%</td><td>0.7×</td><td>0.8×</td><td>0.5×</td><td id="tier1-includes">—</td></tr>
-          <tr><td><code>2 · balanced</code></td><td>win ≥ 50%</td><td>1.0×</td><td>1.0×</td><td>1.0×</td><td id="tier2-includes">—</td></tr>
-          <tr><td><code>3 · aggressive</code></td><td>all tradeable</td><td>1.2×</td><td>1.3×</td><td>1.5×</td><td id="tier3-includes">—</td></tr>
-        </tbody>
-      </table>
-      <p class="meta">
-        Per-tier paper-test results are published live at <a href="/proof#risk-tier-performance">/proof</a>
-        and via the <code>get_tier_performance</code> MCP tool. Caveat: tier
-        sim uses 1h/4h/24h forward-return rows (no intraday trailing-stop
-        modelling). Trailing-stop strategies like <code>sentiment</code> look
-        different at 1m candle granularity (see the per-type table above).
-      </p>
-      <p>
-        Access via the MCP server (<code>https://api.n0brains.com/mcp</code>):
-      </p>
-      <pre><code>{`{
-  "method": "tools/call",
-  "params": {
-    "name": "list_recommended_strategies",
-    "arguments": { "tier": 1 }
-  }
-}`}</code></pre>
-    </div>
-
-    <div class="card">
-      <h2 id="type-detail">Detail on each tradeable type</h2>
-      <h3><code>listing</code> &middot; High win rate, but tracks market beta — not alpha</h3>
-      <p>
-        New listing announcements (CEX listings, ETF approvals, etc) trigger immediate buying
-        pressure that spikes price within minutes. The headline win rate is high (~92%), but on
-        our live measurement listing's <strong>excess return over simply buying and holding is
-        ~0%</strong> — the wins largely reflect the broader market moving up, not an edge in the
-        signal itself. For that reason listing is <strong>not</strong> flagged as a proven
-        (<code>conviction: strong</code>) type. We surface it as intel, not as a trade call.
-      </p>
-
-      <h3><code>sentiment</code> &middot; Largest tradeable inventory</h3>
-      <p>
-        Aggregated cross-source narrative and social momentum. Best setup: <strong>SL 5%,
-        TP 12%, 24-hour horizon, plus a 3% trailing stop</strong> that locks profits once
-        the trade moves favorably. 79% win, sharpe 0.70 over 715 trades. The trailing stop
-        is what separates this from the naive fixed config — it captures the directional
-        move without giving back gains in a reversal.
-      </p>
-
-      <h3><code>macro_pulse</code> &middot; Tight, slow, reliable</h3>
-      <p>
-        Our daily BTC/ETH directional bias (generated by the macro_analyzer cron). Best
-        setup: <strong>SL 2%, TP 5%, 24-hour horizon</strong>. 61% win, sharpe 0.41. Small
-        sample (n=56) and small per-trade move — useful as a portfolio overlay rather than
-        a standalone strategy.
-      </p>
-
-      <h3><code>hack</code> &middot; Wide stops, long holds</h3>
-      <p>
-        Hack/exploit signals. Negative for the affected asset, positive for unaffected. Best
-        setup: <strong>no stop, TP 20%, 72-hour horizon</strong>. 43% win rate but average
-        winners are large (+2.87% net). Volatile — needs wide stops or no stops to avoid
-        being shaken out.
-      </p>
-
-      <h3><code>whale</code> &middot; Tight stops, fast holds</h3>
-      <p>
-        On-chain whale wallet activity. Best setup: <strong>SL 1%, TP 8%, 24-hour horizon</strong>.
-        33% win, sharpe 0.24 over 366 trades. The 1% stop is unusually tight but works because
-        whale-driven moves either follow through quickly or fail quickly — no slow grinds.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2 id="intel-only">Intel-only signal types</h2>
-      <p>
-        The following types are <strong>not</strong> in the tradeable set per our
-        simulation. We tested 1,728 parameter combinations against each — none flip positive.
-        Consume them as context (narrative, positioning, risk awareness), not trade triggers:
-      </p>
-      <table class="strat-table">
-        <thead>
-          <tr><th>Type</th><th>n</th><th>Best win %</th><th>Best total $</th><th>Why intel</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>regulatory</code></td>
-            <td>195</td><td>4.1%</td><td>-$174</td>
-            <td>Market front-runs the headline; signals fire after the move</td>
-          </tr>
-          <tr>
-            <td><code>macro</code></td>
-            <td>40</td><td>12.5%</td><td>-$24</td>
-            <td>Diffuse market-wide impact, not single-asset directional</td>
-          </tr>
-          <tr>
-            <td><code>other</code></td>
-            <td>69</td><td>2.9%</td><td>-$70</td>
-            <td>Catch-all bucket — too heterogeneous to trade systematically</td>
-          </tr>
-          <tr>
-            <td><code>price</code></td>
-            <td>36</td><td>16.7%</td><td>-$2</td>
-            <td>Roughly break-even — direction calls don't beat noise</td>
-          </tr>
-        </tbody>
-      </table>
-      <p>
-        Two more types — <code>funding</code> (n=12) and <code>liquidation</code> (n=19) — have
-        too few samples for a confident verdict. They'll be re-tested as more accumulate.
-      </p>
-      <p>
-        The proven set updates from live forward-return results (real post-signal price action),
-        so a type listed here today could promote into the proven set if its forward-return record
-        clears the bar — both beating buy-and-hold and being profitable on its own. Track changes
-        at <a href="/proof">/proof</a>.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2 id="implementation">Implementing in your bot</h2>
-      <p>
-        n0brains is a data API. We don't execute trades or hold custody. To act on a signal you'll
-        wire the WebSocket or webhook into your own trading layer. Most platforms support every
-        execution style we've researched natively:
-      </p>
-      <table class="strat-table">
-        <thead><tr><th>Platform</th><th>Trailing stop</th><th>Time filter</th><th>No-SL</th></tr></thead>
-        <tbody>
-          <tr><td>TradingView Pine + alerts</td><td>✅</td><td>✅</td><td>✅</td></tr>
-          <tr><td>CCXT (Python/Node)</td><td>via library</td><td>via library</td><td>✅</td></tr>
-          <tr><td>Hummingbot</td><td>✅</td><td>via strategy</td><td>✅</td></tr>
-          <tr><td>3Commas / Cryptohopper</td><td>✅</td><td>limited</td><td>✅</td></tr>
-          <tr><td>Hyperliquid SDK direct</td><td>via custom logic</td><td>via custom logic</td><td>✅</td></tr>
-          <tr><td>OpenClaw (our agent framework)</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        </tbody>
-      </table>
-      <h3>Example: minimal Python implementation</h3>
-      <pre><code>{`# Pseudocode — every signal received via WebSocket
-async for event in n0brains_ws():
-    sig = event["data"]
-    if sig["action_hint"] != "trade_signal":
-        continue
-    if sig["signal_type"] not in {"sentiment", "hack"}:
-        continue  # only proven-tradeable types
-
-    asset = sig["asset"]
-    direction = sig["direction"]            # "bullish" / "bearish"
-    target = sig.get("target_level")        # analytical reference
-
-    # "Ride to horizon" execution example for sentiment:
-    # 1. Open position $100, side = direction
-    # 2. No SL, no TP
-    # 3. Close at +4h
-    await place_market(asset, side=direction, size_usd=100)
-    await asyncio.sleep(4 * 3600)
-    await close_position(asset)`}</code></pre>
-      <p>
-        Adapt for your venue's trailing-stop primitive, your sizing, and your risk budget. None
-        of the above is advice — it's a worked example so you have something to start from.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2 id="proof">Verify the numbers yourself</h2>
-      <p>
-        Every figure on this page is reproducible from the same data you can access via the API.
-        We publish the live paper-trading forward-test at <a href="/proof">/proof</a>; the
-        per-signal-type proven-edge statistics are attached to every signal payload under
-        <code>type_performance</code>; the methodology is in our backtest scripts.
-      </p>
-      <p>
-        If you find an issue or want a different configuration tested,
-        <a href="mailto:support@n0brains.com">email support</a> — we'll run the sweep and
-        publish the result.
+        Questions or want to be notified when the library returns?
+        <a href="mailto:support@n0brains.com">Email support</a>.
       </p>
     </div>
   </section>
 </BaseLayout>
-
-<script>
-  // The per-type exit configs (SL/TP/horizon/trail) are stable backtested
-  // presets — kept here. Win rate / sample size / PnL / tradeable flag are
-  // pulled live from /proof so the table can never advertise a demoted type
-  // as a winner (it previously hardcoded whale + macro_pulse as tradeable).
-  const ENDPOINT = "https://api.n0brains.com/proof";
-  const EXIT_CONFIG = {
-    listing:     { sl: "none", tp: "5%",  horizon: "1h",  trail: "—"  },
-    sentiment:   { sl: "5%",   tp: "12%", horizon: "24h", trail: "3%" },
-    hack:        { sl: "none", tp: "20%", horizon: "72h", trail: "—"  },
-    whale:       { sl: "1%",   tp: "8%",  horizon: "24h", trail: "—"  },
-    macro_pulse: { sl: "2%",   tp: "5%",  horizon: "24h", trail: "—"  },
-    price:       { sl: "3%",   tp: "9%",  horizon: "24h", trail: "—"  },
-  };
-
-  const pct  = (v) => (v == null ? "—" : (Number(v) * 100).toFixed(1) + "%");
-  const pctR = (v) => (v == null ? "—" : (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%");
-  const usd  = (v) => (v == null ? "—" : (Number(v) >= 0 ? "+$" : "-$") + Math.abs(Number(v)).toFixed(2));
-  const code = (s) => "<code>" + s + "</code>";
-
-  function renderStrategies(data) {
-    const body = document.getElementById("strat-rows");
-    if (!data || data.error || !data.types) {
-      body.innerHTML = '<tr><td colspan="10" class="strat-loading">live verdicts unavailable — see <a href="/proof">/proof</a></td></tr>';
-      return;
-    }
-    // Sort tradeable first, then by win rate desc.
-    const types = [...data.types].sort((a, b) =>
-      (b.tradeable - a.tradeable) || (b.win_rate - a.win_rate));
-    let rows = "";
-    for (const t of types) {
-      const cfg = EXIT_CONFIG[t.signal_type] || { sl: "—", tp: "—", horizon: "—", trail: "—" };
-      const cls = t.tradeable ? "row-best" : "row-intel";
-      const flag = t.tradeable
-        ? '<span class="badge badge-yes">tradeable</span>'
-        : '<span class="badge badge-no">intel only</span>';
-      rows += `
-        <tr class="${cls}">
-          <td>${code(t.signal_type)}</td>
-          <td>${cfg.sl}</td><td>${cfg.tp}</td><td>${cfg.horizon}</td><td>${cfg.trail}</td>
-          <td>${t.n}</td>
-          <td>${pct(t.win_rate)}</td>
-          <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctR(t.avg_net_pct)}</td>
-          <td class="${t.total_pnl_usd >= 0 ? "pos" : "neg"}">${usd(t.total_pnl_usd)}</td>
-          <td>${flag}</td>
-        </tr>`;
-    }
-    body.innerHTML = rows;
-
-    // Risk tiers: derive "includes" from the live tradeable set + win rate.
-    const tradeable = types.filter((t) => t.tradeable);
-    const fill = (id, list) => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = list.length
-        ? list.map((t) => code(t.signal_type)).join(", ")
-        : "<em>none currently</em>";
-    };
-    fill("tier1-includes", tradeable.filter((t) => t.win_rate >= 0.70));
-    fill("tier2-includes", tradeable.filter((t) => t.win_rate >= 0.50));
-    fill("tier3-includes", tradeable);
-
-    const meta = document.getElementById("strat-meta");
-    const latest = Math.max(...types.map((t) => t.updated_at || 0));
-    if (meta && latest) {
-      meta.insertAdjacentHTML("beforeend",
-        ` <span class="strat-asof">Verdicts as of ${new Date(latest * 1000).toISOString().slice(0, 10)}.</span>`);
-    }
-  }
-
-  async function loadStrategies() {
-    try {
-      const r = await fetch(ENDPOINT, { cache: "no-store" });
-      renderStrategies(await r.json());
-    } catch (e) {
-      renderStrategies({ error: String(e) });
-    }
-  }
-  loadStrategies();
-</script>
-
-<style>
-  .strat-loading { text-align: center; opacity: 0.6; padding: 1rem; }
-  .row-intel { opacity: 0.6; }
-  .strat-table .badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 4px; }
-  .strat-table .badge-yes { background: rgba(40, 200, 120, 0.18); color: #28c878; }
-  .strat-table .badge-no { background: rgba(150, 150, 150, 0.15); color: #999; }
-  .strat-table .pos { color: #28c878; }
-  .strat-table .neg { color: #e05555; }
-  .strat-asof { opacity: 0.7; }
-</style>
 
 <style>
   .legal-card {
@@ -364,33 +50,4 @@ async for event in n0brains_ws():
   }
   .legal-card h2 { color: #ef4444; }
   .legal-card strong { color: var(--text-heading); }
-
-  .strat-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    margin: 0.75rem 0 1rem;
-  }
-  .strat-table th, .strat-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-  }
-  .strat-table th {
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-  .strat-table .row-best {
-    background: rgba(74, 222, 128, 0.06);
-  }
-  .strat-table .row-best td:first-child {
-    font-weight: 600;
-    color: var(--text-heading);
-  }
-  .meta {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    margin-top: 0.5rem;
-  }
 </style>
