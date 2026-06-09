@@ -207,20 +207,27 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         }
       }
 
-      // price candles overlay (OHLC) — thin, semi-transparent so bands show through
-      const candles = d.candles || [];
+      // price candles overlay (OHLC). CoinGecko's /ohlc buckets are NOT continuous
+      // (close[i] != open[i+1], ~66$ gaps) — that leaves visible breaks between
+      // candles. STITCH them: force each candle's open to the previous candle's
+      // close so the price path is continuous (the body still shows its own range,
+      // wick shows high/low). Bodies ~0.85 of spacing so they nearly touch.
+      let candles = (d.candles || []).filter((k) =>
+        k.t >= (d.times[0]||0) && k.t <= (d.times[d.times.length-1]||0));
       if (candles.length) {
-        const cw = Math.max(1.2, plotW / candles.length * 0.6);
-        for (const k of candles) {
-          if (k.t < (d.times[0]||0) || k.t > (d.times[d.times.length-1]||0)) continue;
+        // stitch open→prev close for a continuous chart
+        const stitched = candles.map((k, i) => i === 0 ? k
+          : { ...k, o: candles[i-1].c });
+        const cw = Math.max(1.5, plotW / stitched.length * 0.85);
+        for (const k of stitched) {
           const x = xOfTime(k.t);
           const up = k.c >= k.o;
-          ctx.strokeStyle = up ? "rgba(120,230,160,0.85)" : "rgba(255,120,110,0.85)";
+          ctx.strokeStyle = up ? "rgba(120,230,160,0.9)" : "rgba(255,120,110,0.9)";
           ctx.fillStyle = ctx.strokeStyle;
           ctx.lineWidth = 1;
-          // wick
+          // wick (high–low)
           ctx.beginPath(); ctx.moveTo(x, yOfPrice(k.h)); ctx.lineTo(x, yOfPrice(k.l)); ctx.stroke();
-          // body
+          // body (open–close), min 1px tall so dojis show
           const yo = yOfPrice(k.o), yc = yOfPrice(k.c);
           ctx.fillRect(x - cw/2, Math.min(yo,yc), cw, Math.max(1, Math.abs(yc-yo)));
         }
