@@ -4,20 +4,26 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="liquidation heatmap"
-  description="n0brains live liquidation heatmap — real on-chain DEX positions (Hyperliquid + GMX) with exact liquidation prices, plotted as a price × time density map. Where leveraged positions cluster to liquidate. Free, live. Not financial advice."
+  description="n0brains live liquidation heatmap — price × time density of where leveraged positions cluster to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) plus a 3-month CEX estimate from open-interest history, with price candles overlaid. Free, live. Not financial advice."
 >
   <section class="about-section lm-wide">
     <h1>liquidation heatmap</h1>
     <p class="legal-updated">
-      Where leveraged positions cluster to liquidate, over time — the bright bands
-      are liquidity magnets. This reads <strong>real on-chain positions</strong>
-      (Hyperliquid + GMX) with their <em>exact</em> liquidation prices, captured
-      every 15&nbsp;minutes and stacked into a price&nbsp;×&nbsp;time map. Free and
+      Where leveraged positions cluster to liquidate, over time — bright bands are
+      liquidity magnets that the price tends to gravitate toward.
+      <strong>CEX</strong> is a 3-month estimate modeled from aggregate
+      open-interest history (the bands trail the price as leverage stacks).
+      <strong>DEX</strong> reads <em>real</em> on-chain positions (Hyperliquid +
+      GMX), captured live and building forward. Price candles overlaid. Free and
       live. Analytical data, <strong>not financial advice</strong>.
     </p>
 
     <div class="lm-controls">
       <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="coin"></div>
+      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source">
+        <button data-venue="cex" class="active" role="tab">CEX · 3-month estimate</button>
+        <button data-venue="dex" role="tab">DEX · real (live)</button>
+      </div>
     </div>
 
     <div id="lm-banner" class="proof-banner proof-loading" role="status">
@@ -48,7 +54,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .lm-tabs button.active { background:var(--accent,#5b8cff); color:#fff; border-color:var(--accent,#5b8cff); }
     .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
     .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
-    .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:64ch; }
+    .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
     .proof-banner.proof-ok .dot { background:#2ecc71; }
   </style>
 
@@ -56,9 +62,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   (function () {
     "use strict";
     const API = "https://api.n0brains.com";
-    const COINS = ["BTC","ETH"];           // DEX real-position coins
-    const REFRESH_MS = 60000;
-    let coin = "BTC", timer = null, reqId = 0, lastData = null, resizeT = null;
+    const COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
+    const DEX_COINS = new Set(["BTC","ETH"]);
+    const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
+    let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
+    const REFRESH_MS = 120000;
+    let coin = "BTC", venue = "cex", timer = null, reqId = 0, lastData = null, resizeT = null;
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -67,35 +76,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       if (p >= 1)    return "$" + p.toFixed(2);
       return "$" + p.toPrecision(3);
     };
-    const fmtUsd = (n) => {
-      n = Math.abs(+n||0);
-      if (n>=1e9) return "$"+(n/1e9).toFixed(2)+"B";
-      if (n>=1e6) return "$"+(n/1e6).toFixed(0)+"M";
-      if (n>=1e3) return "$"+(n/1e3).toFixed(0)+"K";
-      return "$"+n.toFixed(0);
-    };
 
-    // Coinglass-style colormap: dark purple (low) → blue → teal → green → yellow (high).
-    // Intensity is 0..1 (log-scaled). Returns "rgb(r,g,b)".
+    // Coinglass-style colormap: dark (low) → purple → blue → teal → green → yellow.
     function heatColor(t) {
       t = Math.max(0, Math.min(1, t));
-      // piecewise gradient stops
       const stops = [
-        [0.00, [13, 11, 26]],    // near-bg dark
-        [0.18, [40, 22, 90]],    // purple
-        [0.40, [38, 70, 150]],   // blue
-        [0.60, [20, 150, 150]],  // teal
-        [0.80, [40, 200, 90]],   // green
-        [1.00, [240, 240, 40]],  // yellow
+        [0.00, [13, 11, 26]], [0.18, [40, 22, 90]], [0.40, [38, 70, 150]],
+        [0.60, [20, 150, 150]], [0.80, [40, 200, 90]], [1.00, [240, 240, 40]],
       ];
       for (let i = 1; i < stops.length; i++) {
         if (t <= stops[i][0]) {
           const [t0, c0] = stops[i-1], [t1, c1] = stops[i];
           const f = (t - t0) / (t1 - t0 || 1);
-          const r = Math.round(c0[0] + (c1[0]-c0[0])*f);
-          const g = Math.round(c0[1] + (c1[1]-c0[1])*f);
-          const b = Math.round(c0[2] + (c1[2]-c0[2])*f);
-          return `rgb(${r},${g},${b})`;
+          return `rgb(${Math.round(c0[0]+(c1[0]-c0[0])*f)},${Math.round(c0[1]+(c1[1]-c0[1])*f)},${Math.round(c0[2]+(c1[2]-c0[2])*f)})`;
         }
       }
       return "rgb(240,240,40)";
@@ -108,9 +101,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       el.querySelectorAll("button").forEach((b) =>
         b.addEventListener("click", () => { coin = b.dataset.coin; syncTabs(); load(); }));
     }
+    function bindVenue() {
+      document.querySelectorAll("#lm-venue button").forEach((b) =>
+        b.addEventListener("click", () => { venue = b.dataset.venue; syncTabs(); load(); }));
+    }
     function syncTabs() {
       document.querySelectorAll("#lm-coins button").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
+      document.querySelectorAll("#lm-venue button").forEach((b) =>
+        b.classList.toggle("active", b.dataset.venue === venue));
     }
     function banner(state, text) {
       const b = $("lm-banner");
@@ -119,38 +118,36 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function render(d) {
-      lastData = d;   // cache for resize re-render
+      lastData = d;
       const grid = d.grid || [], cols = d.cols || 0, rows = d.rows || 0;
       const canvas = $("lm-canvas"), wrap = $("lm-wrap");
+
       if (!cols || !rows || !grid.length) {
-        banner("proof-loading", d.note || "heatmap builds as snapshots accumulate (every 15 min)");
+        banner("proof-loading", d.note || "heatmap building — more data accruing");
         const ctx = canvas.getContext("2d");
-        canvas.width = 1000; canvas.height = 200;
-        ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        const W0 = Math.max(360, Math.floor(wrap.clientWidth || 900));
+        canvas.width = W0; canvas.height = 200; canvas.style.width = "100%"; canvas.style.height = "auto";
+        ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W0,200);
         ctx.fillStyle = "#6b7280"; ctx.font = "14px system-ui";
-        ctx.fillText("Heatmap is building — first snapshots captured, more every 15 min.", 24, 100);
+        ctx.fillText(venue === "dex" ? "Real DEX heatmap is building — fills over days."
+                                     : "Heatmap building…", 24, 100);
         $("lm-meta").textContent = ""; $("lm-disclaimer").textContent = d.disclaimer || "";
         return;
       }
 
-      // log-scale normalize between min and max nonzero (NOT log(v)/log(max),
-      // which bunches everything near 1.0 → all-green). Spread the actual range
-      // [minNonzero, max] across the full 0..1 colormap.
+      // log-normalize intensities between min and max nonzero (spread the colormap)
       let maxV = 0, minV = Infinity;
       for (const r of grid) for (const v of r) { if (v > maxV) maxV = v; if (v > 0 && v < minV) minV = v; }
       if (!isFinite(minV)) minV = maxV || 1;
-      const lMin = Math.log(minV), lMax = Math.log(maxV);
-      const denom = (lMax - lMin) || 1;
-      const norm = (v) => v <= 0 ? 0 : (Math.log(v) - lMin) / denom;
+      const lMin = Math.log(minV), lMax = Math.log(maxV), den = (lMax - lMin) || 1;
+      const norm = (v) => v <= 0 ? 0 : (Math.log(v) - lMin) / den;
 
-      // canvas geometry: FIT the container width (no horizontal scroll — locked
-      // full-size). W = available width; cells stretch to fill it.
+      // geometry: fit container width, no scroll
       const padL = 70, padB = 26, padT = 10, padR = 10;
       const W = Math.max(360, Math.floor(wrap.clientWidth || 1000));
       const plotW = W - padL - padR;
-      const plotH = Math.max(300, Math.min(640, rows * 7));
+      const plotH = Math.max(320, Math.min(620, rows * 7));
       const H = padT + plotH + padB;
-      // hi-DPI
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       canvas.width = W * dpr; canvas.height = H * dpr;
       canvas.style.width = "100%"; canvas.style.height = "auto";
@@ -159,68 +156,115 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W,H);
 
       const cellW = plotW / cols, cellH = plotH / rows;
-      // cells (grid[0] = highest price = top row)
+      const pMin = d.price_min, pMax = d.price_max, pSpan = (pMax - pMin) || 1;
+      const xOfTime = (ts) => {
+        const times = d.times || [];
+        if (times.length < 2) return padL + plotW/2;
+        const f = (ts - times[0]) / (times[times.length-1] - times[0]);
+        return padL + Math.max(0, Math.min(1, f)) * plotW;
+      };
+      const yOfPrice = (p) => padT + Math.max(0, Math.min(1, (pMax - p) / pSpan)) * plotH;
+
+      // heatmap cells
       for (let ri = 0; ri < rows; ri++) {
-        for (let ciIdx = 0; ciIdx < cols; ciIdx++) {
-          const v = grid[ri][ciIdx];
+        for (let ci = 0; ci < cols; ci++) {
+          const v = grid[ri][ci];
           if (v > 0) {
             ctx.fillStyle = heatColor(norm(v));
-            ctx.fillRect(padL + ciIdx*cellW, padT + ri*cellH, Math.ceil(cellW)+0.5, Math.ceil(cellH)+0.5);
+            ctx.fillRect(padL + ci*cellW, padT + ri*cellH, Math.ceil(cellW)+0.5, Math.ceil(cellH)+0.5);
           }
         }
       }
 
-      // price axis labels (Y)
+      // price candles overlay (OHLC) — thin, semi-transparent so bands show through
+      const candles = d.candles || [];
+      if (candles.length) {
+        const cw = Math.max(1.2, plotW / candles.length * 0.6);
+        for (const k of candles) {
+          if (k.t < (d.times[0]||0) || k.t > (d.times[d.times.length-1]||0)) continue;
+          const x = xOfTime(k.t);
+          const up = k.c >= k.o;
+          ctx.strokeStyle = up ? "rgba(120,230,160,0.85)" : "rgba(255,120,110,0.85)";
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.lineWidth = 1;
+          // wick
+          ctx.beginPath(); ctx.moveTo(x, yOfPrice(k.h)); ctx.lineTo(x, yOfPrice(k.l)); ctx.stroke();
+          // body
+          const yo = yOfPrice(k.o), yc = yOfPrice(k.c);
+          ctx.fillRect(x - cw/2, Math.min(yo,yc), cw, Math.max(1, Math.abs(yc-yo)));
+        }
+      }
+
+      // price axis (Y)
       ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "right";
-      const prices = d.prices || [];
-      const yticks = 7;
+      const prices = d.prices || [], yticks = 7;
       for (let k = 0; k <= yticks; k++) {
         const idx = Math.round((rows - 1) * k / yticks);
-        const py = padT + idx*cellH + cellH/2;
-        const price = prices[idx];
+        const py = padT + idx*cellH + cellH/2, price = prices[idx];
         if (price != null) {
-          ctx.fillStyle = "#23262f"; ctx.fillRect(padL, py, plotW, 0.5);
+          ctx.fillStyle = "rgba(35,38,47,0.6)"; ctx.fillRect(padL, py, plotW, 0.5);
           ctx.fillStyle = "#8b909c"; ctx.fillText(fmtPx(price), padL-6, py+3);
         }
       }
 
-      // spot line (latest spot, dashed yellow) at its price row
-      const spot = (d.spots && d.spots.length) ? d.spots[d.spots.length-1] : null;
-      if (spot != null && d.price_min != null && d.price_max != null && d.price_max > d.price_min) {
-        const frac = (d.price_max - spot) / (d.price_max - d.price_min);
-        const sy = padT + Math.max(0, Math.min(1, frac)) * plotH;
-        ctx.strokeStyle = "#f5c518"; ctx.lineWidth = 1.4; ctx.setLineDash([5,3]);
-        ctx.beginPath(); ctx.moveTo(padL, sy); ctx.lineTo(padL+plotW, sy); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = "#f5c518"; ctx.textAlign = "left"; ctx.font = "bold 11px system-ui";
-        ctx.fillText("spot " + fmtPx(spot), padL+6, sy-4);
-      }
-
-      // time axis labels (X) — first / mid / last
+      // time axis (X)
       ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "center";
       const times = d.times || [];
       const fmtT = (ts) => { const dt = new Date(ts*1000);
-        return (dt.getMonth()+1) + "/" + dt.getDate() + " " + String(dt.getHours()).padStart(2,"0") + ":" + String(dt.getMinutes()).padStart(2,"0"); };
-      [0, Math.floor(cols/2), cols-1].forEach((ci) => {
+        return (dt.getMonth()+1) + "/" + dt.getDate(); };
+      const xticks = Math.min(8, cols);
+      for (let k = 0; k <= xticks; k++) {
+        const ci = Math.round((cols-1) * k / xticks);
         if (times[ci] != null) ctx.fillText(fmtT(times[ci]), padL + ci*cellW + cellW/2, H-8);
-      });
+      }
 
-      const span = times.length>1 ? Math.round((times[times.length-1]-times[0])/3600) : 0;
+      const span = times.length>1 ? Math.round((times[times.length-1]-times[0])/86400) : 0;
+      const src = venue === "cex"
+        ? `${span}d estimate · OI-history model`
+        : `${cols} live snapshots · real DEX positions (HL+GMX)`;
       $("lm-meta").innerHTML =
-        `<strong>${coin}</strong> · ${cols} snapshots · ${span}h of history · ` +
-        `price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)} · real DEX positions (HL+GMX)`;
+        `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}`;
       $("lm-disclaimer").textContent = d.disclaimer || "";
-      banner("proof-ok", "live");
+      banner("proof-ok", venue === "cex" ? "live · estimate" : "live · real");
+    }
+
+    async function fetchCandles(coin, data) {
+      const times = data.times || [];
+      if (times.length < 2) return [];
+      const spanDays = Math.max(1, Math.round((times[times.length-1] - times[0]) / 86400));
+      const days = spanDays <= 1 ? 1 : spanDays <= 7 ? 7 : spanDays <= 30 ? 30 : spanDays <= 90 ? 90 : 180;
+      const key = coin + ":" + days;
+      if (candleCache[key]) return candleCache[key];
+      const id = CG_ID[coin];
+      if (!id) return [];
+      try {
+        const r = await fetch(`https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`, { cache: "no-store" });
+        if (!r.ok) return [];
+        const raw = await r.json();
+        const out = raw.map((k) => ({ t: Math.floor(k[0]/1000), o: k[1], h: k[2], l: k[3], c: k[4] }));
+        candleCache[key] = out;
+        return out;
+      } catch (e) { return []; }
     }
 
     async function load() {
       const my = ++reqId;
-      banner("proof-loading", "loading " + coin + " heatmap…");
+      let v = venue;
+      if (v === "dex" && !DEX_COINS.has(coin)) {
+        banner("proof-error", coin + " has no DEX book — pick BTC/ETH or use CEX");
+        $("lm-canvas").getContext("2d").clearRect(0,0,3000,3000);
+        return;
+      }
+      banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + " heatmap…");
+      const path = v === "cex" ? "/charts/cex-heatmap/" : "/charts/liqmap-heatmap/dex/";
       try {
-        const r = await fetch(API + "/charts/liqmap-heatmap/dex/" + encodeURIComponent(coin), { cache: "no-store" });
+        const r = await fetch(API + path + encodeURIComponent(coin), { cache: "no-store" });
         if (my !== reqId) return;
         if (!r.ok) { banner("proof-error", "error " + r.status); return; }
         const data = await r.json();
+        if (my !== reqId) return;
+        // price candles fetched CLIENT-SIDE (browser → CoinGecko; no server rate-share)
+        data.candles = await fetchCandles(coin, data);
         if (my !== reqId) return;
         render(data);
       } catch (e) {
@@ -230,13 +274,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoinTabs(); load();
+      buildCoinTabs(); bindVenue(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
         else if (!timer) { load(); timer = setInterval(load, REFRESH_MS); }
       });
-      // re-render to the new container width on resize (no scroll — refit)
       window.addEventListener("resize", () => {
         clearTimeout(resizeT);
         resizeT = setTimeout(() => { if (lastData) render(lastData); }, 150);
