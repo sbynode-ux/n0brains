@@ -1,0 +1,247 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="liquidation map"
+  description="n0brains live liquidation map — where leveraged positions are likely to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) with exact liquidation prices, plus a CEX estimate calibrated against real liquidation prints. Free, live. Not advice."
+>
+  <section class="about-section">
+    <h1>liquidation map</h1>
+    <p class="legal-updated">
+      Where leveraged positions cluster to liquidate — the price levels that act as
+      liquidity magnets. <strong>DEX</strong> reads real on-chain positions
+      (Hyperliquid + GMX) with their <em>exact</em> liquidation prices — not an
+      estimate. <strong>CEX</strong> is modeled from aggregate open interest and
+      leverage tiers calibrated against real liquidation prints. Free and live,
+      refreshed every minute. Analytical data, <strong>not financial advice</strong>.
+    </p>
+
+    <div class="lm-controls">
+      <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="coin"></div>
+      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="venue">
+        <button data-venue="dex" class="active" role="tab">DEX · real positions</button>
+        <button data-venue="cex" role="tab">CEX · estimate</button>
+      </div>
+    </div>
+
+    <div id="lm-banner" class="proof-banner proof-loading" role="status">
+      <span class="dot"></span><span class="banner-text">loading map…</span>
+    </div>
+
+    <div class="lm-legend" id="lm-legend" hidden>
+      <span><i class="sw sw-long"></i> long liquidations (below spot)</span>
+      <span><i class="sw sw-short"></i> short liquidations (above spot)</span>
+      <span><i class="sw sw-spot"></i> current price</span>
+    </div>
+
+    <div id="lm-chart" class="lm-chart"></div>
+    <p class="meta" id="lm-meta"></p>
+    <p class="lm-disclaimer" id="lm-disclaimer"></p>
+  </section>
+
+  <style>
+    .lm-controls { display:flex; gap:1.25rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 1rem; }
+    .lm-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .lm-tabs button {
+      background:transparent; border:1px solid var(--border,#2a2a3a);
+      color:var(--text,#cfd2dc); padding:.4rem .85rem; border-radius:7px;
+      cursor:pointer; font-size:.82rem; font-family:inherit; line-height:1;
+      transition:background .12s,border-color .12s;
+    }
+    .lm-tabs button:hover { border-color:var(--accent,#5b8cff); }
+    .lm-tabs button.active { background:var(--accent,#5b8cff); color:#fff; border-color:var(--accent,#5b8cff); }
+    .lm-legend { display:flex; gap:1.4rem; flex-wrap:wrap; font-size:.78rem; color:#9aa0ad; margin:.25rem 0 .75rem; }
+    .lm-legend .sw { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:.35rem; }
+    .sw-long { background:#2ecc71; } .sw-short { background:#e74c3c; }
+    .sw-spot { background:transparent; border-top:2px dashed #f5c518; height:0; width:14px; border-radius:0; }
+    .lm-chart { width:100%; overflow-x:auto; margin-top:.25rem; min-height:120px; }
+    .lm-chart svg { display:block; }
+    .lm-grid { stroke:#23262f; stroke-width:1; }
+    .lm-gridlbl { fill:#6b7280; font-size:.66rem; }
+    .lm-spot-line { stroke:#f5c518; stroke-width:1.6; stroke-dasharray:5 3; }
+    .lm-spot-lbl { fill:#f5c518; font-size:.74rem; font-weight:700; }
+    .lm-long { fill:#2ecc71; } .lm-long:hover { fill:#43e088; }
+    .lm-short { fill:#e74c3c; } .lm-short:hover { fill:#ff5e4d; }
+    .lm-hdr { fill:#8b909c; font-size:.72rem; }
+    .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:64ch; }
+    .proof-banner.proof-ok .dot { background:#2ecc71; }
+  </style>
+
+  <script is:inline>
+  (function () {
+    "use strict";
+    const API = "https://api.n0brains.com";
+    const COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
+    const DEX_COINS = new Set(["BTC","ETH"]);   // venues with a real on-chain book
+    const REFRESH_MS = 60000;
+    let coin = "BTC", venue = "dex", timer = null, reqId = 0;
+
+    const $ = (id) => document.getElementById(id);
+
+    const fmtUsd = (n) => {
+      n = Math.abs(+n || 0);
+      if (n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+      if (n >= 1e6) return "$" + (n/1e6).toFixed(0) + "M";
+      if (n >= 1e3) return "$" + (n/1e3).toFixed(0) + "K";
+      return "$" + n.toFixed(0);
+    };
+    const fmtPx = (p) => {
+      p = +p;
+      if (p >= 1000) return "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      if (p >= 1)    return "$" + p.toFixed(2);
+      return "$" + p.toPrecision(3);
+    };
+    const niceStep = (range, target) => {
+      const raw = range / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const r = raw / mag;
+      return (r >= 5 ? 5 : r >= 2 ? 2 : 1) * mag;
+    };
+
+    function buildCoinTabs() {
+      const el = $("lm-coins");
+      el.innerHTML = COINS.map((c) =>
+        `<button data-coin="${c}" role="tab" class="${c===coin?'active':''}">${c}</button>`).join("");
+      el.querySelectorAll("button").forEach((b) =>
+        b.addEventListener("click", () => { coin = b.dataset.coin; syncTabs(); load(); }));
+    }
+    function bindVenueTabs() {
+      document.querySelectorAll("#lm-venue button").forEach((b) =>
+        b.addEventListener("click", () => { venue = b.dataset.venue; syncTabs(); load(); }));
+    }
+    function syncTabs() {
+      document.querySelectorAll("#lm-coins button").forEach((b) =>
+        b.classList.toggle("active", b.dataset.coin === coin));
+      document.querySelectorAll("#lm-venue button").forEach((b) =>
+        b.classList.toggle("active", b.dataset.venue === venue));
+    }
+    function banner(state, text) {
+      const b = $("lm-banner");
+      b.className = "proof-banner " + state;
+      b.querySelector(".banner-text").textContent = text;
+    }
+
+    // Linear price axis. Bars positioned by ACTUAL price (not row rank) so the
+    // map is spatially honest — a wall $9k away looks $9k away.
+    function render(d, shownVenue) {
+      const spot = +d.current_price;
+      let buckets = (d.buckets || [])
+        .map((b) => ({ price:+b.price, long:+b.long_usd||0, short:+b.short_usd||0 }))
+        .filter((b) => b.price > 0 && (b.long + b.short) > 0);
+
+      if (!buckets.length || !(spot > 0)) {
+        $("lm-chart").innerHTML = "";
+        $("lm-legend").hidden = true;
+        banner("proof-error", "no clusters for " + coin + " (" + shownVenue.toUpperCase() + ")");
+        $("lm-meta").textContent = ""; $("lm-disclaimer").textContent = "";
+        return;
+      }
+
+      // Price window: clamp to ±35% of spot so a single far outlier can't squash
+      // the meaningful near-spot structure. Keep spot centered-ish.
+      const lo0 = Math.min(spot, ...buckets.map((b) => b.price));
+      const hi0 = Math.max(spot, ...buckets.map((b) => b.price));
+      const lo = Math.max(lo0, spot * 0.65);
+      const hi = Math.min(hi0, spot * 1.35);
+      buckets = buckets.filter((b) => b.price >= lo && b.price <= hi);
+      if (!buckets.length) { buckets = [{ price: spot, long:0, short:0 }]; }
+
+      const maxUsd = Math.max(1, ...buckets.map((b) => Math.max(b.long, b.short)));
+      const W = 920, padT = 26, padB = 14, padL = 66, padR = 12;
+      const plotH = Math.max(360, Math.min(720, buckets.length * 9 + 240));
+      const H = padT + padB + plotH;
+      const midX = padL + (W - padL - padR) / 2;
+      const maxBar = (W - padL - padR) / 2 - 70;
+      const yOf = (price) => padT + (hi - price) / (hi - lo) * plotH;
+      const barH = Math.max(2, Math.min(7, plotH / buckets.length * 0.7));
+
+      const parts = [`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:980px" role="img" aria-label="${coin} liquidation map">`];
+
+      // price gridlines + labels
+      const step = niceStep(hi - lo, 7);
+      const first = Math.ceil(lo / step) * step;
+      for (let p = first; p <= hi; p += step) {
+        const y = yOf(p).toFixed(1);
+        parts.push(`<line class="lm-grid" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`);
+        parts.push(`<text class="lm-gridlbl" x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end">${fmtPx(p)}</text>`);
+      }
+
+      // column headers
+      parts.push(`<text class="lm-hdr" x="${midX-6}" y="16" text-anchor="end">◄ long liq</text>`);
+      parts.push(`<text class="lm-hdr" x="${midX+6}" y="16">short liq ►</text>`);
+
+      // bars
+      for (const b of buckets) {
+        const y = (yOf(b.price) - barH/2).toFixed(1);
+        if (b.long > 0) {
+          const w = Math.max(1.5, (b.long / maxUsd) * maxBar);
+          parts.push(`<rect class="lm-long" x="${(midX-w).toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5"><title>long liq @ ${fmtPx(b.price)} — ${fmtUsd(b.long)}</title></rect>`);
+        }
+        if (b.short > 0) {
+          const w = Math.max(1.5, (b.short / maxUsd) * maxBar);
+          parts.push(`<rect class="lm-short" x="${midX.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5"><title>short liq @ ${fmtPx(b.price)} — ${fmtUsd(b.short)}</title></rect>`);
+        }
+      }
+
+      // spot line
+      const sy = yOf(spot).toFixed(1);
+      parts.push(`<line class="lm-spot-line" x1="${padL}" y1="${sy}" x2="${W-padR}" y2="${sy}"/>`);
+      parts.push(`<text class="lm-spot-lbl" x="${W-padR}" y="${(+sy-5).toFixed(1)}" text-anchor="end">spot ${fmtPx(spot)}</text>`);
+      parts.push(`</svg>`);
+
+      $("lm-chart").innerHTML = parts.join("");
+      $("lm-legend").hidden = false;
+
+      const extra = shownVenue === "dex"
+        ? `${(d.n_positions||0).toLocaleString()} real positions · ${d.venues || "hyperliquid+gmx"}`
+        : `calibrated estimate · fit ${d.calibration_score!=null ? (+d.calibration_score).toFixed(2) : "n/a"}`;
+      const t = d.as_of ? new Date(d.as_of*1000) : new Date();
+      $("lm-meta").innerHTML =
+        `<strong>${coin}</strong> · long <span style="color:#2ecc71">${fmtUsd(d.total_long_liq_usd)}</span>` +
+        ` / short <span style="color:#e74c3c">${fmtUsd(d.total_short_liq_usd)}</span> · ${extra}` +
+        ` · updated ${t.toLocaleTimeString()}`;
+      $("lm-disclaimer").textContent = d.disclaimer || "";
+      banner("proof-ok", "live · " + shownVenue.toUpperCase());
+    }
+
+    async function load() {
+      const my = ++reqId;
+      let v = venue;
+      if (v === "dex" && !DEX_COINS.has(coin)) {
+        v = "cex";   // no DEX book for this coin → auto-show CEX, don't flip the toggle silently-wrong
+        banner("proof-loading", coin + " has no DEX book — showing CEX estimate…");
+      } else {
+        banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + "…");
+      }
+      const path = v === "dex" ? "/charts/dex-liqmap/" : "/charts/cex-liqmap/";
+      try {
+        const r = await fetch(API + path + encodeURIComponent(coin), { cache: "no-store" });
+        if (my !== reqId) return;                 // a newer click superseded this
+        if (!r.ok) {
+          $("lm-chart").innerHTML = ""; $("lm-legend").hidden = true;
+          banner("proof-error", r.status === 404 ? "no " + v.toUpperCase() + " data for " + coin + " yet" : "error " + r.status);
+          return;
+        }
+        const data = await r.json();
+        if (my !== reqId) return;
+        render(data, v);
+      } catch (e) {
+        if (my !== reqId) return;
+        banner("proof-error", "fetch failed — retrying…");
+      }
+    }
+
+    function start() {
+      buildCoinTabs(); bindVenueTabs(); load();
+      timer = setInterval(load, REFRESH_MS);
+      // pause polling when tab hidden (save the API + battery)
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { clearInterval(timer); timer = null; }
+        else if (!timer) { load(); timer = setInterval(load, REFRESH_MS); }
+      });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
+  })();
+  </script>
+</BaseLayout>
