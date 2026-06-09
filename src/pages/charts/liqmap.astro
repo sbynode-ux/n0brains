@@ -49,7 +49,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <div id="lm-wrap" class="lm-wrap">
       <canvas id="lm-canvas" class="lm-canvas"></canvas>
-      <div id="lm-tip" class="lm-tip" hidden></div>
+      <div id="lm-tip" class="lm-tip"></div>
     </div>
     <p class="meta" id="lm-meta"></p>
     <p class="lm-disclaimer" id="lm-disclaimer"></p>
@@ -104,7 +104,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a;
       cursor:crosshair; -webkit-user-select:none; user-select:none; touch-action:none;
       -webkit-touch-callout:none; }
-    .lm-tip { position:absolute; pointer-events:none; z-index:5; background:rgba(15,13,28,0.96);
+    .lm-tip { display:none; position:absolute; pointer-events:none; z-index:5; background:rgba(15,13,28,0.96);
       border:1px solid #3a3a4a; border-radius:7px; padding:.5rem .7rem; font-size:.74rem;
       color:#e3e6ee; line-height:1.5; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.5); }
     .lm-tip .lm-tip-k { color:#9aa0ad; } .lm-tip b { color:#fff; font-variant-numeric:tabular-nums; }
@@ -412,29 +412,44 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const canvas = $("lm-canvas"), tip = $("lm-tip"), wrap = $("lm-wrap");
       if (!canvas) return;
 
+      const hide = () => { tip.style.display = "none"; };
       const showAt = (clientX, clientY) => {
-        if (!lastGeom || !lastData) return;
+        if (!lastGeom || !lastData) { hide(); return; }
         const g = lastGeom, d = lastData;
         const rect = canvas.getBoundingClientRect();
-        // canvas CSS width may be scaled vs the W we drew at → map back
+        if (!rect.width) { hide(); return; }
+        // buffer is W×H (CSS-px units, since we draw under setTransform(dpr)); the
+        // element is scaled to rect → map cursor back into draw-space coords.
         const sx = g.W / rect.width, sy = g.H / rect.height;
         const x = (clientX - rect.left) * sx, y = (clientY - rect.top) * sy;
-        const ci = Math.floor((x - g.padL) / g.cellW);
-        const ri = Math.floor((y - g.padT) / g.cellH);
-        if (ci < 0 || ci >= g.cols || ri < 0 || ri >= g.rows) { tip.hidden = true; return; }
-        const usd = (d.grid[ri] || [])[ci] || 0;
-        if (usd <= 0) { tip.hidden = true; return; }
-        const price = (d.prices || [])[ri];
+        // only react inside the plot area
+        if (x < g.padL || x > g.padL + g.plotW || y < g.padT || y > g.padT + g.plotH) { hide(); return; }
+        let ci = Math.floor((x - g.padL) / g.cellW);
+        let ri = Math.floor((y - g.padT) / g.cellH);
+        ci = Math.max(0, Math.min(g.cols - 1, ci));
+        ri = Math.max(0, Math.min(g.rows - 1, ri));
+        let usd = (d.grid[ri] || [])[ci] || 0;
+        // empty cell → snap to the nearest band in this column so the popup always
+        // gives feedback (find the closest row with liquidity)
+        let showRi = ri;
+        if (usd <= 0) {
+          let bestD = 1e9;
+          for (let r = 0; r < g.rows; r++) {
+            const v = (d.grid[r] || [])[ci] || 0;
+            if (v > 0 && Math.abs(r - ri) < bestD) { bestD = Math.abs(r - ri); showRi = r; usd = v; }
+          }
+        }
+        const price = (d.prices || [])[showRi];
         const ts = (d.times || [])[ci];
         const when = ts ? new Date(ts*1000) : null;
         const whenStr = when ? (when.getMonth()+1)+"/"+when.getDate()+" "+
           String(when.getHours()).padStart(2,"0")+":"+String(when.getMinutes()).padStart(2,"0") : "";
         tip.innerHTML =
-          `<div><span class="lm-tip-k">${whenStr}</span></div>` +
+          (whenStr ? `<div><span class="lm-tip-k">${whenStr}</span></div>` : "") +
           `<div><span class="lm-tip-k">price</span> <b>${fmtPx(price)}</b></div>` +
-          `<div><span class="lm-tip-k">liquidation</span> <b>${fmtUsd(usd)}</b></div>`;
-        tip.hidden = false;
-        // position the tip near the cursor, kept inside the wrap
+          (usd > 0 ? `<div><span class="lm-tip-k">liquidation</span> <b>${fmtUsd(usd)}</b></div>`
+                   : `<div><span class="lm-tip-k">liquidation</span> <b>—</b></div>`);
+        tip.style.display = "block";
         const wrect = wrap.getBoundingClientRect();
         let tx = clientX - wrect.left + 14, ty = clientY - wrect.top + 14;
         const tw = tip.offsetWidth, th = tip.offsetHeight;
@@ -445,7 +460,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       };
 
       canvas.addEventListener("mousemove", (e) => showAt(e.clientX, e.clientY));
-      canvas.addEventListener("mouseleave", () => { tip.hidden = true; });
+      canvas.addEventListener("mouseleave", hide);
       // touch: finger acts like hover; preventDefault stops the chart being
       // selected/scrolled (the "copy" selection behaviour on phones).
       const onTouch = (e) => {
@@ -455,7 +470,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       };
       canvas.addEventListener("touchstart", onTouch, { passive: false });
       canvas.addEventListener("touchmove", onTouch, { passive: false });
-      canvas.addEventListener("touchend", () => { tip.hidden = true; });
+      canvas.addEventListener("touchend", hide);
     }
 
     function start() {
