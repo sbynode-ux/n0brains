@@ -157,36 +157,42 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       const parts = [`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:980px" role="img" aria-label="${coin} liquidation map">`];
 
+      // INLINE fill/stroke attrs (NOT CSS classes): JS-injected SVG doesn't get
+      // Astro's scoped [data-astro-cid] attribute, so class-based scoped fills
+      // never match → bars render black. Inline attributes are scope-immune.
+      const C_LONG = "#2ecc71", C_SHORT = "#e74c3c", C_SPOT = "#f5c518",
+            C_GRID = "#23262f", C_GRIDLBL = "#6b7280", C_HDR = "#8b909c";
+
       // price gridlines + labels
       const step = niceStep(hi - lo, 7);
       const first = Math.ceil(lo / step) * step;
       for (let p = first; p <= hi; p += step) {
         const y = yOf(p).toFixed(1);
-        parts.push(`<line class="lm-grid" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`);
-        parts.push(`<text class="lm-gridlbl" x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end">${fmtPx(p)}</text>`);
+        parts.push(`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${C_GRID}" stroke-width="1"/>`);
+        parts.push(`<text x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end" fill="${C_GRIDLBL}" font-size="11">${fmtPx(p)}</text>`);
       }
 
       // column headers
-      parts.push(`<text class="lm-hdr" x="${midX-6}" y="16" text-anchor="end">◄ long liq</text>`);
-      parts.push(`<text class="lm-hdr" x="${midX+6}" y="16">short liq ►</text>`);
+      parts.push(`<text x="${midX-6}" y="16" text-anchor="end" fill="${C_HDR}" font-size="12">◄ long liq</text>`);
+      parts.push(`<text x="${midX+6}" y="16" fill="${C_HDR}" font-size="12">short liq ►</text>`);
 
       // bars
       for (const b of buckets) {
         const y = (yOf(b.price) - barH/2).toFixed(1);
         if (b.long > 0) {
           const w = Math.max(1.5, (b.long / maxUsd) * maxBar);
-          parts.push(`<rect class="lm-long" x="${(midX-w).toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5"><title>long liq @ ${fmtPx(b.price)} — ${fmtUsd(b.long)}</title></rect>`);
+          parts.push(`<rect x="${(midX-w).toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5" fill="${C_LONG}"><title>long liq @ ${fmtPx(b.price)} — ${fmtUsd(b.long)}</title></rect>`);
         }
         if (b.short > 0) {
           const w = Math.max(1.5, (b.short / maxUsd) * maxBar);
-          parts.push(`<rect class="lm-short" x="${midX.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5"><title>short liq @ ${fmtPx(b.price)} — ${fmtUsd(b.short)}</title></rect>`);
+          parts.push(`<rect x="${midX.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="${barH.toFixed(1)}" rx="1.5" fill="${C_SHORT}"><title>short liq @ ${fmtPx(b.price)} — ${fmtUsd(b.short)}</title></rect>`);
         }
       }
 
       // spot line
       const sy = yOf(spot).toFixed(1);
-      parts.push(`<line class="lm-spot-line" x1="${padL}" y1="${sy}" x2="${W-padR}" y2="${sy}"/>`);
-      parts.push(`<text class="lm-spot-lbl" x="${W-padR}" y="${(+sy-5).toFixed(1)}" text-anchor="end">spot ${fmtPx(spot)}</text>`);
+      parts.push(`<line x1="${padL}" y1="${sy}" x2="${W-padR}" y2="${sy}" stroke="${C_SPOT}" stroke-width="1.6" stroke-dasharray="5 3"/>`);
+      parts.push(`<text x="${W-padR}" y="${(+sy-5).toFixed(1)}" text-anchor="end" fill="${C_SPOT}" font-size="12" font-weight="700">spot ${fmtPx(spot)}</text>`);
       parts.push(`</svg>`);
 
       $("lm-chart").innerHTML = parts.join("");
