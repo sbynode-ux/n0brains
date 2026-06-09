@@ -6,7 +6,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   title="liquidation heatmap"
   description="n0brains live liquidation heatmap — real on-chain DEX positions (Hyperliquid + GMX) with exact liquidation prices, plotted as a price × time density map. Where leveraged positions cluster to liquidate. Free, live. Not financial advice."
 >
-  <section class="about-section">
+  <section class="about-section lm-wide">
     <h1>liquidation heatmap</h1>
     <p class="legal-updated">
       Where leveraged positions cluster to liquidate, over time — the bright bands
@@ -31,6 +31,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <p class="lm-disclaimer" id="lm-disclaimer"></p>
   </section>
 
+  <style is:global>
+    /* widen this page past the global .about-section 600px cap (heatmap needs room) */
+    .about-section.lm-wide { max-width: 1100px; }
+  </style>
   <style>
     .lm-controls { display:flex; gap:1.25rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 1rem; }
     .lm-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
@@ -43,7 +47,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .lm-tabs button:hover { border-color:var(--accent,#5b8cff); }
     .lm-tabs button.active { background:var(--accent,#5b8cff); color:#fff; border-color:var(--accent,#5b8cff); }
     .lm-wrap { width:100%; overflow-x:auto; margin-top:.25rem; min-height:140px; }
-    .lm-canvas { display:block; width:100%; max-width:1000px; height:auto; border-radius:6px; background:#0d0b1a; }
+    .lm-canvas { display:block; width:100%; max-width:1080px; height:auto; border-radius:6px; background:#0d0b1a; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:64ch; }
     .proof-banner.proof-ok .dot { background:#2ecc71; }
   </style>
@@ -140,7 +144,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       // canvas geometry: price axis (left gutter) + time axis (bottom)
       const padL = 70, padB = 26, padT = 10, padR = 10;
-      const plotW = Math.max(360, Math.min(900, cols * 6));
+      const plotW = Math.max(360, Math.min(1000, cols * 10));
       const plotH = Math.max(320, Math.min(680, rows * 7));
       const W = padL + plotW + padR, H = padT + plotH + padB;
       // hi-DPI
