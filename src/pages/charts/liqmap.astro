@@ -245,11 +245,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         }
       }
 
-      // time axis (X)
+      // time axis (X) — format by SPAN: short (hours) → HH:MM, longer → M/D.
+      // (DEX live spans minutes/hours so date-only made every tick read the same day.)
       ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "center";
       const times = d.times || [];
-      const fmtT = (ts) => { const dt = new Date(ts*1000);
-        return (dt.getMonth()+1) + "/" + dt.getDate(); };
+      const totalSpanS = times.length > 1 ? (times[times.length-1] - times[0]) : 0;
+      const pad2 = (n) => String(n).padStart(2, "0");
+      const fmtT = (ts) => {
+        const dt = new Date(ts*1000);
+        if (totalSpanS < 36*3600)          // < ~1.5 days → time of day
+          return pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
+        if (totalSpanS < 5*86400)          // < 5 days → M/D HH:MM
+          return (dt.getMonth()+1) + "/" + dt.getDate() + " " + pad2(dt.getHours()) + ":" + pad2(dt.getMinutes());
+        return (dt.getMonth()+1) + "/" + dt.getDate();
+      };
       const xticks = Math.min(8, cols);
       for (let k = 0; k <= xticks; k++) {
         const ci = Math.round((cols-1) * k / xticks);
