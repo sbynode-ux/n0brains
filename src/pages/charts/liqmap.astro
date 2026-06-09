@@ -46,8 +46,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
     .lm-tabs button:hover { border-color:var(--accent,#5b8cff); }
     .lm-tabs button.active { background:var(--accent,#5b8cff); color:#fff; border-color:var(--accent,#5b8cff); }
-    .lm-wrap { width:100%; overflow-x:auto; margin-top:.25rem; min-height:140px; }
-    .lm-canvas { display:block; width:100%; max-width:1080px; height:auto; border-radius:6px; background:#0d0b1a; }
+    .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
+    .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:64ch; }
     .proof-banner.proof-ok .dot { background:#2ecc71; }
   </style>
@@ -58,7 +58,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const API = "https://api.n0brains.com";
     const COINS = ["BTC","ETH"];           // DEX real-position coins
     const REFRESH_MS = 60000;
-    let coin = "BTC", timer = null, reqId = 0;
+    let coin = "BTC", timer = null, reqId = 0, lastData = null, resizeT = null;
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -119,6 +119,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function render(d) {
+      lastData = d;   // cache for resize re-render
       const grid = d.grid || [], cols = d.cols || 0, rows = d.rows || 0;
       const canvas = $("lm-canvas"), wrap = $("lm-wrap");
       if (!cols || !rows || !grid.length) {
@@ -142,15 +143,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const denom = (lMax - lMin) || 1;
       const norm = (v) => v <= 0 ? 0 : (Math.log(v) - lMin) / denom;
 
-      // canvas geometry: price axis (left gutter) + time axis (bottom)
+      // canvas geometry: FIT the container width (no horizontal scroll — locked
+      // full-size). W = available width; cells stretch to fill it.
       const padL = 70, padB = 26, padT = 10, padR = 10;
-      const plotW = Math.max(360, Math.min(1000, cols * 10));
-      const plotH = Math.max(320, Math.min(680, rows * 7));
-      const W = padL + plotW + padR, H = padT + plotH + padB;
+      const W = Math.max(360, Math.floor(wrap.clientWidth || 1000));
+      const plotW = W - padL - padR;
+      const plotH = Math.max(300, Math.min(640, rows * 7));
+      const H = padT + plotH + padB;
       // hi-DPI
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       canvas.width = W * dpr; canvas.height = H * dpr;
-      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      canvas.style.width = "100%"; canvas.style.height = "auto";
       const ctx = canvas.getContext("2d");
       ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W,H);
@@ -202,7 +205,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         if (times[ci] != null) ctx.fillText(fmtT(times[ci]), padL + ci*cellW + cellW/2, H-8);
       });
 
-      $("lm-canvas") && (wrap.scrollLeft = wrap.scrollWidth);  // keep latest in view
       const span = times.length>1 ? Math.round((times[times.length-1]-times[0])/3600) : 0;
       $("lm-meta").innerHTML =
         `<strong>${coin}</strong> · ${cols} snapshots · ${span}h of history · ` +
@@ -233,6 +235,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
         else if (!timer) { load(); timer = setInterval(load, REFRESH_MS); }
+      });
+      // re-render to the new container width on resize (no scroll — refit)
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(() => { if (lastData) render(lastData); }, 150);
       });
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
