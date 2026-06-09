@@ -24,6 +24,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-venue="cex" class="active" role="tab">CEX · estimate</button>
         <button data-venue="dex" role="tab">DEX · real (live)</button>
       </div>
+      <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
+        liquidity threshold <span id="lm-thresh-val">0.00</span>
+        <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0" aria-label="liquidity threshold" />
+      </label>
     </div>
 
     <div id="lm-banner" class="proof-banner proof-loading" role="status">
@@ -52,6 +56,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
     .lm-tabs button:hover { border-color:var(--accent,#5b8cff); }
     .lm-tabs button.active { background:var(--accent,#5b8cff); color:#fff; border-color:var(--accent,#5b8cff); }
+    .lm-thresh { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#9aa0ad; }
+    .lm-thresh input[type=range] { width:140px; accent-color:var(--accent,#5b8cff); cursor:pointer; }
+    #lm-thresh-val { color:#cfd2dc; font-variant-numeric:tabular-nums; min-width:2.5em; }
     .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
     .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
@@ -67,7 +74,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    let coin = "BTC", venue = "cex", timer = null, reqId = 0, lastData = null, resizeT = null;
+    let coin = "BTC", venue = "cex", timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0;
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -140,7 +147,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       for (const r of grid) for (const v of r) { if (v > maxV) maxV = v; if (v > 0 && v < minV) minV = v; }
       if (!isFinite(minV)) minV = maxV || 1;
       const lMin = Math.log(minV), lMax = Math.log(maxV), den = (lMax - lMin) || 1;
-      const norm = (v) => v <= 0 ? 0 : (Math.log(v) - lMin) / den;
+      // threshold (the Coinglass "liquidity threshold" slider): hide cells below the
+      // floor, rescale the rest across the full colormap so the strongest bands pop.
+      const thr = threshold;
+      const norm = (v) => {
+        if (v <= 0) return -1;                      // -1 = don't draw
+        const n = (Math.log(v) - lMin) / den;       // 0..1
+        if (n < thr) return -1;                     // below threshold → hidden
+        return thr >= 1 ? 1 : (n - thr) / (1 - thr); // rescale remaining to 0..1
+      };
 
       // geometry: fit container width, no scroll
       const padL = 70, padB = 26, padT = 10, padR = 10;
@@ -168,9 +183,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // heatmap cells
       for (let ri = 0; ri < rows; ri++) {
         for (let ci = 0; ci < cols; ci++) {
-          const v = grid[ri][ci];
-          if (v > 0) {
-            ctx.fillStyle = heatColor(norm(v));
+          const t = norm(grid[ri][ci]);
+          if (t >= 0) {                             // -1 = below threshold / empty → skip
+            ctx.fillStyle = heatColor(t);
             ctx.fillRect(padL + ci*cellW, padT + ri*cellH, Math.ceil(cellW)+0.5, Math.ceil(cellH)+0.5);
           }
         }
@@ -273,8 +288,18 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       }
     }
 
+    function bindThreshold() {
+      const inp = $("lm-thresh-input"), val = $("lm-thresh-val");
+      if (!inp) return;
+      inp.addEventListener("input", () => {
+        threshold = +inp.value;
+        val.textContent = threshold.toFixed(2);
+        if (lastData) render(lastData);            // instant re-render, no refetch
+      });
+    }
+
     function start() {
-      buildCoinTabs(); bindVenue(); load();
+      buildCoinTabs(); bindVenue(); bindThreshold(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
