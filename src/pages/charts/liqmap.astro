@@ -4,14 +4,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="liquidation heatmap"
-  description="n0brains live liquidation heatmap — price × time density of where leveraged positions cluster to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) plus a 3-month CEX estimate from open-interest history, with price candles overlaid. Free, live. Not financial advice."
+  description="n0brains live liquidation heatmap — price × time density of where leveraged positions cluster to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) plus a multi-month CEX estimate from open-interest history, with price candles overlaid. Free, live. Not financial advice."
 >
   <section class="about-section lm-wide">
     <h1>liquidation heatmap</h1>
     <p class="legal-updated">
       Where leveraged positions cluster to liquidate, over time — bright bands are
       liquidity magnets that the price tends to gravitate toward.
-      <strong>CEX</strong> is a 3-month estimate modeled from aggregate
+      <strong>CEX</strong> is a multi-month estimate modeled from aggregate
       open-interest history (the bands trail the price as leverage stacks).
       <strong>DEX</strong> reads <em>real</em> on-chain positions (Hyperliquid +
       GMX), captured live and building forward. Price candles overlaid. Free and
@@ -21,7 +21,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <div class="lm-controls">
       <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="coin"></div>
       <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source">
-        <button data-venue="cex" class="active" role="tab">CEX · 3-month estimate</button>
+        <button data-venue="cex" class="active" role="tab">CEX · estimate</button>
         <button data-venue="dex" role="tab">DEX · real (live)</button>
       </div>
     </div>
