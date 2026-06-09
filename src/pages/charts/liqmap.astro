@@ -128,10 +128,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         return;
       }
 
-      // log-scale normalize intensities (liq USD spans orders of magnitude)
-      let maxV = 0;
-      for (const r of grid) for (const v of r) if (v > maxV) maxV = v;
-      const norm = (v) => v <= 0 ? 0 : Math.log1p(v) / Math.log1p(maxV);
+      // log-scale normalize between min and max nonzero (NOT log(v)/log(max),
+      // which bunches everything near 1.0 → all-green). Spread the actual range
+      // [minNonzero, max] across the full 0..1 colormap.
+      let maxV = 0, minV = Infinity;
+      for (const r of grid) for (const v of r) { if (v > maxV) maxV = v; if (v > 0 && v < minV) minV = v; }
+      if (!isFinite(minV)) minV = maxV || 1;
+      const lMin = Math.log(minV), lMax = Math.log(maxV);
+      const denom = (lMax - lMin) || 1;
+      const norm = (v) => v <= 0 ? 0 : (Math.log(v) - lMin) / denom;
 
       // canvas geometry: price axis (left gutter) + time axis (bottom)
       const padL = 70, padB = 26, padT = 10, padR = 10;
