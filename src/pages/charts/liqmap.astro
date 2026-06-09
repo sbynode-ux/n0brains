@@ -52,6 +52,21 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     </div>
     <p class="meta" id="lm-meta"></p>
     <p class="lm-disclaimer" id="lm-disclaimer"></p>
+
+    <div class="lm-upsell">
+      <p>
+        <strong>Want this data in your agent or bot?</strong> The liquidation map +
+        heatmap are on the <a href="/signup">n0brains API</a> — both the CEX estimate
+        and the <strong>real on-chain DEX</strong> map, all coins, programmatic via
+        REST &amp; the MCP server.
+      </p>
+      <p class="lm-endpoints">
+        <code>/liqmap/{'{coin}'}</code> · <code>/liquidation-map/{'{coin}'}</code> ·
+        <code>/liq-heatmap/{'{coin}'}</code> · <code>/liquidation-heatmap/{'{coin}'}</code>
+        — <a href="/docs#liquidation-map">docs</a>
+      </p>
+      <a class="lm-cta" href="/signup">Get API access →</a>
+    </div>
   </section>
 
   <style is:global>
@@ -81,6 +96,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
     .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
+    .lm-upsell { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid var(--border,#2a2a3a);
+      border-radius:10px; background:rgba(91,140,255,0.05); max-width:74ch; }
+    .lm-upsell p { margin:0 0 .6rem; font-size:.9rem; color:#cfd2dc; }
+    .lm-upsell .lm-endpoints { font-size:.74rem; color:#9aa0ad; }
+    .lm-upsell code { font-size:.72rem; color:#8fb3ff; }
+    .lm-cta { display:inline-block; margin-top:.4rem; background:var(--accent,#5b8cff);
+      color:#fff; padding:.5rem 1rem; border-radius:7px; font-size:.85rem; font-weight:600;
+      text-decoration:none; }
+    .lm-cta:hover { filter:brightness(1.1); }
     .proof-banner.proof-ok .dot { background:#2ecc71; }
   </style>
 

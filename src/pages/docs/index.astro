@@ -424,7 +424,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/manipulation/{'{coin}'}</code></td><td>Pro</td><td>Manipulation score for asset</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/trust/{'{coin}'}</code></td><td>Pro</td><td>Trust &amp; scam score for token</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
-          <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-map/{'{coin}'}</code></td><td>API Key</td><td>Estimated liquidation-cluster zones (modeled from OI + leverage tiers)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-map/{'{coin}'}</code></td><td>API Key</td><td>CEX estimated liquidation-cluster zones (modeled from OI + leverage tiers)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/liqmap/{'{coin}'}</code></td><td>API Key</td><td>DEX <strong>real</strong> on-chain liquidation map — actual positions (Hyperliquid + GMX) with exact liq prices</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-heatmap/{'{coin}'}</code></td><td>API Key</td><td>CEX liquidation heatmap — price×time intensity grid. <code>?days=</code> (1–180), <code>?rows=</code>, <code>?cols=</code></td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/liq-heatmap/{'{coin}'}</code></td><td>API Key</td><td>DEX real-position liquidation heatmap — price×time grid (BTC/ETH)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/correlation</code></td><td>API Key</td><td>Cross-asset return-correlation matrix (7d). <code>?vs=BTC</code>, <code>?coins=…</code></td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/correlation/{'{coin}'}</code></td><td>API Key</td><td>One coin's correlation + beta to BTC/ETH + peers</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/rotation</code></td><td>API Key</td><td>Altseason/rotation read — into_alts / into_btc / neutral</td></tr>
