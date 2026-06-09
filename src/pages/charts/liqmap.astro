@@ -49,6 +49,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <div id="lm-wrap" class="lm-wrap">
       <canvas id="lm-canvas" class="lm-canvas"></canvas>
+      <div id="lm-tip" class="lm-tip" hidden></div>
     </div>
     <p class="meta" id="lm-meta"></p>
     <p class="lm-disclaimer" id="lm-disclaimer"></p>
@@ -93,8 +94,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       padding:0; cursor:pointer; outline:none;
     }
     .lm-swatches button.active { border-color:#fff; box-shadow:0 0 0 1px #fff; }
-    .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
-    .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
+    .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; position:relative; }
+    .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a;
+      cursor:crosshair; -webkit-user-select:none; user-select:none; touch-action:none;
+      -webkit-touch-callout:none; }
+    .lm-tip { position:absolute; pointer-events:none; z-index:5; background:rgba(15,13,28,0.96);
+      border:1px solid #3a3a4a; border-radius:7px; padding:.5rem .7rem; font-size:.74rem;
+      color:#e3e6ee; line-height:1.5; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.5); }
+    .lm-tip .lm-tip-k { color:#9aa0ad; } .lm-tip b { color:#fff; font-variant-numeric:tabular-nums; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
     .lm-upsell { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid var(--border,#2a2a3a);
       border-radius:10px; background:rgba(91,140,255,0.05); max-width:74ch; }
@@ -118,6 +125,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
     let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0;
+    let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -238,6 +246,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W,H);
 
       const cellW = plotW / cols, cellH = plotH / rows;
+      // stash geometry (CSS px) so the hover handler can map cursor → cell
+      lastGeom = { padL, padT, plotW, plotH, cellW, cellH, rows, cols, W, H, dpr };
       const pMin = d.price_min, pMax = d.price_max, pSpan = (pMax - pMin) || 1;
       const xOfTime = (ts) => {
         const times = d.times || [];
@@ -392,8 +402,58 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         }));
     }
 
+    function bindHover() {
+      const canvas = $("lm-canvas"), tip = $("lm-tip"), wrap = $("lm-wrap");
+      if (!canvas) return;
+
+      const showAt = (clientX, clientY) => {
+        if (!lastGeom || !lastData) return;
+        const g = lastGeom, d = lastData;
+        const rect = canvas.getBoundingClientRect();
+        // canvas CSS width may be scaled vs the W we drew at → map back
+        const sx = g.W / rect.width, sy = g.H / rect.height;
+        const x = (clientX - rect.left) * sx, y = (clientY - rect.top) * sy;
+        const ci = Math.floor((x - g.padL) / g.cellW);
+        const ri = Math.floor((y - g.padT) / g.cellH);
+        if (ci < 0 || ci >= g.cols || ri < 0 || ri >= g.rows) { tip.hidden = true; return; }
+        const usd = (d.grid[ri] || [])[ci] || 0;
+        if (usd <= 0) { tip.hidden = true; return; }
+        const price = (d.prices || [])[ri];
+        const ts = (d.times || [])[ci];
+        const when = ts ? new Date(ts*1000) : null;
+        const whenStr = when ? (when.getMonth()+1)+"/"+when.getDate()+" "+
+          String(when.getHours()).padStart(2,"0")+":"+String(when.getMinutes()).padStart(2,"0") : "";
+        tip.innerHTML =
+          `<div><span class="lm-tip-k">${whenStr}</span></div>` +
+          `<div><span class="lm-tip-k">price</span> <b>${fmtPx(price)}</b></div>` +
+          `<div><span class="lm-tip-k">liquidation</span> <b>${fmtUsd(usd)}</b></div>`;
+        tip.hidden = false;
+        // position the tip near the cursor, kept inside the wrap
+        const wrect = wrap.getBoundingClientRect();
+        let tx = clientX - wrect.left + 14, ty = clientY - wrect.top + 14;
+        const tw = tip.offsetWidth, th = tip.offsetHeight;
+        if (tx + tw > wrap.clientWidth) tx = clientX - wrect.left - tw - 14;
+        if (ty + th > wrap.clientHeight) ty = clientY - wrect.top - th - 14;
+        tip.style.left = Math.max(0, tx) + "px";
+        tip.style.top = Math.max(0, ty) + "px";
+      };
+
+      canvas.addEventListener("mousemove", (e) => showAt(e.clientX, e.clientY));
+      canvas.addEventListener("mouseleave", () => { tip.hidden = true; });
+      // touch: finger acts like hover; preventDefault stops the chart being
+      // selected/scrolled (the "copy" selection behaviour on phones).
+      const onTouch = (e) => {
+        if (!e.touches || !e.touches.length) return;
+        e.preventDefault();
+        showAt(e.touches[0].clientX, e.touches[0].clientY);
+      };
+      canvas.addEventListener("touchstart", onTouch, { passive: false });
+      canvas.addEventListener("touchmove", onTouch, { passive: false });
+      canvas.addEventListener("touchend", () => { tip.hidden = true; });
+    }
+
     function start() {
-      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); bindPalette(); syncTabs(); load();
+      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
