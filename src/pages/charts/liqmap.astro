@@ -35,6 +35,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         liquidity threshold <span id="lm-thresh-val">0.00</span>
         <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0" aria-label="liquidity threshold" />
       </label>
+      <div id="lm-palette" class="lm-swatches" role="group" aria-label="color scheme">
+        <button data-pal="viridis" class="active" title="viridis" style="background:linear-gradient(90deg,#28165a,#149696,#28c85a,#f0f028)"></button>
+        <button data-pal="bluered" title="blue → red" style="background:linear-gradient(90deg,#1e50c8,#14c8d2,#f0dc28,#e63228)"></button>
+        <button data-pal="greenred" title="green → red" style="background:linear-gradient(90deg,#28c85a,#f0e628,#e63228)"></button>
+        <button data-pal="heat" title="heat" style="background:linear-gradient(90deg,#8c143c,#e6461e,#fab428,#fafae6)"></button>
+      </div>
     </div>
 
     <div id="lm-banner" class="proof-banner proof-loading" role="status">
@@ -66,6 +72,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .lm-thresh { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#9aa0ad; }
     .lm-thresh input[type=range] { width:140px; accent-color:var(--accent,#5b8cff); cursor:pointer; }
     #lm-thresh-val { color:#cfd2dc; font-variant-numeric:tabular-nums; min-width:2.5em; }
+    .lm-swatches { display:flex; gap:.3rem; }
+    .lm-swatches button {
+      width:30px; height:18px; border-radius:4px; border:1px solid #2a2a3a;
+      padding:0; cursor:pointer; outline:none;
+    }
+    .lm-swatches button.active { border-color:#fff; box-shadow:0 0 0 1px #fff; }
     .lm-wrap { width:100%; margin-top:.25rem; min-height:140px; }
     .lm-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
@@ -91,13 +103,27 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       return "$" + p.toPrecision(3);
     };
 
-    // Coinglass-style colormap: dark (low) → purple → blue → teal → green → yellow.
+    // Selectable colormaps (like Coinglass's palette swatches). Each = stop list
+    // [t, [r,g,b]] from low→high; the dark first stop blends into the bg.
+    const PALETTES = {
+      viridis: [   // purple → teal → green → yellow (default)
+        [0.00, [13, 11, 26]], [0.18, [40, 22, 90]], [0.40, [38, 70, 150]],
+        [0.60, [20, 150, 150]], [0.80, [40, 200, 90]], [1.00, [240, 240, 40]] ],
+      bluered: [   // blue → cyan → yellow → red
+        [0.00, [10, 12, 30]], [0.25, [30, 80, 200]], [0.50, [20, 200, 210]],
+        [0.75, [240, 220, 40]], [1.00, [230, 50, 40]] ],
+      greenred: [  // green → yellow → red
+        [0.00, [8, 16, 10]], [0.35, [40, 200, 90]], [0.70, [240, 230, 40]],
+        [1.00, [230, 50, 40]] ],
+      heat: [      // black → red → orange → yellow → white (inferno-ish)
+        [0.00, [8, 6, 12]], [0.30, [140, 20, 60]], [0.55, [230, 70, 30]],
+        [0.80, [250, 180, 40]], [1.00, [250, 250, 230]] ],
+    };
+    let palette = "viridis";
+
     function heatColor(t) {
       t = Math.max(0, Math.min(1, t));
-      const stops = [
-        [0.00, [13, 11, 26]], [0.18, [40, 22, 90]], [0.40, [38, 70, 150]],
-        [0.60, [20, 150, 150]], [0.80, [40, 200, 90]], [1.00, [240, 240, 40]],
-      ];
+      const stops = PALETTES[palette] || PALETTES.viridis;
       for (let i = 1; i < stops.length; i++) {
         if (t <= stops[i][0]) {
           const [t0, c0] = stops[i-1], [t1, c1] = stops[i];
@@ -105,7 +131,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           return `rgb(${Math.round(c0[0]+(c1[0]-c0[0])*f)},${Math.round(c0[1]+(c1[1]-c0[1])*f)},${Math.round(c0[2]+(c1[2]-c0[2])*f)})`;
         }
       }
-      return "rgb(240,240,40)";
+      const last = stops[stops.length-1][1];
+      return `rgb(${last[0]},${last[1]},${last[2]})`;
     }
 
     function buildCoinTabs() {
@@ -331,8 +358,18 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       });
     }
 
+    function bindPalette() {
+      document.querySelectorAll("#lm-palette button").forEach((b) =>
+        b.addEventListener("click", () => {
+          palette = b.dataset.pal;
+          document.querySelectorAll("#lm-palette button").forEach((x) =>
+            x.classList.toggle("active", x.dataset.pal === palette));
+          if (lastData) render(lastData);          // instant recolor, no refetch
+        }));
+    }
+
     function start() {
-      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); syncTabs(); load();
+      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); bindPalette(); syncTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
