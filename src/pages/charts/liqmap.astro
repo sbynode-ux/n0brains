@@ -24,6 +24,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-venue="cex" class="active" role="tab">CEX · estimate</button>
         <button data-venue="dex" role="tab">DEX · real (live)</button>
       </div>
+      <div id="lm-range" class="lm-tabs" role="tablist" aria-label="time range">
+        <button data-days="1" role="tab">24h</button>
+        <button data-days="7" role="tab">7d</button>
+        <button data-days="30" role="tab">30d</button>
+        <button data-days="90" role="tab">90d</button>
+        <button data-days="166" class="active" role="tab">max</button>
+      </div>
       <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
         liquidity threshold <span id="lm-thresh-val">0.00</span>
         <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0" aria-label="liquidity threshold" />
@@ -74,7 +81,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    let coin = "BTC", venue = "cex", timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0;
+    let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0;
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -112,11 +119,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       document.querySelectorAll("#lm-venue button").forEach((b) =>
         b.addEventListener("click", () => { venue = b.dataset.venue; syncTabs(); load(); }));
     }
+    function bindRange() {
+      document.querySelectorAll("#lm-range button").forEach((b) =>
+        b.addEventListener("click", () => { days = +b.dataset.days; syncTabs(); load(); }));
+    }
     function syncTabs() {
       document.querySelectorAll("#lm-coins button").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
       document.querySelectorAll("#lm-venue button").forEach((b) =>
         b.classList.toggle("active", b.dataset.venue === venue));
+      document.querySelectorAll("#lm-range button").forEach((b) =>
+        b.classList.toggle("active", +b.dataset.days === days));
+      // range applies to CEX only (DEX history too short yet) — hide for DEX
+      const rng = $("lm-range");
+      if (rng) rng.style.display = (venue === "cex") ? "" : "none";
     }
     function banner(state, text) {
       const b = $("lm-banner");
@@ -272,8 +288,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       }
       banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + " heatmap…");
       const path = v === "cex" ? "/charts/cex-heatmap/" : "/charts/liqmap-heatmap/dex/";
+      const qs = v === "cex" ? ("?days=" + days) : "";
       try {
-        const r = await fetch(API + path + encodeURIComponent(coin), { cache: "no-store" });
+        const r = await fetch(API + path + encodeURIComponent(coin) + qs, { cache: "no-store" });
         if (my !== reqId) return;
         if (!r.ok) { banner("proof-error", "error " + r.status); return; }
         const data = await r.json();
@@ -299,7 +316,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoinTabs(); bindVenue(); bindThreshold(); load();
+      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); syncTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
