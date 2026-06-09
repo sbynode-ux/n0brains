@@ -4,25 +4,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="liquidation map"
-  description="n0brains live liquidation map — where leveraged positions are likely to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) with exact liquidation prices, plus a CEX estimate calibrated against real liquidation prints. Free, live. Not advice."
+  description="n0brains live liquidation map — real on-chain DEX positions (Hyperliquid + GMX) with their exact liquidation prices. Where leveraged positions cluster to liquidate. Free, live. Not financial advice."
 >
   <section class="about-section">
     <h1>liquidation map</h1>
     <p class="legal-updated">
       Where leveraged positions cluster to liquidate — the price levels that act as
-      liquidity magnets. <strong>DEX</strong> reads real on-chain positions
+      liquidity magnets. This reads <strong>real on-chain positions</strong>
       (Hyperliquid + GMX) with their <em>exact</em> liquidation prices — not an
-      estimate. <strong>CEX</strong> is modeled from aggregate open interest and
-      leverage tiers calibrated against real liquidation prints. Free and live,
-      refreshed every minute. Analytical data, <strong>not financial advice</strong>.
+      estimate. Free and live, refreshed every minute. Analytical data,
+      <strong>not financial advice</strong>.
     </p>
 
     <div class="lm-controls">
       <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="coin"></div>
-      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="venue">
-        <button data-venue="dex" class="active" role="tab">DEX · real positions</button>
-        <button data-venue="cex" role="tab">CEX · estimate</button>
-      </div>
     </div>
 
     <div id="lm-banner" class="proof-banner proof-loading" role="status">
@@ -72,10 +67,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   (function () {
     "use strict";
     const API = "https://api.n0brains.com";
-    const COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
-    const DEX_COINS = new Set(["BTC","ETH"]);   // venues with a real on-chain book
+    // DEX (real on-chain positions) only — coins with an actual HL/GMX book.
+    const COINS = ["BTC","ETH"];
     const REFRESH_MS = 60000;
-    let coin = "BTC", venue = "dex", timer = null, reqId = 0;
+    let coin = "BTC", timer = null, reqId = 0;
 
     const $ = (id) => document.getElementById(id);
 
@@ -105,15 +100,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       el.querySelectorAll("button").forEach((b) =>
         b.addEventListener("click", () => { coin = b.dataset.coin; syncTabs(); load(); }));
     }
-    function bindVenueTabs() {
-      document.querySelectorAll("#lm-venue button").forEach((b) =>
-        b.addEventListener("click", () => { venue = b.dataset.venue; syncTabs(); load(); }));
-    }
     function syncTabs() {
       document.querySelectorAll("#lm-coins button").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
-      document.querySelectorAll("#lm-venue button").forEach((b) =>
-        b.classList.toggle("active", b.dataset.venue === venue));
     }
     function banner(state, text) {
       const b = $("lm-banner");
@@ -123,7 +112,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     // Linear price axis. Bars positioned by ACTUAL price (not row rank) so the
     // map is spatially honest — a wall $9k away looks $9k away.
-    function render(d, shownVenue) {
+    function render(d) {
       const spot = +d.current_price;
       let buckets = (d.buckets || [])
         .map((b) => ({ price:+b.price, long:+b.long_usd||0, short:+b.short_usd||0 }))
@@ -132,7 +121,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       if (!buckets.length || !(spot > 0)) {
         $("lm-chart").innerHTML = "";
         $("lm-legend").hidden = true;
-        banner("proof-error", "no clusters for " + coin + " (" + shownVenue.toUpperCase() + ")");
+        banner("proof-error", "no clusters for " + coin + " yet");
         $("lm-meta").textContent = ""; $("lm-disclaimer").textContent = "";
         return;
       }
@@ -198,39 +187,30 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       $("lm-chart").innerHTML = parts.join("");
       $("lm-legend").hidden = false;
 
-      const extra = shownVenue === "dex"
-        ? `${(d.n_positions||0).toLocaleString()} real positions · ${d.venues || "hyperliquid+gmx"}`
-        : `calibrated estimate · fit ${d.calibration_score!=null ? (+d.calibration_score).toFixed(2) : "n/a"}`;
+      const extra = `${(d.n_positions||0).toLocaleString()} real positions · ${d.venues || "hyperliquid+gmx"}`;
       const t = d.as_of ? new Date(d.as_of*1000) : new Date();
       $("lm-meta").innerHTML =
         `<strong>${coin}</strong> · long <span style="color:#2ecc71">${fmtUsd(d.total_long_liq_usd)}</span>` +
         ` / short <span style="color:#e74c3c">${fmtUsd(d.total_short_liq_usd)}</span> · ${extra}` +
         ` · updated ${t.toLocaleTimeString()}`;
       $("lm-disclaimer").textContent = d.disclaimer || "";
-      banner("proof-ok", "live · " + shownVenue.toUpperCase());
+      banner("proof-ok", "live");
     }
 
     async function load() {
       const my = ++reqId;
-      let v = venue;
-      if (v === "dex" && !DEX_COINS.has(coin)) {
-        v = "cex";   // no DEX book for this coin → auto-show CEX, don't flip the toggle silently-wrong
-        banner("proof-loading", coin + " has no DEX book — showing CEX estimate…");
-      } else {
-        banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + "…");
-      }
-      const path = v === "dex" ? "/charts/dex-liqmap/" : "/charts/cex-liqmap/";
+      banner("proof-loading", "loading " + coin + "…");
       try {
-        const r = await fetch(API + path + encodeURIComponent(coin), { cache: "no-store" });
+        const r = await fetch(API + "/charts/dex-liqmap/" + encodeURIComponent(coin), { cache: "no-store" });
         if (my !== reqId) return;                 // a newer click superseded this
         if (!r.ok) {
           $("lm-chart").innerHTML = ""; $("lm-legend").hidden = true;
-          banner("proof-error", r.status === 404 ? "no " + v.toUpperCase() + " data for " + coin + " yet" : "error " + r.status);
+          banner("proof-error", r.status === 404 ? "no data for " + coin + " yet" : "error " + r.status);
           return;
         }
         const data = await r.json();
         if (my !== reqId) return;
-        render(data, v);
+        render(data);
       } catch (e) {
         if (my !== reqId) return;
         banner("proof-error", "fetch failed — retrying…");
@@ -238,7 +218,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoinTabs(); bindVenueTabs(); load();
+      buildCoinTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       // pause polling when tab hidden (save the API + battery)
       document.addEventListener("visibilitychange", () => {
