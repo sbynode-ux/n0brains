@@ -4,7 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="proof"
-  description="n0brains live forward-return proof — every signal type measured against real post-signal price action, with win rate, excess over buy-and-hold, and confidence intervals. The exact gate we use to flag signals. Not advice."
+  description="n0brains live forward-return proof — every signal type measured against real post-signal price action, with win rate, excess vs BTC, and confidence intervals. The exact gate we use to flag signals. Not advice."
   ogImage="/og-proof.png"
 >
   <section class="about-section">
@@ -13,10 +13,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       We measure <strong>every directional signal</strong> against real
       post-signal price action — Hyperliquid 1-hour candles — at the 24h horizon
       over a rolling 30-day window. For each signal type we publish the win rate,
-      the mean return of the trade itself, the mean <strong>excess over simply
-      buying and holding</strong>, and 95% confidence intervals. A type is marked
+      the mean return of the trade itself, the mean <strong>excess vs BTC over
+      the same window</strong>, and 95% confidence intervals. A type is marked
       <strong>proven</strong> only when it clears 30+ measured signals AND both
-      beats buy-and-hold AND is profitable on its own (excess-return CI lower
+      beats BTC AND is profitable on its own (excess-return CI lower
       bound above zero). This is the <em>exact</em> gate the pipeline uses to flag
       <code>conviction: strong</code> — so this page can never claim edge the
       product doesn't actually act on. Refreshed live.
@@ -50,8 +50,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <p class="legal-updated" style="margin-top: 32px;">
       A type is shown as <strong>forward-return proven</strong> only when its
       live post-signal price record clears 30+ measured signals AND both beats
-      buy-and-hold and is profitable on its own, with a 95% confidence interval
-      above zero. (Beating buy-and-hold alone isn't enough — a type that only
+      BTC and is profitable on its own, with a 95% confidence interval
+      above zero. (Beating BTC alone isn't enough — a type that only
       looks good by being short in a downtrend, while still losing money, does
       not qualify.) These are the types we flag <code>conviction: strong</code>
       in the API. Measured on real prices for informational purposes only — not
@@ -121,7 +121,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <thead>
           <tr><th>type</th><th>signals</th><th>win rate</th>
               <th title="mean return of the trade itself">avg return</th>
-              <th title="mean return minus buy-and-hold over the same window">excess vs hold</th>
+              <th title="mean return minus BTC over the same window">excess vs BTC</th>
               <th title="95% confidence lower bound on excess return — the conservative edge">excess CI low</th>
               <th></th></tr>
         </thead>

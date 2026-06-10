@@ -8,7 +8,7 @@ const sources = [
   { chip: "MP",  title: "Macro Pulse",            desc: "Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive." },
   { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
   { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
-  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Inflows lead selling pressure; outflows lead accumulation." },
+  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Positioning context and capital-concentration tracking — directional whale reads come from Hyperliquid leaderboard positions." },
   { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
   { chip: "OPT", title: "Options Flow",           desc: "Deribit options positioning — put/call open-interest ratio, max-pain magnets, and large smart-money block trades on BTC + ETH. Surfaces institutional positioning the crowd-sentiment feeds miss." },
   { chip: "ETF", title: "ETF Flows",              desc: "US spot BTC + ETH ETF daily net flows. Sustained inflows = institutional accumulation, outflows = distribution — the cleanest read on institutional capital, timed right after the US close settles." },
@@ -20,7 +20,7 @@ const sources = [
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
   { chip: "LP",  title: "Launchpads & Listings",  desc: "New-token launch detection across Pump.fun (Solana) and major IDO/IEO/launchpad platforms. Catches listings and launches as they go live." },
   { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves. No paid APIs." },
-  { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain activity and momentum on decentralized exchanges. Enrichment context, lightly weighted." },
+  { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain discovery and token activity. Discovery context, non-directional." },
   { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of vetted on-chain trackers, exchanges, and analysts — Lookonchain, Arkham, WuBlockchain, official exchange handles, and more." },
 ];
 
@@ -266,7 +266,7 @@ const computeLayerCount = 10;
       </p>
       <h1>SIGNALS THAT<br /><span class="accent">PROVE</span><br />THEIR EDGE</h1>
       <p class="lede">
-        We measure every signal type against real post-signal price action and flag a call <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record both beats buy-and-hold and is profitable on its own (95% CI lower bound above zero)</a> — and we publicly demote our own weak signals. Every event is machine-classified, cross-corroborated, and scored with a <strong>calibrated</strong> confidence, anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, <strong>Webhook</strong>, <strong>MCP</strong>, or pay-per-call <strong>x402</strong>.
+        We measure every signal type against real post-signal price action and flag a call <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record beats BTC over the same window (excess return / alpha) AND is profitable on its own (95% CI lower bound above zero)</a>, judged per direction — and we publicly demote our own weak signals. Every event is machine-classified, cross-corroborated, and scored with a <strong>calibrated</strong> confidence, anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, <strong>Webhook</strong>, <strong>MCP</strong>, or pay-per-call <strong>x402</strong>.
       </p>
       <div class="cta-row">
         <a href="/signup" class="btn btn-primary">Start Free →</a>
@@ -418,7 +418,7 @@ const computeLayerCount = 10;
               <td><span class="no">Never</span></td>
             </tr>
             <tr>
-              <td>Forward-return vs buy-and-hold, with 95% CI</td>
+              <td>Forward-return vs BTC baseline, with 95% CI</td>
               <td class="us-col"><span class="yes">Yes</span></td>
               <td><span class="no">No</span></td>
               <td><span class="no">No</span></td>
@@ -545,7 +545,7 @@ const computeLayerCount = 10;
         "name": "What signal types does n0brains classify?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "n0brains classifies signals into: whale, funding, liquidation, regulatory, sentiment, price, hack, listing, macro, macro_pulse, and other. Each signal includes direction (bullish/bearish/neutral), urgency (high/medium/low), confidence score, action hint, and optional entry/stop-loss/take-profit prices."
+          "text": "n0brains classifies signals into: whale, whale_position, funding, liquidation, regulatory, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, and other. Each signal includes direction (bullish/bearish/neutral), urgency (high/medium/low), confidence score, action hint, and optional entry/stop-loss/take-profit prices."
         }
       },
       {
