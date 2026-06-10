@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const proFeatures = [
+  "600 requests / minute",
+  "<strong>Real-time</strong> signals — no delay",
+  "REST + WebSocket + Webhooks + <strong><a href=\"/docs/mcp\">MCP server</a></strong>",
+  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (19 tools, Bearer auth)",
+  "Full source &amp; channel detail",
+  "Whale tracking (Hyperliquid positions) + on-chain flows",
+  "Corroboration scoring",
+  "<strong>Macro Pulse</strong> — daily + weekly BTC/ETH bias",
+  "<strong>Narrative heatmap</strong> — 1h/4h/24h signal momentum per asset",
+  "<strong>Semantic search</strong> — find similar signals by meaning",
+  "<strong>Trust scoring</strong> — contract risk + rug probability per token",
+  "<strong>Manipulation detection</strong> — coordinated pump + social burst flags",
+  "<strong>Wallet DNA</strong> — smart money classification + stealth-accumulation flag",
+  "<strong>x402</strong> pay-per-call — one-time packs from $5 for calls beyond your tier",
+  "Email support",
+];
+const freeFeatures = [
+  "60 requests / minute",
+  "15-minute signal delay",
+  "REST API only",
+  "Limited signal detail",
+  "Community support",
+];
+---
+
+<BaseLayout
+  title="pricing"
+  description="n0brains pricing — start free, upgrade to Pro ($19.99/mo) for real-time signals, full source detail, WebSocket, Webhooks, and the MCP server. No credit card to start."
+>
+  <section class="about-section">
+    <h1>pricing</h1>
+    <p class="legal-updated">Start free. Upgrade to Pro for real-time signals. No credit card to begin.</p>
+
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="tier-name">Free</div>
+        <div class="price">$0<span class="period">/mo</span></div>
+        <ul class="feature-list">
+          {freeFeatures.map((f) => <li set:html={f} />)}
+        </ul>
+        <a href="/signup" class="btn btn-secondary">Start Free</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="tier-name">Pro</div>
+        <div class="price">$19.99<span class="period">/mo</span></div>
+        <ul class="feature-list">
+          {proFeatures.map((f) => <li set:html={f} />)}
+        </ul>
+        <a href="/signup" class="btn btn-primary">Start Pro</a>
+      </div>
+    </div>
+
+    <p class="legal-updated" style="margin-top: 32px;">
+      Every signal is analytical data — not financial advice. We measure our own
+      track record on real prices and publish it at <a href="/proof">/proof</a>,
+      flagging a call <code>trade_signal</code> only when that (type, direction)
+      pair's live forward-return record beats BTC and is profitable. See the full
+      API in <a href="/docs">/docs</a>. Questions:
+      <a href="mailto:support@n0brains.com">support@n0brains.com</a>.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin: 32px 0;
+  }
+  .pricing-card {
+    border: 1px solid var(--border, #2a2a2a);
+    border-radius: 12px;
+    padding: 28px 24px;
+    background: var(--card-bg, #131313);
+  }
+  .pricing-card.featured {
+    border-color: var(--accent, #5b8cff);
+    box-shadow: 0 0 0 1px var(--accent, #5b8cff);
+  }
+  .pricing-card .tier-name {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.7;
+  }
+  .pricing-card.featured .tier-name { color: var(--accent, #5b8cff); }
+  .pricing-card .price {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin: 8px 0 20px;
+  }
+  .pricing-card .price .period {
+    font-size: 1rem;
+    font-weight: 400;
+    opacity: 0.6;
+  }
+  .feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+  }
+  .feature-list li {
+    padding: 6px 0 6px 22px;
+    position: relative;
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+  .feature-list li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    opacity: 0.5;
+  }
+  .pricing-card .btn { width: 100%; justify-content: center; }
+</style>

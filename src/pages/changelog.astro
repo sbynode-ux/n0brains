@@ -1,0 +1,89 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Newest first. Keep entries honest and specific — this page is read by people
+// deciding whether to trust the product. Don't list vapor.
+const entries = [
+  {
+    date: "2026-06-10",
+    items: [
+      "Proven-tradeable gate now measures forward return as excess over BTC (real alpha) instead of the same asset held long — a measurement fix that surfaces edge the old baseline hid.",
+      "Trade-signal gate is now per-(type, direction) and regime-aware: a type can be flagged in one direction and not the other, and the proven side adapts as the market regime turns.",
+      "Retired the exchange-netflow whale direction heuristic (it did not predict price); directional whale reads now come from Hyperliquid leaderboard positions.",
+      "Added whale_position and macro_flow to the documented signal types; /signals now accepts signal_type=whale_position.",
+    ],
+  },
+  {
+    date: "2026-06-06",
+    items: [
+      "End-to-end collection→delivery audit; per-source edge ranking; watchdog coverage extended across all watchers.",
+      "Concurrent dual-backend classification pool (local + hosted) for ~2.3× throughput.",
+      "Built our own DEX liquidation map (real on-chain positions with exact liq prices) — charts at /charts/liqmap.",
+    ],
+  },
+  {
+    date: "2026-06-04",
+    items: [
+      "Signal-quality overhaul: feed de-noised, the proven gate switched to live forward-return ground truth, /proof + the site reworked for honesty.",
+      "Conviction field (strong/notable/watch/none) supersedes the deprecated action_hint.",
+    ],
+  },
+  {
+    date: "2026-06-01",
+    items: [
+      "First automated test suite + deploy gate with rollback for the intel pipeline.",
+      "Health-monitor moved to a 10-minute systemd timer with email fallback.",
+    ],
+  },
+  {
+    date: "2026-05-27",
+    items: [
+      "Migrated the pipeline data store to self-hosted PostgreSQL.",
+      "Whale + smart-money watchers rewritten on first-party data sources.",
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="changelog"
+  description="n0brains changelog — what shipped and when. Measurement fixes, new signal types, source changes, and infrastructure work."
+>
+  <section class="about-section">
+    <h1>changelog</h1>
+    <p class="legal-updated">What we shipped, newest first. Specific, not marketing.</p>
+
+    {entries.map((e) => (
+      <div class="changelog-entry">
+        <h2 class="changelog-date">{e.date}</h2>
+        <ul class="changelog-items">
+          {e.items.map((it) => <li>{it}</li>)}
+        </ul>
+      </div>
+    ))}
+
+    <p class="legal-updated" style="margin-top: 32px;">
+      Track record measured on real prices at <a href="/proof">/proof</a>.
+      Full API in <a href="/docs">/docs</a>.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .changelog-entry { margin: 28px 0; }
+  .changelog-date {
+    font-size: 1.05rem;
+    font-family: var(--mono, monospace);
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  .changelog-items {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .changelog-items li {
+    padding: 5px 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
+  }
+</style>
