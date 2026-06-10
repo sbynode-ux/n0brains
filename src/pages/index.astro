@@ -63,19 +63,98 @@ const computeLayerCount = 10;
   <style>
     .signals-page { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
 
-    .hero-section { padding: 6rem 0 4rem; text-align: center; }
+    /* ── Hero ── */
+    .hero-section { padding: 6.5rem 0 4.5rem; text-align: center; position: relative; }
+
+    /* Layered backdrop: masked grid + two drifting accent glows.
+       Pure gradients (no blur filters), transform-only animation. */
+    .hero-bg {
+      position: absolute; inset: -30% -10% 0;
+      pointer-events: none; z-index: -1; overflow: hidden;
+    }
+    .hero-bg::before {
+      content: ""; position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 54px 54px;
+      -webkit-mask-image: radial-gradient(ellipse 58% 52% at 50% 42%, #000 0%, transparent 72%);
+      mask-image: radial-gradient(ellipse 58% 52% at 50% 42%, #000 0%, transparent 72%);
+      opacity: 0.55;
+    }
+    .hero-glow {
+      position: absolute; width: 620px; height: 620px; border-radius: 50%;
+      will-change: transform;
+    }
+    .hero-glow-a {
+      left: 50%; top: 8%; margin-left: -480px;
+      background: radial-gradient(circle, rgba(0,255,65,0.075), transparent 62%);
+      animation: glowDriftA 22s ease-in-out infinite alternate;
+    }
+    .hero-glow-b {
+      left: 50%; top: 22%; margin-left: -80px;
+      background: radial-gradient(circle, rgba(255,0,85,0.045), transparent 60%);
+      animation: glowDriftB 28s ease-in-out infinite alternate;
+    }
+    @keyframes glowDriftA { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(70px,40px,0) scale(1.12); } }
+    @keyframes glowDriftB { from { transform: translate3d(0,0,0) scale(1.08); } to { transform: translate3d(-60px,-30px,0) scale(0.95); } }
+
+    /* Scroll-linked parallax fade — CSS scroll-driven where supported, static
+       otherwise. Duration overrides don't silence scroll timelines, so gate
+       explicitly on motion preference. */
+    @media (prefers-reduced-motion: no-preference) {
+      @supports (animation-timeline: view()) {
+        .hero-bg {
+          animation: heroBgRecede linear both;
+          animation-timeline: view();
+          animation-range: exit 0% exit 100%;
+        }
+        @keyframes heroBgRecede {
+          to { transform: translateY(90px); opacity: 0.15; }
+        }
+      }
+    }
+
+    .hero-eyebrow-line {
+      font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase;
+      letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.5s var(--ease-out) 0.05s forwards;
+      transform: translateY(10px);
+    }
+
     .hero-section h1 {
       font-family: var(--font-display);
       font-size: clamp(3rem, 8vw, 5.5rem);
       font-weight: 400; line-height: 1; letter-spacing: 0.03em;
       margin-bottom: 1rem; color: var(--text-heading);
     }
-    .hero-section h1 .accent { color: var(--accent); }
+    /* Per-line mask reveal */
+    .hero-section h1 .hl { display: block; overflow: hidden; padding-bottom: 0.04em; }
+    .hero-section h1 .hli {
+      display: block; transform: translateY(110%);
+      animation: lineUp 0.8s var(--ease-out) forwards;
+    }
+    .hero-section h1 .hl:nth-child(1) .hli { animation-delay: 0.10s; }
+    .hero-section h1 .hl:nth-child(2) .hli { animation-delay: 0.22s; }
+    .hero-section h1 .hl:nth-child(3) .hli { animation-delay: 0.34s; }
+    @keyframes lineUp { to { transform: translateY(0); } }
+    .hero-section h1 .accent { color: var(--accent); text-shadow: 0 0 36px var(--accent-glow-strong); }
+
     .hero-section .lede {
       font-size: 1.1rem; color: var(--text); /* upgraded from --text-muted for AA */
       max-width: 600px; margin: 0 auto 2rem; line-height: 1.6;
+      opacity: 0; transform: translateY(12px);
+      animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
     }
     .hero-section .lede strong { color: var(--text-heading); font-weight: 500; }
+    .hero-section .cta-row {
+      opacity: 0; transform: translateY(12px);
+      animation: fadeUp 0.6s var(--ease-out) 0.62s forwards;
+    }
+    .hero-section .proof-strip {
+      opacity: 0; transform: translateY(10px);
+      animation: fadeUp 0.6s var(--ease-out) 0.74s forwards;
+    }
 
     .live-dot {
       display: inline-block; width: 8px; height: 8px;
@@ -91,11 +170,25 @@ const computeLayerCount = 10;
       font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;
       text-transform: uppercase; letter-spacing: 0.05em;
       transition: all 0.2s ease; cursor: pointer; border: none;
+      position: relative; overflow: hidden;
     }
+    .btn:active { transform: translateY(1px); }
     .btn-primary   { background: var(--accent); color: #000; }
     .btn-primary:hover   { background: #fff; }
+    /* Sheen sweep on the primary CTA — single pass, transform-only. */
+    .btn-primary::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.5) 50%, transparent 65%);
+      transform: translateX(-130%);
+      transition: transform 0.55s ease;
+      pointer-events: none;
+    }
+    .btn-primary:hover::after { transform: translateX(130%); }
     .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:hover {
+      border-color: var(--accent); color: var(--accent);
+      box-shadow: 0 0 18px -6px var(--accent-glow-strong);
+    }
 
     /* Live proof strip — above the fold, always current from /proof */
     .proof-strip {
@@ -117,7 +210,13 @@ const computeLayerCount = 10;
 
     /* Sources */
     .sources-section, .pricing-section, .stats-section, .contrast-section {
-      padding: 4rem 0; border-top: 1px solid var(--border);
+      padding: 5rem 0; border-top: none; position: relative;
+    }
+    /* Gradient hairline dividers — accent shimmer fading at the edges. */
+    .sources-section::before, .pricing-section::before,
+    .stats-section::before, .contrast-section::before, .honesty-section::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-accent) 25%, var(--border) 50%, var(--border) 75%, transparent);
     }
     .sources-section h2, .pricing-section h2, .stats-section h2, .contrast-section h2 {
       font-family: var(--font-display);
@@ -139,7 +238,16 @@ const computeLayerCount = 10;
     .source-card {
       background: var(--bg-alt); padding: 1.5rem;
       transition: background 0.2s ease;
+      position: relative;
     }
+    /* Cursor spotlight — radial accent follows pointer (set via --mx/--my). */
+    .source-card::after {
+      content: ""; position: absolute; inset: 0; opacity: 0;
+      background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), var(--accent-glow), transparent 70%);
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+    .source-card:hover::after { opacity: 1; }
     /* Filler tile shown only when the source count is odd, so the 2-col grid
        never ends on a dead cell. Links to the docs instead of empty space. */
     .source-card.source-filler {
@@ -188,8 +296,21 @@ const computeLayerCount = 10;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 2rem; position: relative;
+      transition: transform 0.3s var(--ease-out), border-color 0.3s ease, box-shadow 0.3s ease;
     }
-    .pricing-card.featured { border-color: var(--accent); }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      border-color: #2a2a2a;
+      box-shadow: 0 16px 40px -20px rgba(0,0,0,0.9);
+    }
+    .pricing-card.featured {
+      border-color: var(--accent);
+      box-shadow: 0 0 44px -16px var(--accent-glow-strong);
+    }
+    .pricing-card.featured:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 56px -12px var(--accent-glow-strong), 0 16px 40px -20px rgba(0,0,0,0.9);
+    }
     .pricing-card .badge {
       position: absolute; top: -1px; right: -1px;
       background: var(--accent); color: #000;
@@ -223,7 +344,7 @@ const computeLayerCount = 10;
     .payg-note a { color: var(--accent); }
 
     /* Honesty comparison */
-    .honesty-section { padding: 4rem 0; border-top: 1px solid var(--border); }
+    .honesty-section { padding: 5rem 0; border-top: none; position: relative; }
     .honesty-section h2 {
       font-family: var(--font-display); font-size: 2.4rem; font-weight: 400;
       color: var(--text-heading); letter-spacing: 0.04em; text-align: center;
@@ -245,8 +366,10 @@ const computeLayerCount = 10;
     }
     .honesty-table td { color: var(--text); }
     .honesty-table td:first-child { color: var(--text-heading); font-weight: 500; }
-    .honesty-table .us-col { background: var(--bg-hover); }
+    .honesty-table .us-col { background: var(--bg-hover); box-shadow: inset 1px 0 0 var(--border-accent), inset -1px 0 0 var(--border-accent); }
     .honesty-table thead .us-col { color: var(--accent); }
+    .honesty-table tbody tr { transition: background 0.15s ease; }
+    .honesty-table tbody tr:hover { background: rgba(255,255,255,0.015); }
     .honesty-table .yes { color: #4ade80; font-weight: 600; }
     .honesty-table .yes a { color: #4ade80; text-decoration: underline; }
     .honesty-table .no { color: var(--text-muted); }
@@ -261,10 +384,18 @@ const computeLayerCount = 10;
   <div class="signals-page">
     <!-- Hero -->
     <section class="hero-section" id="hero">
-      <p style="font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1.5rem;">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="hero-glow hero-glow-a"></div>
+        <div class="hero-glow hero-glow-b"></div>
+      </div>
+      <p class="hero-eyebrow-line">
         <span class="live-dot"></span>Live Signal Feed Active
       </p>
-      <h1>SIGNALS THAT<br /><span class="accent">PROVE</span><br />THEIR EDGE</h1>
+      <h1>
+        <span class="hl"><span class="hli">SIGNALS THAT</span></span>
+        <span class="hl"><span class="hli accent">PROVE</span></span>
+        <span class="hl"><span class="hli">THEIR EDGE</span></span>
+      </h1>
       <p class="lede">
         We measure every signal type against real post-signal price action and flag a call <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record beats BTC over the same window (excess return / alpha) AND is profitable on its own (95% CI lower bound above zero)</a>, judged per direction — and we publicly demote our own weak signals. Every event is machine-classified, cross-corroborated, and scored with a <strong>calibrated</strong> confidence, anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, <strong>Webhook</strong>, <strong>MCP</strong>, or pay-per-call <strong>x402</strong>.
       </p>
@@ -285,9 +416,10 @@ const computeLayerCount = 10;
 
     <!-- What we watch -->
     <section class="sources-section">
-      <h2>What we watch</h2>
-      <p class="subtitle">Telegram, whales (ETH + BTC + SOL), positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias. Over 30 data sources. One API.</p>
-      <div class="sources-grid">
+      <div class="section-label" data-reveal="fade">01 · sources</div>
+      <h2 data-reveal>What we watch</h2>
+      <p class="subtitle" data-reveal>Telegram, whales (ETH + BTC + SOL), positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias. Over 30 data sources. One API.</p>
+      <div class="sources-grid" data-reveal-stagger>
         {sources.map((s) => (
           <div class="source-card">
             <div class="chip-row"><MonoChip text={s.chip} /></div>
@@ -306,9 +438,10 @@ const computeLayerCount = 10;
 
     <!-- Intelligence Layers -->
     <section class="sources-section">
-      <h2>What we compute</h2>
-      <p class="subtitle">Raw signals are just the start. Ten intelligence layers run on every event before it reaches your API key.</p>
-      <div class="sources-grid">
+      <div class="section-label" data-reveal="fade">02 · intelligence</div>
+      <h2 data-reveal>What we compute</h2>
+      <p class="subtitle" data-reveal>Raw signals are just the start. Ten intelligence layers run on every event before it reaches your API key.</p>
+      <div class="sources-grid" data-reveal-stagger>
         <div class="source-card">
           <div class="chip-row"><MonoChip text="∿" /></div>
           <h3>Confidence Decay</h3>
@@ -370,8 +503,9 @@ const computeLayerCount = 10;
 
     <!-- vs. the dashboards -->
     <section class="contrast-section">
-      <h2>One API. Not twelve.</h2>
-      <div class="contrast-grid">
+      <div class="section-label" data-reveal="fade">03 · consolidation</div>
+      <h2 data-reveal>One API. Not twelve.</h2>
+      <div class="contrast-grid" data-reveal-stagger>
         <div class="contrast-col others">
           <div class="ctag">Others</div>
           <p>Whale data from one API. Funding from another. News from three more. L/S ratios, on-chain flows, options positioning, ETF flows, macro calendar — each a separate subscription, separate key, separate rate limit. You duct-tape them together and still do all the synthesis yourself.</p>
@@ -385,13 +519,14 @@ const computeLayerCount = 10;
 
     <!-- We publish our win-rate. They don't. (honesty comparison) -->
     <section class="honesty-section">
-      <h2>We publish our win-rate. They don't.</h2>
-      <p class="subtitle honesty-sub">
+      <div class="section-label" data-reveal="fade">04 · receipts</div>
+      <h2 data-reveal>We publish our win-rate. They don't.</h2>
+      <p class="subtitle honesty-sub" data-reveal>
         Most of the industry asks you to trust a backtest you can't audit. We measure
         every signal type on real prices, publish the result, and demote our own weak
         signals in the open. The edge here is honesty — not a bigger pile of data.
       </p>
-      <div class="honesty-wrap">
+      <div class="honesty-wrap" data-reveal="scale">
         <table class="honesty-table">
           <thead>
             <tr>
@@ -434,7 +569,7 @@ const computeLayerCount = 10;
           </tbody>
         </table>
       </div>
-      <p class="honesty-foot">
+      <p class="honesty-foot" data-reveal="fade">
         Comparison reflects publicly published methodology as of mid-2026. We're thinner
         than the big dashboards on raw data volume — we compete on <strong>edge quality you
         can audit</strong>, not data quantity. Not financial advice.
@@ -443,9 +578,10 @@ const computeLayerCount = 10;
 
     <!-- Pricing -->
     <section class="pricing-section" id="pricing">
-      <h2>Choose your tier.</h2>
-      <p class="subtitle">Start free. Upgrade to Pro for real-time signals.</p>
-      <div class="pricing-grid">
+      <div class="section-label" data-reveal="fade">05 · pricing</div>
+      <h2 data-reveal>Choose your tier.</h2>
+      <p class="subtitle" data-reveal>Start free. Upgrade to Pro for real-time signals.</p>
+      <div class="pricing-grid" data-reveal-stagger>
         <div class="pricing-card">
           <div class="tier-name">Free</div>
           <div class="price">$0<span class="period">/mo</span></div>
@@ -471,7 +607,7 @@ const computeLayerCount = 10;
           <button data-checkout="pro" class="btn btn-primary" style="width: 100%; justify-content: center;">Get Pro</button>
         </div>
       </div>
-      <p class="payg-note">
+      <p class="payg-note" data-reveal="fade">
         Need more than your rate limit allows? Buy <strong>pay-per-call credits</strong> —
         one-time packs from $5, spent only on calls beyond your tier's included rate.
         Manage them in your <a href="/dashboard">account</a>. No account at all?

@@ -141,6 +141,7 @@ const softwareAppLd = homepage ? {
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to content</a>
+    <div id="scroll-progress" aria-hidden="true"></div>
 
     <a class="founding-banner" href="/pricing?utm_source=site&utm_medium=banner&utm_campaign=founding20">
       🏁 <strong>Founding&nbsp;20</strong> — code <span class="fb-code">RACE</span> at checkout = 1&nbsp;month Pro free, in exchange for honest feedback. 20 seats, then it's gone&nbsp;→
@@ -204,26 +205,36 @@ const softwareAppLd = homepage ? {
       </div>
     </footer>
 
-    {homepage && (
-      <script>
-        (() => {
-          const header = document.getElementById("site-header");
-          const hero   = document.getElementById("hero");
-          let ticking = false;
-          const update = () => {
-            if (!hero) return;
-            const heroBottom = hero.getBoundingClientRect().bottom;
-            header.classList.toggle("scrolled", heroBottom < 60);
-          };
-          window.addEventListener("scroll", () => {
-            if (!ticking) {
-              requestAnimationFrame(() => { update(); ticking = false; });
-              ticking = true;
-            }
-          }, { passive: true });
-          update();
+    <script>
+      (() => {
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const header = document.getElementById("site-header");
+        const hero   = document.getElementById("hero");
+        const bar    = document.getElementById("scroll-progress");
 
-          const cards = document.querySelectorAll(".post-card");
+        /* Scroll-linked state: glass header, hero text swap, progress bar.
+           One rAF-throttled passive listener; transform/class writes only. */
+        let ticking = false;
+        const update = () => {
+          const y = window.scrollY;
+          header?.classList.toggle("glass", y > 8);
+          if (hero) header?.classList.toggle("scrolled", hero.getBoundingClientRect().bottom < 60);
+          if (bar) {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            (bar as HTMLElement).style.transform = `scaleX(${max > 80 ? Math.min(y / max, 1) : 0})`;
+          }
+        };
+        window.addEventListener("scroll", () => {
+          if (!ticking) {
+            requestAnimationFrame(() => { update(); ticking = false; });
+            ticking = true;
+          }
+        }, { passive: true });
+        update();
+
+        /* Legacy .post-card reveal (blog / intel lists). */
+        const cards = document.querySelectorAll(".post-card");
+        if (cards.length) {
           const io = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
@@ -238,8 +249,49 @@ const softwareAppLd = homepage ? {
             (card as HTMLElement).dataset.delay = String(i * 80);
             io.observe(card);
           });
-        })();
-      </script>
-    )}
+        }
+
+        /* data-reveal scroll choreography. Only elements still below the fold
+           get hidden (no flash above the fold, no-JS users see everything). */
+        if (!reduceMotion) {
+          const els: HTMLElement[] = Array.from(document.querySelectorAll("[data-reveal]"));
+          document.querySelectorAll("[data-reveal-stagger]").forEach((group) => {
+            Array.from(group.children).forEach((child, i) => {
+              const el = child as HTMLElement;
+              if (!el.hasAttribute("data-reveal")) el.setAttribute("data-reveal", "up");
+              el.style.setProperty("--reveal-delay", `${Math.min(i, 5) * 70}ms`);
+              els.push(el);
+            });
+          });
+          const vh = window.innerHeight;
+          const rio = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("reveal-in");
+                rio.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.1, rootMargin: "0px 0px -8% 0px" });
+          els.forEach((el) => {
+            if (el.getBoundingClientRect().top > vh * 0.88) {
+              el.classList.add("reveal-init");
+              rio.observe(el);
+            }
+          });
+        }
+
+        /* Cursor spotlight on source cards — pointer devices only. */
+        if (window.matchMedia("(hover: hover)").matches) {
+          document.querySelectorAll(".source-card").forEach((card) => {
+            card.addEventListener("mousemove", (e) => {
+              const r = card.getBoundingClientRect();
+              const me = e as MouseEvent;
+              (card as HTMLElement).style.setProperty("--mx", `${me.clientX - r.left}px`);
+              (card as HTMLElement).style.setProperty("--my", `${me.clientY - r.top}px`);
+            }, { passive: true });
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
