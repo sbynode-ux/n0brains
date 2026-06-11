@@ -413,6 +413,23 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       } catch (e) { return []; }
     }
 
+    // Trim a DEX heatmap to the last `days` of columns (grid is [row][col],
+    // times[col]). Keeps the price-row axis intact; just narrows the time window.
+    function sliceDexRange(data, days) {
+      const times = data.times || [];
+      if (times.length < 2) return data;
+      const cutoff = times[times.length - 1] - days * 86400;
+      let start = times.findIndex((t) => t >= cutoff);
+      if (start <= 0) return data;                 // whole window already inside range
+      const keep = times.length - start;
+      return {
+        ...data,
+        times: times.slice(start),
+        grid: (data.grid || []).map((row) => row.slice(start)),
+        cols: keep,
+      };
+    }
+
     async function load() {
       const my = ++reqId;
       let v = venue;
@@ -428,9 +445,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         const r = await fetch(API + path + encodeURIComponent(coin) + qs, { cache: "no-store" });
         if (my !== reqId) return;
         if (!r.ok) { banner("proof-error", "error " + r.status); return; }
-        const data = await r.json();
+        let data = await r.json();
         if (my !== reqId) return;
-        // price candles fetched CLIENT-SIDE (browser → CoinGecko; no server rate-share)
+        // DEX is served as the full captured window; the range buttons (24h/7d/…)
+        // are applied CLIENT-SIDE by slicing the grid columns. (CEX honors ?days=
+        // server-side already.) "max" (166) → no slice.
+        if (v === "dex" && days < 166) data = sliceDexRange(data, days);
+        // price candles fetched CLIENT-SIDE (browser → Binance; no server rate-share)
         data.candles = await fetchCandles(coin, data);
         if (my !== reqId) return;
         render(data);
