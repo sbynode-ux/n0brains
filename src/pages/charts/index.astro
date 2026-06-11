@@ -1,0 +1,135 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const charts = [
+  {
+    href: "/charts/win-rate",
+    chip: "THE WEDGE",
+    title: "Win-rate scoreboard",
+    desc: "Every signal type measured against real post-signal price action — win rate, excess vs BTC, confidence intervals. Audited live, not a backtest.",
+    tier: "free",
+  },
+  {
+    href: "/charts/market-state",
+    chip: "DIRECTIONAL",
+    title: "Market-state consensus",
+    desc: "Live bull / bear / neutral consensus across proven signal voters, per coin, regime-aware. The dial nobody else publishes.",
+    tier: "free + pro",
+  },
+  {
+    href: "/charts/liqmap",
+    chip: "ON-CHAIN",
+    title: "Liquidation heatmap",
+    desc: "Real on-chain DEX positions (Hyperliquid) binned into liquidation clusters — plus modeled CEX intensity. Free vs Coinglass $299.",
+    tier: "free + pro",
+  },
+  {
+    href: "/charts/levels",
+    chip: "S / R",
+    title: "Support & resistance",
+    desc: "Order-book + pivot levels overlaid on live price. BTC and ETH free; full coin coverage on Pro.",
+    tier: "free + pro",
+  },
+];
+---
+
+<BaseLayout
+  title="charts"
+  description="n0brains live charts — audited win-rate scoreboard, market-state consensus, on-chain liquidation heatmaps, and support/resistance levels. Real data, published edge. Free."
+  ogImage="/og-default.png"
+>
+  <section class="charts-hub">
+    <p class="kicker"><span class="live-dot"></span>Live data · published edge</p>
+    <h1>CHARTS</h1>
+    <p class="lede">
+      Every chart here is built from the same data the API serves — and the same
+      <a href="/proof">forward-return record</a> we gate signals on. No backtests,
+      no cherry-picking. The majors are free; the full picture is
+      <a href="/pricing">Pro</a>.
+    </p>
+
+    <div class="charts-grid">
+      {charts.map((c) => (
+        <a class="chart-card" href={c.href}>
+          <div class="card-top">
+            <span class="chart-chip">{c.chip}</span>
+            <span class={"tier-tag " + (c.tier === "free" ? "tier-free" : "tier-mixed")}>{c.tier}</span>
+          </div>
+          <h2>{c.title}</h2>
+          <p>{c.desc}</p>
+          <span class="card-cta">Open chart →</span>
+        </a>
+      ))}
+    </div>
+
+    <p class="hub-foot">
+      Analytical data for informational purposes only — not financial advice.
+      See <a href="/terms">terms</a>.
+    </p>
+  </section>
+</BaseLayout>
+
+<style>
+  .charts-hub { max-width: var(--max-width-app); margin: 0 auto; padding: 3rem 0 4rem; }
+  .kicker {
+    font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .charts-hub h1 {
+    font-family: var(--font-display); font-size: clamp(3rem, 8vw, 5.5rem);
+    line-height: 0.92; letter-spacing: 0.01em; color: var(--text-heading); margin-bottom: 1.2rem;
+  }
+  .lede { font-size: 1.05rem; max-width: 640px; color: var(--text); margin-bottom: 2.8rem; }
+  .lede a { color: var(--accent); }
+
+  .charts-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem;
+  }
+  @media (max-width: 720px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-card); padding: 1.4rem 1.5rem 1.3rem;
+    text-decoration: none; color: inherit; transition: border-color 0.18s, transform 0.18s, background 0.18s;
+  }
+  .chart-card:hover {
+    border-color: var(--border-accent); background: var(--bg-hover);
+    transform: translateY(-2px);
+  }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+  .chart-chip {
+    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    border: 1px solid var(--border-accent); border-radius: 100px; padding: 3px 10px;
+  }
+  .tier-tag {
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  .tier-free { color: var(--accent-dim); }
+  .chart-card h2 {
+    font-family: var(--font-body); font-size: 1.25rem; font-weight: 500;
+    color: var(--text-heading); margin: 0.1rem 0 0.1rem;
+  }
+  .chart-card p { font-size: 0.92rem; color: var(--text); line-height: 1.55; flex: 1; }
+  .card-cta {
+    font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent);
+    margin-top: 0.6rem; transition: letter-spacing 0.18s;
+  }
+  .chart-card:hover .card-cta { letter-spacing: 0.04em; }
+
+  .hub-foot {
+    color: var(--text-muted); font-size: 0.8rem; font-family: var(--font-mono);
+    margin-top: 2.5rem;
+  }
+  .hub-foot a { color: var(--text-muted); text-decoration: underline; }
+
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent); display: inline-block;
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+</style>

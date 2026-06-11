@@ -1,0 +1,254 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="market-state consensus"
+  description="n0brains live market-state consensus — bull / bear / neutral directional dial per coin, regime-aware, built from proven signal voters. The consensus gauge nobody else publishes."
+  ogImage="/og-default.png"
+>
+  <section class="chart-page">
+    <div class="chart-head">
+      <a href="/charts" class="back">← charts</a>
+      <p class="kicker"><span class="live-dot"></span>Live consensus · refreshed every 60s</p>
+      <h1>MARKET-STATE<br /><span class="accent">CONSENSUS</span></h1>
+      <p class="lede">
+        A live directional dial — equal-weight consensus across the
+        <a href="/charts/win-rate">proven</a> signal voters over the last 24h,
+        regime-vetoed. Free shows the gauge and regime; <a href="/pricing">Pro</a>
+        unlocks the drivers, invalidation level, and liq-map target.
+      </p>
+    </div>
+
+    <div class="coin-tabs" id="coin-tabs">
+      <button class="coin-tab active" data-coin="BTC">BTC</button>
+      <button class="coin-tab" data-coin="ETH">ETH</button>
+      <button class="coin-tab" data-coin="SOL">SOL</button>
+      <button class="coin-tab" data-coin="XRP">XRP</button>
+    </div>
+
+    <div id="ms-banner" class="status-banner status-loading">
+      <span class="dot"></span><span class="banner-text">loading consensus…</span>
+    </div>
+
+    <div class="ms-grid">
+      <!-- Gauge -->
+      <div class="panel ms-gauge-panel">
+        <div class="panel-head"><span class="panel-title" id="ms-coin-title">BTC</span>
+          <span class="regime-badge" id="ms-regime">—</span></div>
+        <div id="ms-gauge" class="ms-gauge">loading…</div>
+        <div class="ms-splits" id="ms-splits"></div>
+      </div>
+
+      <!-- Pro detail (locked for free) -->
+      <div class="panel ms-detail-panel">
+        <div class="panel-head"><span class="panel-title">Drivers & levels</span>
+          <span class="pro-pill" id="ms-tier-pill">PRO</span></div>
+        <div id="ms-detail" class="ms-detail"></div>
+      </div>
+    </div>
+
+    <p class="meta" id="ms-meta"></p>
+  </section>
+</BaseLayout>
+
+<script>
+  const PUB = "https://api.n0brains.com/charts/market-state/";
+  const PRO = "https://api.n0brains.com/charts/pro/market-state/";
+  const API_BASE = (location.hostname === "127.0.0.1" || location.hostname === "localhost")
+    ? "http://127.0.0.1:8000" : "https://api.n0brains.com";
+  let coin = "BTC";
+
+  const jwt = () => localStorage.getItem("auth_token");
+  const isPro = () => (localStorage.getItem("tier") || "free") === "pro" && !!jwt();
+
+  function gaugeSVG(bull, bear, neutral, direction) {
+    // semicircle gauge: bear (left/red) → neutral (mid/grey) → bull (right/green)
+    const W = 300, H = 170, cx = 150, cy = 150, r = 120;
+    const total = (bull + bear + neutral) || 1;
+    const b = bear / total, n = neutral / total, u = bull / total;
+    // needle angle: -90 (full bear) .. +90 (full bull); score = bull - bear
+    const net = (bull - bear) / total; // -1..1
+    const ang = net * 90;
+    const rad = (deg) => (deg - 90) * Math.PI / 180;
+    function arc(startFrac, endFrac, color) {
+      const a0 = rad(startFrac * 180), a1 = rad(endFrac * 180);
+      const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
+      const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      const large = (endFrac - startFrac) > 0.5 ? 1 : 0;
+      return `<path d="M${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 ${large} 1 ${x1.toFixed(1)},${y1.toFixed(1)}"
+        fill="none" stroke="${color}" stroke-width="22" stroke-linecap="butt"/>`;
+    }
+    const nx = cx + (r - 18) * Math.cos(rad(((net + 1) / 2) * 180));
+    const ny = cy + (r - 18) * Math.sin(rad(((net + 1) / 2) * 180));
+    return `<svg viewBox="0 0 ${W} ${H}" class="gauge-svg">
+      ${arc(0, b, "#ef4444")}
+      ${arc(b, b + n, "#555")}
+      ${arc(b + n, 1, "#00ff41")}
+      <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#efefef" stroke-width="3"/>
+      <circle cx="${cx}" cy="${cy}" r="6" fill="#efefef"/>
+      <text x="20" y="165" class="g-lbl" fill="#ef4444">BEAR</text>
+      <text x="${W-20}" y="165" class="g-lbl" fill="#00ff41" text-anchor="end">BULL</text>
+    </svg>`;
+  }
+
+  function render(d) {
+    const banner = document.getElementById("ms-banner");
+    if (!d || d.error || !d.direction) {
+      banner.className = "status-banner status-unknown";
+      banner.querySelector(".banner-text").textContent = "consensus unavailable (" + (d?.error || d?.detail || "fetch failed") + ")";
+      document.getElementById("ms-gauge").innerHTML = "<div class='wr-empty'>no data for " + coin + "</div>";
+      return;
+    }
+    const dirCls = d.direction === "bullish" ? "pos" : d.direction === "bearish" ? "neg" : "neu";
+    banner.className = "status-banner status-up";
+    banner.querySelector(".banner-text").textContent =
+      coin + ": " + d.direction.toUpperCase() + " · " + Math.round((d.confidence || 0) * 100) + "% confidence · " + (d.n_signals || 0) + " signals (24h)";
+
+    document.getElementById("ms-coin-title").textContent = coin;
+    const regime = document.getElementById("ms-regime");
+    regime.textContent = (d.regime || "—").replace(/_/g, " ");
+    regime.className = "regime-badge regime-" + (d.regime || "neutral");
+
+    document.getElementById("ms-gauge").innerHTML = gaugeSVG(d.bull_score || 0, d.bear_score || 0, d.neutral_score || 0, d.direction);
+
+    const total = (d.bull_score + d.bear_score + d.neutral_score) || 1;
+    document.getElementById("ms-splits").innerHTML = `
+      <div class="split"><span class="split-bar" style="background:#00ff41;width:${(d.bull_score/total*100).toFixed(0)}%"></span><b class="pos">Bull</b> ${(d.bull_score/total*100).toFixed(0)}%</div>
+      <div class="split"><span class="split-bar" style="background:#555;width:${(d.neutral_score/total*100).toFixed(0)}%"></span><b class="neu">Neutral</b> ${(d.neutral_score/total*100).toFixed(0)}%</div>
+      <div class="split"><span class="split-bar" style="background:#ef4444;width:${(d.bear_score/total*100).toFixed(0)}%"></span><b class="neg">Bear</b> ${(d.bear_score/total*100).toFixed(0)}%</div>`;
+
+    if (d.as_of) document.getElementById("ms-meta").textContent = "as of " + new Date(d.as_of * 1000).toISOString();
+  }
+
+  function renderDetailLocked() {
+    document.getElementById("ms-tier-pill").textContent = "PRO";
+    document.getElementById("ms-tier-pill").className = "pro-pill";
+    document.getElementById("ms-detail").innerHTML = `
+      <div class="locked">
+        <div class="lock-rows">
+          <div class="lock-row"><span>Top drivers</span><span class="blur">whale_position · funding · sentiment</span></div>
+          <div class="lock-row"><span>Invalidation level</span><span class="blur">$00,000</span></div>
+          <div class="lock-row"><span>Liq-map target</span><span class="blur">$00,000</span></div>
+        </div>
+        <a class="btn-primary" href="/pricing?utm_source=charts&utm_medium=chart&utm_campaign=market-state">Unlock with Pro — code RACE →</a>
+        <p class="lock-foot">Founding 20: <code>RACE</code> at checkout = 1 month Pro free.</p>
+      </div>`;
+  }
+
+  function renderDetailPro(d) {
+    document.getElementById("ms-tier-pill").textContent = "PRO ✓";
+    document.getElementById("ms-tier-pill").className = "pro-pill pro-on";
+    const drivers = (d.top_drivers || []).map((x) => {
+      if (typeof x === "string") return `<span class="driver">${x}</span>`;
+      const dir = x.dir === "bullish" ? "▲" : x.dir === "bearish" ? "▼" : "";
+      const dcls = x.dir === "bullish" ? "pos" : x.dir === "bearish" ? "neg" : "";
+      return `<span class="driver"><span class="${dcls}">${dir}</span> ${x.type || x.name || "?"}</span>`;
+    }).join("");
+    document.getElementById("ms-detail").innerHTML = `
+      <div class="detail-rows">
+        <div class="d-row"><span class="d-k">Top drivers</span><span class="d-v">${drivers || "—"}</span></div>
+        <div class="d-row"><span class="d-k">Invalidation level</span><span class="d-v">${d.invalidation_level != null ? "$" + Number(d.invalidation_level).toLocaleString() : "—"}</span></div>
+        <div class="d-row"><span class="d-k">Liq-map target</span><span class="d-v">${d.liqmap_target != null ? "$" + Number(d.liqmap_target).toLocaleString() : "—"}</span></div>
+      </div>`;
+  }
+
+  async function loadDetail() {
+    if (!isPro()) { renderDetailLocked(); return; }
+    try {
+      const r = await fetch(PRO + coin, { headers: { Authorization: "Bearer " + jwt() }, cache: "no-store" });
+      if (!r.ok) { renderDetailLocked(); return; }
+      renderDetailPro(await r.json());
+    } catch (e) { renderDetailLocked(); }
+  }
+
+  async function load() {
+    try { const r = await fetch(PUB + coin, { cache: "no-store" }); render(await r.json()); }
+    catch (e) { render({ error: String(e) }); }
+    loadDetail();
+  }
+
+  document.getElementById("coin-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".coin-tab"); if (!b) return;
+    document.querySelectorAll(".coin-tab").forEach((t) => t.classList.remove("active"));
+    b.classList.add("active"); coin = b.dataset.coin; load();
+  });
+  load(); setInterval(load, 60000);
+</script>
+
+<style>
+  .chart-page { max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 4rem; }
+  .chart-head { margin-bottom: 1.4rem; }
+  .back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+  .back:hover { color: var(--accent); }
+  .kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0; display: flex; align-items: center; gap: 0.6rem; }
+  .chart-head h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
+    line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+  .accent { color: var(--accent); }
+  .lede { font-size: 1rem; max-width: 660px; color: var(--text); }
+  .lede a { color: var(--accent); }
+
+  .coin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; }
+  .coin-tab { font-family: var(--font-mono); font-size: 0.84rem; padding: 0.45rem 1rem;
+    background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer; transition: 0.15s; }
+  .coin-tab:hover { color: var(--text-heading); border-color: var(--border-accent); }
+  .coin-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+
+  .status-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.86rem;
+    margin-bottom: 1.3rem; border: 1px solid var(--border); }
+  .status-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+  .status-up { border-color: rgba(0,255,65,0.3); }
+  .status-up .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-loading .dot { background: var(--accent); animation: blink 1.4s infinite; }
+
+  .ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
+  @media (max-width: 760px) { .ms-grid { grid-template-columns: 1fr; } }
+  .panel { border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-card); padding: 1.2rem 1.4rem 1.4rem; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .panel-title { font-family: var(--font-mono); font-size: 0.86rem; color: var(--text-heading);
+    text-transform: uppercase; letter-spacing: 0.08em; }
+  .regime-badge { font-family: var(--font-mono); font-size: 0.72rem; padding: 3px 10px;
+    border-radius: 100px; border: 1px solid var(--border); color: var(--text-muted); text-transform: uppercase; }
+  .regime-risk_off { color: #ef4444; border-color: rgba(239,68,68,0.4); }
+  .regime-risk_on { color: var(--accent); border-color: rgba(0,255,65,0.4); }
+
+  .gauge-svg { width: 100%; height: auto; display: block; }
+  :global(.gauge-svg .g-lbl) { font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+  .ms-splits { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.8rem; }
+  .split { font-family: var(--font-mono); font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text); }
+  .split-bar { height: 8px; border-radius: 3px; min-width: 2px; }
+  .split b { width: 56px; } .split .pos { color: var(--accent); } .split .neg { color: #ef4444; } .split .neu { color: var(--text-muted); }
+
+  .pro-pill { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    padding: 3px 9px; border-radius: 100px; border: 1px solid var(--border); color: var(--text-muted); }
+  .pro-on { color: var(--accent); border-color: rgba(0,255,65,0.4); }
+
+  .locked { text-align: center; padding: 0.5rem 0; }
+  .lock-rows { margin-bottom: 1.2rem; }
+  .lock-row { display: flex; justify-content: space-between; padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.84rem; }
+  .lock-row span:first-child { color: var(--text-muted); }
+  .blur { color: var(--text-heading); filter: blur(5px); user-select: none; }
+  .lock-foot { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); margin-top: 0.8rem; }
+  .lock-foot code { color: var(--accent); }
+
+  .detail-rows { display: flex; flex-direction: column; }
+  .d-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.86rem; }
+  .d-k { color: var(--text-muted); } .d-v { color: var(--text-heading); text-align: right; }
+  .driver { display: inline-block; background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 7px; margin: 0 0 3px 4px; font-size: 0.78rem; }
+
+  .wr-empty { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; padding: 1rem 0; }
+  .meta { color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono); margin-top: 1rem; }
+  .btn-primary { background: var(--accent); color: #000; font-family: var(--font-mono); font-weight: 700;
+    padding: 0.7rem 1.3rem; border-radius: var(--radius-sm); text-decoration: none; display: inline-block; transition: filter 0.15s; }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent); display: inline-block; animation: blink 2s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+</style>

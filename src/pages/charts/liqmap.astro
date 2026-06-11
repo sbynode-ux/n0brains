@@ -7,7 +7,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   description="n0brains live liquidation heatmap — price × time density of where leveraged positions cluster to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) plus a multi-month CEX estimate from open-interest history, with price candles overlaid. Free, live. Not financial advice."
 >
   <section class="about-section lm-wide">
-    <h1>liquidation heatmap</h1>
+    <a href="/charts" class="lm-back">← charts</a>
+    <p class="lm-kicker"><span class="lm-livedot"></span>On-chain + estimate · live</p>
+    <h1 class="lm-h1">LIQUIDATION<br /><span class="lm-accent">HEATMAP</span></h1>
     <p class="legal-updated">
       Where leveraged positions cluster to liquidate, over time — bright bands are
       liquidity magnets that the price tends to gravitate toward.
@@ -15,7 +17,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       open-interest history (the bands trail the price as leverage stacks).
       <strong>DEX</strong> reads <em>real</em> on-chain positions (Hyperliquid +
       GMX), captured live and building forward. Price candles overlaid. Free and
-      live. Analytical data, <strong>not financial advice</strong>.
+      live — vs Coinglass $299. Analytical data, <strong>not financial advice</strong>.
     </p>
 
     <div class="lm-controls">
@@ -73,6 +75,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <style is:global>
     /* widen this page past the global .about-section 600px cap (heatmap needs room) */
     .about-section.lm-wide { max-width: 1100px; }
+    /* charts-hub shell header (matches /charts/win-rate etc.) */
+    .lm-back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+    .lm-back:hover { color: var(--accent); }
+    .lm-kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+      letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0; display: flex; align-items: center; gap: 0.6rem; }
+    .lm-livedot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 8px var(--accent); display: inline-block; animation: lm-blink 2s infinite; }
+    @keyframes lm-blink { 50% { opacity: 0.3; } }
+    .lm-h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
+      line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+    .lm-accent { color: var(--accent); }
   </style>
   <style>
     .lm-controls { display:flex; gap:1.25rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 1rem; }

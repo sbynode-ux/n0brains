@@ -1,0 +1,240 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="support & resistance"
+  description="n0brains live support/resistance levels overlaid on price — order-book + pivot levels for BTC and ETH free, full coin coverage on Pro."
+  ogImage="/og-default.png"
+>
+  <section class="chart-page">
+    <div class="chart-head">
+      <a href="/charts" class="back">← charts</a>
+      <p class="kicker"><span class="live-dot"></span>Live levels · refreshed every 60s</p>
+      <h1>SUPPORT &amp;<br /><span class="accent">RESISTANCE</span></h1>
+      <p class="lede">
+        Order-book + pivot levels overlaid on live price. <strong>BTC and ETH are
+        free</strong>; <a href="/pricing">Pro</a> unlocks every coin we track.
+      </p>
+    </div>
+
+    <div class="coin-tabs" id="coin-tabs">
+      <button class="coin-tab active" data-coin="BTC">BTC</button>
+      <button class="coin-tab" data-coin="ETH">ETH</button>
+      <button class="coin-tab pro-coin" data-coin="SOL">SOL <span class="lk">🔒</span></button>
+      <button class="coin-tab pro-coin" data-coin="XRP">XRP <span class="lk">🔒</span></button>
+      <button class="coin-tab pro-coin" data-coin="DOGE">DOGE <span class="lk">🔒</span></button>
+    </div>
+
+    <div id="lv-banner" class="status-banner status-loading">
+      <span class="dot"></span><span class="banner-text">loading levels…</span>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title" id="lv-title">BTC</span>
+        <span class="panel-sub" id="lv-price">—</span>
+      </div>
+      <div id="lv-chart" class="lv-chart-wrap"><canvas id="lv-canvas"></canvas></div>
+      <div id="lv-legend" class="lv-legend"></div>
+    </div>
+
+    <p class="meta" id="lv-meta"></p>
+  </section>
+</BaseLayout>
+
+<script is:inline>
+(function () {
+  "use strict";
+  const PUB = "https://api.n0brains.com/charts/levels/";
+  const PRO = "https://api.n0brains.com/charts/pro/levels/";
+  const CG_ID = { BTC: "bitcoin", ETH: "ethereum", SOL: "solana", XRP: "ripple", DOGE: "dogecoin" };
+  let coin = "BTC", candles = [], timer = null, reqId = 0;
+
+  const $ = (id) => document.getElementById(id);
+  const jwt = () => localStorage.getItem("auth_token");
+  const isPro = () => (localStorage.getItem("tier") || "free") === "pro" && !!jwt();
+  const fmtPx = (p) => p >= 1000 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 })
+    : "$" + p.toLocaleString(undefined, { maximumFractionDigits: p < 10 ? 4 : 2 });
+
+  function banner(cls, text) {
+    const b = $("lv-banner");
+    b.className = "status-banner " + cls;
+    b.querySelector(".banner-text").textContent = text;
+  }
+
+  async function fetchCandles(c) {
+    try {
+      const r = await fetch(`https://api.coingecko.com/api/v3/coins/${CG_ID[c]}/ohlc?vs_currency=usd&days=7`, { cache: "no-store" });
+      const raw = await r.json();
+      return raw.map((k) => ({ t: k[0] / 1000, o: k[1], h: k[2], l: k[3], c: k[4] }));
+    } catch (e) { return []; }
+  }
+
+  async function fetchLevels(c) {
+    if (isPro()) {
+      try {
+        const r = await fetch(PRO + c, { headers: { Authorization: "Bearer " + jwt() }, cache: "no-store" });
+        if (r.ok) return await r.json();
+      } catch (e) {}
+    }
+    const r = await fetch(PUB + c, { cache: "no-store" });
+    return await r.json();
+  }
+
+  function render(data) {
+    const cv = $("lv-canvas"), ctx = cv.getContext("2d");
+    const wrap = $("lv-chart-wrap") || cv.parentElement;
+    const W = wrap.clientWidth, H = 420;
+    cv.width = W * devicePixelRatio; cv.height = H * devicePixelRatio;
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    if (data.pro_only) {
+      banner("status-unknown", coin + " levels are Pro — BTC/ETH are free");
+      $("lv-price").textContent = "";
+      drawLocked(ctx, W, H);
+      $("lv-legend").innerHTML = `<a class="btn-primary" href="/pricing?utm_source=charts&utm_medium=chart&utm_campaign=levels">Unlock ${coin} with Pro — code RACE →</a>`;
+      return;
+    }
+    if (!data || data.error || !data.current_price) {
+      banner("status-unknown", "levels unavailable (" + (data?.detail || data?.error || "fetch failed") + ")");
+      return;
+    }
+
+    const price = data.current_price;
+    $("lv-title").textContent = coin;
+    $("lv-price").textContent = fmtPx(price);
+    banner("status-up", coin + " · " + fmtPx(price) + " · live S/R");
+
+    const PADL = 8, PADR = 86, PADT = 16, PADB = 28;
+    const res = (data.all_resistance || []).map((r) => r.price);
+    const sup = (data.all_support || []).map((s) => s.price);
+    const allLevels = [...res, ...sup];
+    let lo = Math.min(price, ...candles.map((k) => k.l), ...allLevels.filter(Boolean));
+    let hi = Math.max(price, ...candles.map((k) => k.h), ...allLevels.filter(Boolean));
+    if (!isFinite(lo) || !isFinite(hi) || lo === hi) { lo = price * 0.95; hi = price * 1.05; }
+    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+    const Y = (p) => PADT + (1 - (p - lo) / (hi - lo)) * (H - PADT - PADB);
+
+    // candles
+    if (candles.length) {
+      const t0 = candles[0].t, t1 = candles[candles.length - 1].t;
+      const X = (t) => PADL + ((t - t0) / (t1 - t0 || 1)) * (W - PADL - PADR);
+      const cw = Math.max(1.5, (W - PADL - PADR) / candles.length - 1.5);
+      for (const k of candles) {
+        const up = k.c >= k.o; ctx.strokeStyle = ctx.fillStyle = up ? "#26d07c" : "#ef4444";
+        const x = X(k.t) + cw / 2;
+        ctx.beginPath(); ctx.moveTo(x, Y(k.h)); ctx.lineTo(x, Y(k.l)); ctx.stroke();
+        ctx.fillRect(X(k.t), Y(Math.max(k.o, k.c)), cw, Math.max(1.5, Math.abs(Y(k.o) - Y(k.c))));
+      }
+    }
+    // level lines
+    ctx.font = "11px 'Space Mono', monospace";
+    function drawLevel(p, color, label) {
+      const y = Y(p);
+      ctx.strokeStyle = color; ctx.globalAlpha = 0.55; ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.fillStyle = color; ctx.textAlign = "left";
+      ctx.fillText(fmtPx(p), W - PADR + 4, y + 4);
+    }
+    res.forEach((p) => drawLevel(p, "#ef4444", "R"));
+    sup.forEach((p) => drawLevel(p, "#00ff41", "S"));
+    // current price line
+    const yp = Y(price);
+    ctx.strokeStyle = "#efefef"; ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.moveTo(PADL, yp); ctx.lineTo(W - PADR, yp); ctx.stroke();
+    ctx.fillStyle = "#efefef"; ctx.fillText(fmtPx(price), W - PADR + 4, yp - 4);
+
+    $("lv-legend").innerHTML =
+      `<span class="lg"><span class="lg-line" style="background:#00ff41"></span>support</span>` +
+      `<span class="lg"><span class="lg-line" style="background:#ef4444"></span>resistance</span>` +
+      `<span class="lg"><span class="lg-line" style="background:#efefef"></span>price</span>` +
+      (isPro() ? `<span class="lg pro-on">PRO ✓ all coins</span>` : `<span class="lg muted">BTC/ETH free · <a href="/pricing">Pro for all coins</a></span>`);
+    if (data.disclaimer) $("lv-meta").textContent = data.disclaimer;
+  }
+
+  function drawLocked(ctx, W, H) {
+    ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#707070"; ctx.font = "48px 'Space Mono', monospace"; ctx.textAlign = "center";
+    ctx.fillText("🔒", W / 2, H / 2 - 10);
+    ctx.font = "14px 'Space Mono', monospace";
+    ctx.fillText(coin + " levels are a Pro feature", W / 2, H / 2 + 28);
+  }
+
+  async function load() {
+    const my = ++reqId;
+    banner("status-loading", "loading " + coin + " levels…");
+    const isMajor = coin === "BTC" || coin === "ETH";
+    candles = (isMajor || isPro()) ? await fetchCandles(coin) : [];
+    if (my !== reqId) return;
+    try {
+      const data = await fetchLevels(coin);
+      if (my !== reqId) return;
+      render(data);
+    } catch (e) { render({ error: String(e) }); }
+  }
+
+  document.getElementById("coin-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".coin-tab"); if (!b) return;
+    document.querySelectorAll(".coin-tab").forEach((t) => t.classList.remove("active"));
+    b.classList.add("active"); coin = b.dataset.coin; load();
+  });
+  addEventListener("resize", () => { clearTimeout(window._lvrz); window._lvrz = setTimeout(load, 200); });
+  load(); setInterval(load, 60000);
+})();
+</script>
+
+<style>
+  .chart-page { max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 4rem; }
+  .chart-head { margin-bottom: 1.4rem; }
+  .back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+  .back:hover { color: var(--accent); }
+  .kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0; display: flex; align-items: center; gap: 0.6rem; }
+  .chart-head h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
+    line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+  .accent { color: var(--accent); }
+  .lede { font-size: 1rem; max-width: 660px; color: var(--text); }
+  .lede a { color: var(--accent); }
+
+  .coin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .coin-tab { font-family: var(--font-mono); font-size: 0.84rem; padding: 0.45rem 1rem;
+    background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); cursor: pointer; transition: 0.15s; }
+  .coin-tab:hover { color: var(--text-heading); border-color: var(--border-accent); }
+  .coin-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .coin-tab .lk { font-size: 0.7rem; opacity: 0.7; }
+
+  .status-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.86rem;
+    margin-bottom: 1.3rem; border: 1px solid var(--border); }
+  .status-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+  .status-up { border-color: rgba(0,255,65,0.3); }
+  .status-up .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-loading .dot { background: var(--accent); animation: blink 1.4s infinite; }
+
+  .panel { border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-card); padding: 1.2rem 1.4rem 1.4rem; }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+  .panel-title { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-heading);
+    text-transform: uppercase; letter-spacing: 0.08em; }
+  .panel-sub { font-family: var(--font-mono); font-size: 0.95rem; color: var(--accent); }
+  .lv-chart-wrap { width: 100%; }
+  #lv-canvas { display: block; width: 100%; }
+  .lv-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-top: 0.9rem;
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); }
+  .lg { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .lg-line { width: 16px; height: 2px; display: inline-block; }
+  .lg.pro-on { color: var(--accent); } .lg.muted a { color: var(--accent); }
+
+  .meta { color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono); margin-top: 1rem; }
+  .btn-primary { background: var(--accent); color: #000; font-family: var(--font-mono); font-weight: 700;
+    padding: 0.6rem 1.2rem; border-radius: var(--radius-sm); text-decoration: none; display: inline-block; transition: filter 0.15s; }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent); display: inline-block; animation: blink 2s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+</style>

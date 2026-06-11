@@ -1,0 +1,213 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="win-rate scoreboard"
+  description="n0brains live win-rate scoreboard — every signal type's forward-return record vs BTC, win rate, and 95% confidence interval. Audited on real prices, refreshed live. The exact gate we flag signals on."
+  ogImage="/og-proof.png"
+>
+  <section class="chart-page">
+    <div class="chart-head">
+      <a href="/charts" class="back">← charts</a>
+      <p class="kicker"><span class="live-dot"></span>Audited live · refreshed every 60s</p>
+      <h1>WIN-RATE<br /><span class="accent">SCOREBOARD</span></h1>
+      <p class="lede">
+        Every directional signal type, measured against real post-signal price —
+        Hyperliquid 1h candles at the 24h horizon, rolling 30 days. A type is
+        <strong>proven</strong> only when it clears 30+ signals AND beats BTC AND
+        is profitable on its own (95% CI lower bound above zero). This is the exact
+        gate behind <code>conviction: strong</code>. <a href="/proof">Full methodology →</a>
+      </p>
+    </div>
+
+    <div id="wr-banner" class="status-banner status-loading">
+      <span class="dot"></span><span class="banner-text">loading scoreboard…</span>
+    </div>
+
+    <!-- Bar visualization: excess vs BTC per proven type -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Excess return vs BTC — proven types</span>
+        <span class="panel-sub">bar = mean excess · whisker = 95% CI lower bound</span>
+      </div>
+      <div id="wr-bars" class="wr-bars">loading…</div>
+    </div>
+
+    <!-- Full table -->
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">All signal types</span></div>
+      <div id="wr-table"></div>
+    </div>
+
+    <p class="meta" id="wr-meta"></p>
+
+    <div class="cta-strip">
+      <div>
+        <strong>Pipe these into your agent.</strong>
+        <span>REST · WebSocket · MCP · x402 — conviction flags built in.</span>
+      </div>
+      <a class="btn-primary" href="/signup?utm_source=charts&utm_medium=chart&utm_campaign=win-rate">Start free →</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const ENDPOINT = "https://api.n0brains.com/charts/proof";
+  const PROVEN_COLORS = ["#00ff41", "#4ade80", "#60a5fa", "#f59e0b", "#c084fc", "#f472b6"];
+
+  const pct = (v) => (v === null || v === undefined) ? "—" : (Number(v) * 100).toFixed(1) + "%";
+  const pctRaw = (v) => (v === null || v === undefined) ? "—" : (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%";
+
+  function renderBars(types) {
+    const el = document.getElementById("wr-bars");
+    const proven = types.filter((t) => t.tradeable);
+    if (!proven.length) { el.innerHTML = "<div class='wr-empty'>no proven types right now — we demote in the open</div>"; return; }
+    const maxExcess = Math.max(...proven.map((t) => Math.abs(t.excess_pct || 0)), 1);
+    el.innerHTML = proven.map((t, i) => {
+      const c = PROVEN_COLORS[i % PROVEN_COLORS.length];
+      const w = Math.max(2, (Math.abs(t.excess_pct) / maxExcess) * 100);
+      const ciW = Math.max(0, (Math.abs(t.ci_low_pct) / maxExcess) * 100);
+      return `
+        <div class="wr-bar-row">
+          <div class="wr-bar-label">
+            <span class="wr-dot" style="background:${c}"></span>${t.signal_type}
+            <span class="wr-n">n=${t.n}</span>
+          </div>
+          <div class="wr-bar-track">
+            <div class="wr-bar-fill" style="width:${w}%;background:${c}"></div>
+            <div class="wr-ci" style="left:${ciW}%" title="95% CI lower bound: ${pctRaw(t.ci_low_pct)}"></div>
+          </div>
+          <div class="wr-bar-val">
+            <span class="wr-excess">${pctRaw(t.excess_pct)}</span>
+            <span class="wr-win">${pct(t.win_rate)} win</span>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderTable(types) {
+    const table = document.getElementById("wr-table");
+    let rows = "";
+    for (const t of types) {
+      const cls = t.tradeable ? "" : "row-untradeable";
+      const flag = t.tradeable
+        ? '<span class="badge badge-yes">proven</span>'
+        : '<span class="badge badge-no">intel only</span>';
+      rows += `<tr class="${cls}">
+        <td class="type">${t.signal_type}</td>
+        <td>${t.n}</td>
+        <td>${pct(t.win_rate)}</td>
+        <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</td>
+        <td class="${t.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.excess_pct)}</td>
+        <td class="${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</td>
+        <td>${flag}</td></tr>`;
+    }
+    table.innerHTML = `<table class="data-table">
+      <thead><tr><th>type</th><th>signals</th><th>win rate</th>
+        <th title="mean return of the trade itself">avg return</th>
+        <th title="mean return minus BTC, same window">excess vs BTC</th>
+        <th title="95% CI lower bound on excess — the conservative edge">CI low</th>
+        <th></th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  function render(data) {
+    const banner = document.getElementById("wr-banner");
+    if (!data || data.error || !data.types) {
+      banner.className = "status-banner status-unknown";
+      banner.querySelector(".banner-text").textContent = "scoreboard unavailable (" + (data?.error || "fetch failed") + ")";
+      return;
+    }
+    const proven = data.types.filter((t) => t.tradeable);
+    banner.className = "status-banner status-up";
+    banner.querySelector(".banner-text").textContent =
+      proven.length + " signal type" + (proven.length === 1 ? "" : "s") + " forward-return proven · " +
+      data.window_days + "d window · " + data.horizon + " horizon";
+    renderBars(data.types);
+    renderTable(data.types);
+    const latest = Math.max(...data.types.map((t) => t.updated_at || 0));
+    if (latest) document.getElementById("wr-meta").textContent = "Last updated " + new Date(latest * 1000).toISOString();
+  }
+
+  async function load() {
+    try { const r = await fetch(ENDPOINT, { cache: "no-store" }); render(await r.json()); }
+    catch (e) { render({ error: String(e) }); }
+  }
+  load(); setInterval(load, 60000);
+</script>
+
+<style>
+  .chart-page { max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 4rem; }
+  .chart-head { margin-bottom: 1.8rem; }
+  .back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+  .back:hover { color: var(--accent); }
+  .kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0 1rem; display: flex; align-items: center; gap: 0.6rem; }
+  .chart-head h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
+    line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+  .accent { color: var(--accent); }
+  .lede { font-size: 1rem; max-width: 660px; color: var(--text); }
+  .lede a { color: var(--accent); }
+
+  .status-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.86rem;
+    margin: 1.5rem 0; border: 1px solid var(--border); }
+  .status-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+  .status-up { border-color: rgba(0,255,65,0.3); }
+  .status-up .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .status-loading .dot { background: var(--accent); animation: blink 1.4s infinite; }
+  .status-unknown { border-color: var(--border); }
+
+  .panel { border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--bg-card); padding: 1.2rem 1.4rem 1.4rem; margin-bottom: 1.3rem; }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
+  .panel-title { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-heading);
+    text-transform: uppercase; letter-spacing: 0.08em; }
+  .panel-sub { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+
+  /* bar viz */
+  .wr-bars { display: flex; flex-direction: column; gap: 0.7rem; }
+  .wr-bar-row { display: grid; grid-template-columns: 180px 1fr 130px; align-items: center; gap: 1rem; }
+  @media (max-width: 640px) { .wr-bar-row { grid-template-columns: 110px 1fr 92px; gap: 0.5rem; } }
+  .wr-bar-label { font-family: var(--font-mono); font-size: 0.84rem; color: var(--text-heading);
+    display: flex; align-items: center; gap: 0.45rem; }
+  .wr-dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+  .wr-n { color: var(--text-muted); font-size: 0.72rem; }
+  .wr-bar-track { position: relative; height: 22px; background: var(--bg-code);
+    border-radius: 4px; overflow: hidden; }
+  .wr-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(.22,1,.36,1); }
+  .wr-ci { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(255,255,255,0.55); }
+  .wr-bar-val { text-align: right; font-family: var(--font-mono); }
+  .wr-excess { display: block; color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+  .wr-win { display: block; color: var(--text-muted); font-size: 0.72rem; }
+  .wr-empty { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; }
+
+  /* table */
+  .data-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.86rem; }
+  .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  .data-table th { color: var(--text-muted); font-weight: 500; }
+  .data-table td.type { font-weight: 700; color: var(--text-heading); }
+  .data-table .pos { color: #4ade80; } .data-table .neg { color: #ef4444; }
+  .row-untradeable { opacity: 0.5; }
+  .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); }
+  .badge-yes { color: var(--accent); border-color: rgba(0,255,65,0.3); }
+  .badge-no { color: var(--text-muted); }
+
+  .meta { color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono); margin-top: 0.4rem; }
+
+  .cta-strip { display: flex; align-items: center; justify-content: space-between; gap: 1.4rem;
+    flex-wrap: wrap; margin-top: 2.4rem; padding: 1.4rem 1.6rem; border: 1px solid var(--border-accent);
+    border-radius: var(--radius); background: var(--accent-glow); }
+  .cta-strip strong { color: var(--text-heading); display: block; }
+  .cta-strip span { color: var(--text); font-size: 0.9rem; }
+  .btn-primary { background: var(--accent); color: #000; font-family: var(--font-mono); font-weight: 700;
+    padding: 0.7rem 1.4rem; border-radius: var(--radius-sm); text-decoration: none; white-space: nowrap;
+    transition: filter 0.15s; }
+  .btn-primary:hover { filter: brightness(1.12); }
+
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent); display: inline-block; animation: blink 2s infinite; }
+  @keyframes blink { 50% { opacity: 0.3; } }
+</style>
