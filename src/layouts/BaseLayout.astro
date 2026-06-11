@@ -168,8 +168,9 @@ const softwareAppLd = homepage ? {
           <a href="/intel">intel</a>
           <a href="/blog">blog</a>
           <a href="/podcast">podcast</a>
-          <a href="/login">login</a>
-          <a href="/dashboard">account</a>
+          <a href="/login" id="nav-login">login</a>
+          <a href="/dashboard" id="nav-account">account</a>
+          <a href="#" id="nav-logout" hidden>logout</a>
         </nav>
       </div>
     </header>
@@ -206,6 +207,25 @@ const softwareAppLd = homepage ? {
         </p>
       </div>
     </footer>
+
+    <script>
+      /* Auth-aware nav: hide "login" + show "logout" once a session exists.
+         Static site → auth state lives in localStorage (set by login/signup). */
+      (() => {
+        const loggedIn = !!localStorage.getItem("auth_token");
+        const login = document.getElementById("nav-login");
+        const logout = document.getElementById("nav-logout");
+        if (loggedIn) {
+          if (login) login.hidden = true;
+          if (logout) logout.hidden = false;
+        }
+        if (logout) logout.addEventListener("click", (e) => {
+          e.preventDefault();
+          ["auth_token", "tier", "api_key"].forEach((k) => localStorage.removeItem(k));
+          window.location.href = "/";
+        });
+      })();
+    </script>
 
     <script>
       (() => {
