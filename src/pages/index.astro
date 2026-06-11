@@ -6,8 +6,9 @@ import MonoChip from "../components/MonoChip.astro";
 /* Ordered by market-signaling significance — strongest directional / timing edge first. */
 const sources = [
   { chip: "MP",  title: "Macro Pulse",            desc: "Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive." },
-  { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — the highest-conviction directional read." },
-  { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket. The cleanest timing signal for reversals and continuations." },
+  { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — and like every signal here, its live track record is published on /proof." },
+  { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket, plus multi-venue open-interest momentum from Coinglass snapshots. Timing signal for reversals and continuations." },
+  { chip: "LIQ", title: "DEX Liquidation Map",    desc: "Our own liquidation map built from real on-chain DEX perp positions (Hyperliquid + GMX) — exact liquidation prices, not estimates. Cluster signals fire when large pools sit near price; also shapes targets and stops." },
   { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Positioning context and capital-concentration tracking — directional whale reads come from Hyperliquid leaderboard positions." },
   { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
   { chip: "OPT", title: "Options Flow",           desc: "Deribit options positioning — put/call open-interest ratio, max-pain magnets, and large smart-money block trades on BTC + ETH. Surfaces institutional positioning the crowd-sentiment feeds miss." },
@@ -16,12 +17,13 @@ const sources = [
   { chip: "SR",  title: "S/R Levels",             desc: "Real-time support/resistance from the Hyperliquid order book. Shapes entries and stops; rejects trades near adverse levels." },
   { chip: "TG",  title: "Telegram Channels",      desc: "WatcherGuru, ZachXBT Investigations, and more. Fastest source for hacks and breaking events — high speed, needs corroboration." },
   { chip: "SEC", title: "Security & Exploits",    desc: "Dedicated exploit feed — DefiLlama hacks database (amount, technique, chain) plus rekt.news post-mortems. Structured, first-mover coverage of protocol drains and bridge hacks." },
-  { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
+  { chip: "RSS", title: "News & RSS",             desc: "CoinDesk, Decrypt, CoinTelegraph, Reddit, Tree of Alpha fast-news, and Trump's Truth Social. Keyword-filtered — broader context, slower than the live feeds." },
+  { chip: "FC",  title: "Farcaster",              desc: "Crypto-native social monitoring on Farcaster channels — our highest trades-per-signal social source in the live source audit." },
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
   { chip: "LP",  title: "Launchpads & Listings",  desc: "New-token launch detection across Pump.fun (Solana) and major IDO/IEO/launchpad platforms. Catches listings and launches as they go live." },
-  { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves. No paid APIs." },
+  { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves — plus congressional stock-trade disclosures. No paid APIs." },
   { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain discovery and token activity. Discovery context, non-directional." },
-  { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of vetted on-chain trackers, exchanges, and analysts — Lookonchain, Arkham, WuBlockchain, official exchange handles, and more." },
+  { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of research-vetted directional analysts and on-chain trackers — Arthur Hayes, Ki Young Ju, Pentoshi, EmberCN, Lookonchain, WuBlockchain, and more — plus official exchange listing and hack feeds." },
 ];
 
 const proFeatures = [
@@ -38,6 +40,8 @@ const proFeatures = [
   "<strong>Trust scoring</strong> — contract risk + rug probability per token",
   "<strong>Manipulation detection</strong> — coordinated pump + social burst flags",
   "<strong>Wallet DNA</strong> — smart money classification + stealth-accumulation flag",
+  "<strong>Market-state</strong> — BTC/ETH consensus snapshot from proven voters",
+  "<strong>Liquidation map</strong> — real-position DEX liq levels (HL + GMX)",
   "Email support",
 ];
 const freeFeatures = [
@@ -48,9 +52,42 @@ const freeFeatures = [
   "Community support",
 ];
 
-// "What we compute" cards are inline below; keep this in sync if you add/remove
-// a layer. Drives the odd-count filler tile (same logic as the sources grid).
-const computeLayerCount = 10;
+/* ---------- Pipeline visualization data ---------- */
+/* Sources collapsed into 5 intake groups; chips reference the taxonomy above. */
+const sourceGroups = [
+  { name: "Market Structure", chips: ["WH", "$", "LIQ", "L/S", "OPT", "SR"], count: 6, blurb: "whales · funding · liq map · options · order book" },
+  { name: "Capital Flows",    chips: ["ETH", "ETF", "USD"],                  count: 3, blurb: "on-chain · ETF · stablecoin mints" },
+  { name: "News & Events",    chips: ["TG", "SEC", "RSS", "FC", "X"],        count: 5, blurb: "telegram · exploits · news · farcaster · X" },
+  { name: "Macro & Regime",   chips: ["MP", "CMC", "GOV"],                   count: 3, blurb: "macro pulse · fear & greed · policy" },
+  { name: "Discovery",        chips: ["LP", "DEX"],                          count: 2, blurb: "launchpads · DEX screener" },
+];
+
+const engineLayers = [
+  { icon: "∿",  name: "Confidence Decay" },
+  { icon: "⚖",  name: "Source Accuracy Feedback" },
+  { icon: "🌡", name: "Narrative Heatmap" },
+  { icon: "⚠",  name: "Manipulation Detection" },
+  { icon: "🧬", name: "Wallet DNA" },
+  { icon: "🛡", name: "Trust & Scam Scoring" },
+  { icon: "∿∿", name: "Semantic Signal Search" },
+  { icon: "ML", name: "ML Outcome Models" },
+  { icon: "∮",  name: "Historical Edge" },
+  { icon: "≈",  name: "Binned Calibration" },
+];
+
+/* Full layer descriptions for the deep-dive accordion (same copy as before). */
+const computeLayers = [
+  { chip: "∿",  title: "Confidence Decay",         desc: "Signal confidence degrades exponentially with age. A liquidation cascade from 4 hours ago is not the same signal as one from 4 minutes ago. Every score you receive reflects time." },
+  { chip: "⚖",  title: "Source Accuracy Feedback", desc: "Source weights self-tune daily via EMA-smoothed win rates from tracked outcomes. Sources that predict correctly get boosted; sources that don't get dampened. Automatically." },
+  { chip: "🌡", title: "Narrative Heatmap",         desc: "Rolling 1h / 4h / 24h signal momentum per asset. Narrative strength, velocity, and decay rate. Coordination detection: three independent source types firing the same direction in 5 minutes raises a manipulation flag." },
+  { chip: "⚠",  title: "Manipulation Detection",   desc: "Social burst scoring, coordinated pump detection, and liquidation cascade identification. If engagement spikes 5× baseline or four unrelated sources fire the same coin in 10 minutes — you know." },
+  { chip: "🧬", title: "Wallet DNA",                desc: "Whale signals tagged with wallet archetype — CEX hot/cold, market maker, MEV bot, institutional, smart trader. 700+ verified labeled addresses across Ethereum, refreshed weekly from Etherscan label cloud and a live top-volume sweep. Stealth-accumulation flag fires when a tracked wallet receives a token in ≥3 fragmented buys totaling ≥$500K within 24h — catches quiet accumulation before it shows up in whale-alert feeds." },
+  { chip: "🛡", title: "Trust & Scam Scoring",      desc: "Every new token signal gets a contract risk pass — GoPlus honeypot check, mint function, sell tax, insider concentration, and DexScreener liquidity. Composite rug probability score. Cached 6 hours per token." },
+  { chip: "∿∿", title: "Semantic Signal Search",   desc: "BGE-M3 embeddings on every signal, stored in a vector database. Find signals by meaning, not just keywords. Semantic deduplication suppresses near-duplicate events before they reach the feed." },
+  { chip: "ML", title: "ML Outcome Models",         desc: "Four models score every directional signal: a logistic win-probability, q10/q50/q90 PnL quantiles, a Cox survival model for median hold time, and an HMM market-regime detector — all trained on tracked forward returns. Sub-10ms inference; degrade gracefully when a model is cold." },
+  { chip: "∮",  title: "Historical Edge",           desc: "Each signal's (type × direction × regime) cell carries its empirical track record. When a cell is anti-predictive (n≥30, win rate ≤30%, avg PnL ≤−2%) we attach a labeled paired_inverse advisory — short-term reversal literature, never silently flipping your signal." },
+  { chip: "≈",  title: "Binned Calibration",        desc: "Confidence is mapped to empirical win rate per signal type, per raw-confidence bin. Win-rate is non-monotonic and type-dependent (higher confidence means higher win for sentiment, lower for whale) — a single curve can't capture that, so we bin it." },
+];
 ---
 
 <BaseLayout
@@ -284,11 +321,6 @@ const computeLayerCount = 10;
     }
     .pricing-section .subtitle { text-align: center; margin-bottom: 2.5rem; }
 
-    .sources-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1px; background: var(--border);
-    }
     .source-card {
       background: var(--bg-alt); padding: 1.5rem;
       transition: background 0.2s ease;
@@ -302,22 +334,191 @@ const computeLayerCount = 10;
       pointer-events: none;
     }
     .source-card:hover::after { opacity: 1; }
-    /* Filler tile shown only when the source count is odd, so the 2-col grid
-       never ends on a dead cell. Links to the docs instead of empty space. */
-    .source-card.source-filler {
-      display: flex; flex-direction: column; justify-content: center;
-      align-items: center; text-align: center; text-decoration: none;
-      color: var(--text); gap: 0.3rem;
-    }
-    .source-card.source-filler:hover { background: var(--bg-hover); }
-    .source-card.source-filler .filler-arrow {
-      font-size: 1.1rem; color: var(--accent); font-weight: 700;
-    }
-    .source-card.source-filler .filler-sub { font-size: 0.8rem; opacity: 0.7; }
     .source-card:hover { background: var(--bg-hover); }
     .source-card .chip-row { margin-bottom: 0.75rem; }
     .source-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-heading); }
     .source-card p  { font-size: 0.85rem; color: var(--text); line-height: 1.55; }
+
+    /* ── The Pipeline ── */
+    .pipeline {
+      display: grid;
+      grid-template-columns: 1fr 52px 1.15fr 52px 1fr;
+      align-items: stretch;
+      margin-top: 2.5rem;
+    }
+    .pl-stage { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
+    .pl-stage-label {
+      font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.25em; color: var(--accent);
+      padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .pl-stage-sub { color: var(--text-faint); letter-spacing: 0.1em; font-weight: 400; }
+
+    .pl-node {
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--bg-alt); padding: 0.8rem 0.95rem;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .pl-node:hover { border-color: var(--border-accent); background: var(--bg-hover); }
+    .pl-node-head { display: flex; justify-content: space-between; align-items: baseline; }
+    .pl-node-name { font-size: 0.85rem; font-weight: 600; color: var(--text-heading); }
+    .pl-node-count { font-family: var(--font-mono); font-size: 0.62rem; color: var(--accent); }
+    .pl-node-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0.5rem 0 0.4rem; }
+    .pl-node-blurb {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      color: var(--text-muted); letter-spacing: 0.04em;
+    }
+
+    /* Flow connectors — dashes streaming toward the next stage. */
+    .pl-flow {
+      display: flex; flex-direction: column; justify-content: center;
+      gap: 22px; padding: 0 6px;
+    }
+    .pl-flow-line { position: relative; height: 2px; background: var(--border); overflow: hidden; }
+    .pl-flow-line::after {
+      content: ""; position: absolute; inset: 0;
+      background: repeating-linear-gradient(90deg, transparent 0 12px, var(--accent) 12px 20px);
+      animation: flowDash 1.1s linear infinite;
+      opacity: 0.85;
+    }
+    @keyframes flowDash { from { transform: translateX(-20px); } to { transform: translateX(0); } }
+
+    /* The engine */
+    .pl-core {
+      position: relative; flex: 1; overflow: hidden;
+      border: 1px solid var(--border-accent); border-radius: var(--radius);
+      background: var(--bg-card);
+      box-shadow: 0 0 44px -18px var(--accent-glow-strong);
+      padding-bottom: 0.4rem;
+    }
+    .pl-core-head {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent);
+      padding: 0.85rem 1rem; border-bottom: 1px solid var(--border);
+    }
+    .pl-core-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite;
+    }
+    .pl-layers { list-style: none; padding: 0.5rem 0; margin: 0; }
+    .pl-layer {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.4rem 1rem; border-left: 2px solid transparent;
+      animation: layerPulse 6s ease-in-out infinite;
+      animation-delay: calc(var(--li) * 0.6s);
+    }
+    @keyframes layerPulse {
+      0%, 9%, 100% { background: transparent; border-left-color: transparent; }
+      3.5% { background: rgba(0,255,65,0.06); border-left-color: var(--accent); }
+    }
+    .pl-layer-icon {
+      font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent);
+      width: 1.8em; text-align: center; flex-shrink: 0;
+    }
+    .pl-layer-name { font-size: 0.82rem; color: var(--text); }
+    .pl-core-scan {
+      position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, transparent 42%, var(--accent-glow) 50%, transparent 58%);
+      transform: translateY(-100%);
+      animation: scanSweep 5.5s linear infinite;
+    }
+    @keyframes scanSweep { to { transform: translateY(100%); } }
+
+    /* Output signal card */
+    .pl-signal {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-card); overflow: hidden;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .pl-signal.swap { opacity: 0; transform: translateY(6px); }
+    .pl-signal-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.6rem 1rem; border-bottom: 1px solid var(--border);
+      background: var(--bg-alt);
+    }
+    .pl-signal-title {
+      font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-heading);
+    }
+    .pl-signal-live {
+      font-family: var(--font-mono); font-size: 0.58rem;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted);
+      display: inline-flex; align-items: center;
+    }
+    .pl-signal-body { padding: 0.7rem 1rem 0.9rem; margin: 0; }
+    .pl-signal-body > div {
+      display: flex; justify-content: space-between; gap: 1rem;
+      padding: 0.32rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.05);
+    }
+    .pl-signal-body > div:last-child { border-bottom: none; }
+    .pl-signal-body dt {
+      font-family: var(--font-mono); font-size: 0.66rem;
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+    }
+    .pl-signal-body dd {
+      font-family: var(--font-mono); font-size: 0.78rem;
+      color: var(--text-heading); text-align: right; margin: 0;
+    }
+    .dir-bearish { color: #f87171 !important; }
+    .dir-bullish { color: #4ade80 !important; }
+    .ps-note { color: var(--text-faint); font-size: 0.85em; }
+
+    .pl-delivery { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.9rem; }
+    .pl-deliv-chip {
+      font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      border: 1px solid var(--border); border-radius: 3px;
+      padding: 4px 10px; color: var(--text);
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .pl-deliv-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .pl-agent {
+      font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);
+      margin-top: 0.9rem;
+    }
+    .pl-cursor { animation: blink 1.1s steps(1) infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    @media (max-width: 920px) {
+      .pipeline { grid-template-columns: 1fr; }
+      .pl-flow { flex-direction: row; justify-content: center; gap: 26px; height: 44px; padding: 8px 0; }
+      .pl-flow-line { width: 2px; height: 100%; }
+      .pl-flow-line::after {
+        background: repeating-linear-gradient(180deg, transparent 0 12px, var(--accent) 12px 20px);
+        animation: flowDashV 1.1s linear infinite;
+      }
+    }
+    @keyframes flowDashV { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+
+    /* ── Deep dive accordions ── */
+    .deep {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-alt); margin-bottom: 1rem; overflow: hidden;
+    }
+    .deep summary {
+      cursor: pointer; list-style: none;
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-heading);
+      transition: background 0.2s ease;
+    }
+    .deep summary::-webkit-details-marker { display: none; }
+    .deep summary:hover { background: var(--bg-hover); }
+    .deep-marker {
+      color: var(--accent); font-weight: 700; width: 1em;
+      transition: transform 0.25s var(--ease-out); text-align: center;
+    }
+    .deep[open] .deep-marker { transform: rotate(45deg); }
+    .deep-hint { margin-left: auto; font-size: 0.6rem; color: var(--text-faint); letter-spacing: 0.15em; }
+    .deep-cols { columns: 2 340px; column-gap: 1.25rem; padding: 0 1.25rem 1.25rem; }
+    .deep-cols .source-card {
+      break-inside: avoid; margin-bottom: 1.25rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+    }
 
     /* Contrast */
     .contrast-section h2 { text-align: center; margin-bottom: 2.5rem; }
@@ -486,91 +687,121 @@ const computeLayerCount = 10;
       </div>
     </div>
 
-    <!-- What we watch -->
-    <section class="sources-section">
-      <div class="section-label" data-reveal="fade">01 · sources</div>
-      <h2 data-reveal>What we watch</h2>
-      <p class="subtitle" data-reveal>Telegram, whales (ETH + BTC + SOL), positioning, funding, on-chain flows, news, macro calendar, order-book levels — every event classified, cross-corroborated, and scored in real-time, then anchored to the weekly Macro Pulse bias. Over 30 data sources. One API.</p>
-      <div class="sources-grid" data-reveal-stagger>
-        {sources.map((s) => (
-          <div class="source-card">
-            <div class="chip-row"><MonoChip text={s.chip} /></div>
-            <h3>{s.title}</h3>
-            <p>{s.desc}</p>
+    <!-- The Pipeline — how a signal is made -->
+    <section class="sources-section pipeline-section">
+      <div class="section-label" data-reveal="fade">01 · the pipeline</div>
+      <h2 data-reveal>How a signal is made</h2>
+      <p class="subtitle" data-reveal>30+ raw feeds in. Ten intelligence layers. One scored, corroborated signal out — delivered wherever your agent lives.</p>
+
+      <div class="pipeline" data-reveal="fade">
+        <!-- Stage 1: intake -->
+        <div class="pl-stage pl-intake">
+          <div class="pl-stage-label">intake <span class="pl-stage-sub">30+ feeds</span></div>
+          {sourceGroups.map((g) => (
+            <div class="pl-node">
+              <div class="pl-node-head">
+                <span class="pl-node-name">{g.name}</span>
+                <span class="pl-node-count">×{g.count}</span>
+              </div>
+              <div class="pl-node-chips">
+                {g.chips.map((c) => <MonoChip text={c} />)}
+              </div>
+              <div class="pl-node-blurb">{g.blurb}</div>
+            </div>
+          ))}
+        </div>
+
+        <!-- Flow: intake → engine -->
+        <div class="pl-flow" aria-hidden="true">
+          <span class="pl-flow-line"></span>
+          <span class="pl-flow-line"></span>
+          <span class="pl-flow-line"></span>
+        </div>
+
+        <!-- Stage 2: the engine -->
+        <div class="pl-stage pl-engine">
+          <div class="pl-stage-label">process <span class="pl-stage-sub">every event</span></div>
+          <div class="pl-core">
+            <div class="pl-core-head">
+              <span class="pl-core-dot"></span>n0brains core
+            </div>
+            <ol class="pl-layers">
+              {engineLayers.map((l, i) => (
+                <li class="pl-layer" style={`--li: ${i}`}>
+                  <span class="pl-layer-icon">{l.icon}</span>
+                  <span class="pl-layer-name">{l.name}</span>
+                </li>
+              ))}
+            </ol>
+            <div class="pl-core-scan" aria-hidden="true"></div>
           </div>
-        ))}
-        {sources.length % 2 === 1 && (
-          <a class="source-card source-filler" href="/docs">
-            <span class="filler-arrow">See the docs →</span>
-            <span class="filler-sub">full source list &amp; data model</span>
-          </a>
-        )}
+        </div>
+
+        <!-- Flow: engine → output -->
+        <div class="pl-flow" aria-hidden="true">
+          <span class="pl-flow-line"></span>
+        </div>
+
+        <!-- Stage 3: output -->
+        <div class="pl-stage pl-output">
+          <div class="pl-stage-label">output <span class="pl-stage-sub">scored signal</span></div>
+          <div class="pl-signal" id="pl-signal">
+            <div class="pl-signal-head">
+              <span class="pl-signal-title">signal</span>
+              <span class="pl-signal-live"><span class="live-dot"></span>example payload</span>
+            </div>
+            <dl class="pl-signal-body">
+              <div><dt>type</dt><dd id="ps-type">hack</dd></div>
+              <div><dt>asset</dt><dd id="ps-asset">ETH</dd></div>
+              <div><dt>direction</dt><dd id="ps-dir" class="dir-bearish">▼ bearish</dd></div>
+              <div><dt>confidence</dt><dd id="ps-conf">0.87 <span class="ps-note">calibrated</span></dd></div>
+              <div><dt>conviction</dt><dd id="ps-conv">strong</dd></div>
+              <div><dt>corroboration</dt><dd id="ps-srcs">3 independent sources</dd></div>
+            </dl>
+          </div>
+          <div class="pl-delivery">
+            <span class="pl-deliv-chip">REST</span>
+            <span class="pl-deliv-chip">WS</span>
+            <span class="pl-deliv-chip">Webhook</span>
+            <span class="pl-deliv-chip">MCP</span>
+            <span class="pl-deliv-chip">x402</span>
+          </div>
+          <div class="pl-agent">$ your-agent <span class="pl-cursor">▌</span></div>
+        </div>
       </div>
     </section>
 
-    <!-- Intelligence Layers -->
+    <!-- Deep dive: full source + layer detail, no card walls -->
     <section class="sources-section">
-      <div class="section-label" data-reveal="fade">02 · intelligence</div>
-      <h2 data-reveal>What we compute</h2>
-      <p class="subtitle" data-reveal>Raw signals are just the start. Ten intelligence layers run on every event before it reaches your API key.</p>
-      <div class="sources-grid" data-reveal-stagger>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="∿" /></div>
-          <h3>Confidence Decay</h3>
-          <p>Signal confidence degrades exponentially with age. A liquidation cascade from 4 hours ago is not the same signal as one from 4 minutes ago. Every score you receive reflects time.</p>
+      <div class="section-label" data-reveal="fade">02 · under the hood</div>
+      <h2 data-reveal>Every source. Every layer.</h2>
+      <p class="subtitle" data-reveal>The full intake list and what each intelligence layer does — because auditable beats mysterious.</p>
+
+      <details class="deep" data-reveal>
+        <summary><span class="deep-marker">+</span> All {sources.length} source feeds <span class="deep-hint">expand</span></summary>
+        <div class="deep-cols">
+          {sources.map((s) => (
+            <div class="source-card">
+              <div class="chip-row"><MonoChip text={s.chip} /></div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
         </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="⚖" /></div>
-          <h3>Source Accuracy Feedback</h3>
-          <p>Source weights self-tune daily via EMA-smoothed win rates from tracked outcomes. Sources that predict correctly get boosted; sources that don't get dampened. Automatically.</p>
+      </details>
+
+      <details class="deep" data-reveal>
+        <summary><span class="deep-marker">+</span> All 10 intelligence layers <span class="deep-hint">expand</span></summary>
+        <div class="deep-cols">
+          {computeLayers.map((s) => (
+            <div class="source-card">
+              <div class="chip-row"><MonoChip text={s.chip} /></div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
         </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="🌡" /></div>
-          <h3>Narrative Heatmap</h3>
-          <p>Rolling 1h / 4h / 24h signal momentum per asset. Narrative strength, velocity, and decay rate. Coordination detection: three independent source types firing the same direction in 5 minutes raises a manipulation flag.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="⚠" /></div>
-          <h3>Manipulation Detection</h3>
-          <p>Social burst scoring, coordinated pump detection, and liquidation cascade identification. If engagement spikes 5× baseline or four unrelated sources fire the same coin in 10 minutes — you know.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="🧬" /></div>
-          <h3>Wallet DNA</h3>
-          <p>Whale signals tagged with wallet archetype — CEX hot/cold, market maker, MEV bot, institutional, smart trader. 700+ verified labeled addresses across Ethereum, refreshed weekly from Etherscan label cloud and a live top-volume sweep. Stealth-accumulation flag fires when a tracked wallet receives a token in ≥3 fragmented buys totaling ≥$500K within 24h — catches quiet accumulation before it shows up in whale-alert feeds.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="🛡" /></div>
-          <h3>Trust &amp; Scam Scoring</h3>
-          <p>Every new token signal gets a contract risk pass — GoPlus honeypot check, mint function, sell tax, insider concentration, and DexScreener liquidity. Composite rug probability score. Cached 6 hours per token.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="∿∿" /></div>
-          <h3>Semantic Signal Search</h3>
-          <p>BGE-M3 embeddings on every signal, stored in a vector database. Find signals by meaning, not just keywords. Semantic deduplication suppresses near-duplicate events before they reach the feed.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="ML" /></div>
-          <h3>ML Outcome Models</h3>
-          <p>Four models score every directional signal: a logistic win-probability, q10/q50/q90 PnL quantiles, a Cox survival model for median hold time, and an HMM market-regime detector — all trained on tracked forward returns. Sub-10ms inference; degrade gracefully when a model is cold.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="∮" /></div>
-          <h3>Historical Edge</h3>
-          <p>Each signal's (type × direction × regime) cell carries its empirical track record. When a cell is anti-predictive (n≥30, win rate ≤30%, avg PnL ≤−2%) we attach a labeled <code>paired_inverse</code> advisory — short-term reversal literature, never silently flipping your signal.</p>
-        </div>
-        <div class="source-card">
-          <div class="chip-row"><MonoChip text="≈" /></div>
-          <h3>Binned Calibration</h3>
-          <p>Confidence is mapped to empirical win rate per signal type, per raw-confidence bin. Win-rate is non-monotonic and type-dependent (higher confidence means higher win for sentiment, lower for whale) — a single curve can't capture that, so we bin it.</p>
-        </div>
-        {computeLayerCount % 2 === 1 && (
-          <a class="source-card source-filler" href="/docs">
-            <span class="filler-arrow">See the docs →</span>
-            <span class="filler-sub">how each layer scores a signal</span>
-          </a>
-        )}
-      </div>
+      </details>
     </section>
 
     <!-- vs. the dashboards -->
@@ -713,7 +944,7 @@ const computeLayerCount = 10;
         "name": "What does the Pro tier include?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (19 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, and wallet DNA classification."
+          "text": "Pro is $19.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (19 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, wallet DNA classification, the BTC/ETH market-state consensus endpoint, and a real-position DEX liquidation map (Hyperliquid + GMX)."
         }
       },
       {
@@ -794,6 +1025,38 @@ const computeLayerCount = 10;
           // On failure, fall back to a static honest label (no invented numbers).
           textEl.textContent = "live win-rate scoreboard";
         });
+    })();
+
+    // Pipeline output card: cycle through example payloads so the flow reads
+    // as alive. Clearly labeled "example payload" — not live data.
+    (() => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const card = document.getElementById("pl-signal");
+      if (!card) return;
+      const sigs = [
+        { type: "hack",    asset: "ETH", dir: "bearish", conf: "0.87", conv: "strong",  srcs: "3 independent sources" },
+        { type: "listing", asset: "SOL", dir: "bullish", conf: "0.74", conv: "notable", srcs: "2 independent sources" },
+        { type: "funding", asset: "BTC", dir: "bullish", conf: "0.69", conv: "watch",   srcs: "funding extreme + L/S" },
+        { type: "sentiment", asset: "ETH", dir: "bearish", conf: "0.78", conv: "notable", srcs: "burst-scored, 4 sources" },
+      ];
+      const $ = (id: string) => document.getElementById(id)!;
+      let i = 0;
+      setInterval(() => {
+        i = (i + 1) % sigs.length;
+        card.classList.add("swap");
+        setTimeout(() => {
+          const s = sigs[i];
+          $("ps-type").textContent = s.type;
+          $("ps-asset").textContent = s.asset;
+          const d = $("ps-dir");
+          d.textContent = (s.dir === "bullish" ? "▲ " : "▼ ") + s.dir;
+          d.className = "dir-" + s.dir;
+          $("ps-conf").innerHTML = `${s.conf} <span class="ps-note">calibrated</span>`;
+          $("ps-conv").textContent = s.conv;
+          $("ps-srcs").textContent = s.srcs;
+          card.classList.remove("swap");
+        }, 360);
+      }, 4200);
     })();
   </script>
 </BaseLayout>
