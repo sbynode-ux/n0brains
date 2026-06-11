@@ -160,9 +160,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    // per-venue default time range: DEX → 24h (1), CEX → 7d (7).
+    // per-venue defaults: time range + liquidity threshold. DEX has a strong
+    // above/below asymmetry (one side can be 4x the other), so a high threshold
+    // amputates the smaller side — DEX uses a lower floor to show BOTH sides.
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
-    let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
+    const VENUE_DEFAULT_THR  = { dex: 0.55, cex: 0.85 };
+    let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.cex;
     let FOCUS_PCT = 0.03;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
@@ -224,7 +227,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       document.querySelectorAll("#lm-venue button").forEach((b) =>
         b.addEventListener("click", () => {
           venue = b.dataset.venue;
-          days = VENUE_DEFAULT_DAYS[venue] ?? days;   // snap range to venue default
+          days = VENUE_DEFAULT_DAYS[venue] ?? days;          // snap range to venue default
+          threshold = VENUE_DEFAULT_THR[venue] ?? threshold; // snap threshold too
+          const inp = $("lm-thresh-input"), val = $("lm-thresh-val");
+          if (inp) inp.value = threshold;
+          if (val) val.textContent = threshold.toFixed(2);
           syncTabs(); load();
         }));
     }
