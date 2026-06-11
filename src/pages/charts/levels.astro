@@ -53,7 +53,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
   const $ = (id) => document.getElementById(id);
   const jwt = () => localStorage.getItem("auth_token");
-  const isPro = () => (localStorage.getItem("tier") || "free") === "pro" && !!jwt();
+  // Server-verified Pro flag (don't trust cached tier — stale after upgrade).
+  // null = unknown/not-checked, true/false = server's answer this session.
+  let proVerified = null;
+  const hasSession = () => !!jwt();
   const fmtPx = (p) => p >= 1000 ? "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 })
     : "$" + p.toLocaleString(undefined, { maximumFractionDigits: p < 10 ? 4 : 2 });
 
@@ -72,11 +75,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
 
   async function fetchLevels(c) {
-    if (isPro()) {
+    // If a session exists, try the Pro endpoint first and let the server decide.
+    // 200 → Pro (records proVerified=true); 401/403 → not Pro → fall to public.
+    if (hasSession()) {
       try {
         const r = await fetch(PRO + c, { headers: { Authorization: "Bearer " + jwt() }, cache: "no-store" });
-        if (r.ok) return await r.json();
+        if (r.ok) { proVerified = true; return await r.json(); }
+        if (r.status === 401 || r.status === 403) proVerified = false;
       } catch (e) {}
+    } else {
+      proVerified = false;
     }
     const r = await fetch(PUB + c, { cache: "no-store" });
     return await r.json();
@@ -152,7 +160,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       `<span class="lg"><span class="lg-line" style="background:#00ff41"></span>support</span>` +
       `<span class="lg"><span class="lg-line" style="background:#ef4444"></span>resistance</span>` +
       `<span class="lg"><span class="lg-line" style="background:#efefef"></span>price</span>` +
-      (isPro() ? `<span class="lg pro-on">PRO ✓ all coins</span>` : `<span class="lg muted">BTC/ETH free · <a href="/pricing">Pro for all coins</a></span>`);
+      (proVerified ? `<span class="lg pro-on">PRO ✓ all coins</span>` : `<span class="lg muted">BTC/ETH free · <a href="/pricing">Pro for all coins</a></span>`);
     if (data.disclaimer) $("lv-meta").textContent = data.disclaimer;
   }
 
@@ -168,13 +176,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const my = ++reqId;
     banner("status-loading", "loading " + coin + " levels…");
     const isMajor = coin === "BTC" || coin === "ETH";
-    candles = (isMajor || isPro()) ? await fetchCandles(coin) : [];
+    // Fetch levels FIRST (this also resolves proVerified), then decide candles.
+    let data;
+    try { data = await fetchLevels(coin); }
+    catch (e) { if (my === reqId) render({ error: String(e) }); return; }
     if (my !== reqId) return;
-    try {
-      const data = await fetchLevels(coin);
-      if (my !== reqId) return;
-      render(data);
-    } catch (e) { render({ error: String(e) }); }
+    candles = (isMajor || proVerified) && !data.pro_only ? await fetchCandles(coin) : [];
+    if (my !== reqId) return;
+    render(data);
   }
 
   document.getElementById("coin-tabs").addEventListener("click", (e) => {

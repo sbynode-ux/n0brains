@@ -175,9 +175,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
 
   async function loadDetail() {
-    if (!isPro()) { renderDetailLocked(); return; }
+    // Don't trust cached tier (can be stale after an upgrade). If a session JWT
+    // exists, ASK the server: 200 = Pro (unlock), 401/403 = not Pro (lock).
+    const t = jwt();
+    if (!t) { renderDetailLocked(); return; }
     try {
-      const r = await fetch(PRO + coin, { headers: { Authorization: "Bearer " + jwt() }, cache: "no-store" });
+      const r = await fetch(PRO + coin, { headers: { Authorization: "Bearer " + t }, cache: "no-store" });
       if (!r.ok) { renderDetailLocked(); return; }
       renderDetailPro(await r.json());
     } catch (e) { renderDetailLocked(); }
