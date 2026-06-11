@@ -28,8 +28,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- Rotating live stat — cycles through proven types, values from /proof -->
       <div class="ph-panel" id="ph-panel" aria-live="off">
         <div class="ph-label"><span class="live-dot-sm"></span>proven · live</div>
-        <div class="ph-num" id="ph-num">··<span class="ph-pct">%</span></div>
-        <div class="ph-sub" id="ph-sub">measuring…</div>
+        <div class="ph-body" id="ph-body">
+          <div class="ph-num" id="ph-num">··<span class="ph-pct">%</span></div>
+          <div class="ph-sub" id="ph-sub">measuring…</div>
+        </div>
         <div class="ph-foot" id="ph-foot">win rate · 24h forward return</div>
       </div>
     </div>
@@ -267,9 +269,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     if (rotTimer) { show(); return; }   // refresh: update values, keep cadence
     show();
     if (REDUCE || proven.length < 2) return;
+    const body = document.getElementById("ph-body");
     rotTimer = setInterval(() => {
-      panel.classList.add("swap");
-      setTimeout(() => { show(); panel.classList.remove("swap"); }, 300);
+      // Card chrome stays put; only the text block crossfades.
+      body.classList.add("swap");
+      setTimeout(() => { show(); body.classList.remove("swap"); }, 240);
     }, 3600);
   }
 
@@ -557,10 +561,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       var(--bg-card);
     box-shadow: 0 0 44px -16px var(--accent-glow-strong);
     padding: 1.4rem 1.6rem 1.2rem; text-align: left;
-    transition: opacity 0.3s ease, transform 0.3s ease;
     opacity: 0; animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
   }
-  .ph-panel.swap { opacity: 0 !important; transform: translateY(6px); animation: none; }
+  .ph-body { transition: opacity 0.24s ease; }
+  .ph-body.swap { opacity: 0; }
   .ph-label {
     font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent);
