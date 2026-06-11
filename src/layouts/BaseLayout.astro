@@ -212,10 +212,10 @@ const softwareAppLd = homepage ? {
       /* Auth-aware nav: hide "login" + show "logout" once a session exists.
          Static site → auth state lives in localStorage (set by login/signup). */
       (() => {
-        const loggedIn = !!localStorage.getItem("auth_token");
+        const token = localStorage.getItem("auth_token");
         const login = document.getElementById("nav-login");
         const logout = document.getElementById("nav-logout");
-        if (loggedIn) {
+        if (token) {
           if (login) login.hidden = true;
           if (logout) logout.hidden = false;
         }
@@ -224,6 +224,24 @@ const softwareAppLd = homepage ? {
           ["auth_token", "tier", "api_key"].forEach((k) => localStorage.removeItem(k));
           window.location.href = "/";
         });
+        // Refresh cached tier from the server so an upgrade (or expiry) reflects
+        // everywhere without a re-login. Cached localStorage.tier was going stale
+        // after a Stripe upgrade, leaving Pro users looking like free.
+        if (token) {
+          const base = (location.hostname === "127.0.0.1" || location.hostname === "localhost")
+            ? "http://127.0.0.1:8000" : "https://api.n0brains.com";
+          fetch(base + "/auth/me", { headers: { Authorization: "Bearer " + token } })
+            .then((r) => r.ok ? r.json() : null)
+            .then((me) => {
+              if (!me) return;
+              if (me.tier) localStorage.setItem("tier", me.tier);
+              const k = (me.api_keys && me.api_keys[0]) || null;
+              // store the full key only if the API ever returns it (it returns
+              // key_prefix only; charts use the JWT, so this is best-effort).
+              if (k && k.key) localStorage.setItem("api_key", k.key);
+            })
+            .catch(() => {});
+        }
       })();
     </script>
 

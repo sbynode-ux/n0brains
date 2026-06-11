@@ -90,14 +90,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <style>
     .lm-controls { display:flex; gap:1.25rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 1rem; }
     .lm-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
-    .lm-tabs button {
-      background:transparent; border:1px solid var(--border,#2a2a3a);
-      color:var(--text,#cfd2dc); padding:.4rem .85rem; border-radius:7px;
-      cursor:pointer; font-size:.82rem; font-family:inherit; line-height:1;
-      transition:background .12s,border-color .12s;
+    /* :global so the rules also match the coin buttons injected via innerHTML
+       into #lm-coins — Astro's scoped [data-astro-cid] never lands on JS nodes,
+       which left the selected coin un-highlighted. */
+    .lm-tabs :global(button) {
+      background:var(--bg-card,#0d0d0d); border:1px solid var(--border,#1a1a1a);
+      color:var(--text-muted,#707070); padding:.4rem .85rem; border-radius:7px;
+      cursor:pointer; font-size:.82rem; font-family:var(--font-mono,inherit); line-height:1;
+      transition:background .12s,border-color .12s,color .12s;
     }
-    .lm-tabs button:hover { border-color:var(--accent,#5b8cff); }
-    .lm-tabs button.active { background:var(--accent,#5b8cff); color:#000; font-weight:600; border-color:var(--accent,#5b8cff); }
+    .lm-tabs :global(button:hover) { border-color:var(--accent,#00ff41); color:var(--text-heading,#efefef); }
+    .lm-tabs :global(button.active) { background:var(--accent,#00ff41); color:#000; font-weight:700; border-color:var(--accent,#00ff41); }
     .lm-thresh { display:flex; align-items:center; gap:.5rem; font-size:.78rem; color:#9aa0ad; }
     .lm-thresh input[type=range] { width:150px; accent-color:var(--accent,#5b8cff); cursor:pointer;
       height:24px; touch-action:pan-y; }
