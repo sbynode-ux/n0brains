@@ -34,8 +34,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-days="166" class="active" role="tab">max</button>
       </div>
       <div id="lm-zoom" class="lm-tabs" role="tablist" aria-label="price zoom">
-        <button data-zoom="0.03" role="tab">±3%</button>
-        <button data-zoom="0.06" class="active" role="tab">±6%</button>
+        <button data-zoom="0.03" class="active" role="tab">±3%</button>
+        <button data-zoom="0.06" role="tab">±6%</button>
         <button data-zoom="0.12" role="tab">±12%</button>
         <button data-zoom="1" role="tab">full</button>
       </div>
@@ -163,7 +163,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // per-venue default time range: DEX → 24h (1), CEX → 7d (7).
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
     let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
-    let FOCUS_PCT = 0.06;     // DEX y-axis zoom: view = current price ± this fraction
+    let FOCUS_PCT = 0.03;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
