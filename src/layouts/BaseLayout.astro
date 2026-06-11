@@ -215,6 +215,7 @@ const softwareAppLd = homepage ? {
         /* Scroll-linked state: glass header, hero text swap, progress bar.
            One rAF-throttled passive listener; transform/class writes only. */
         let ticking = false;
+        const hint = document.getElementById("scroll-hint");
         const update = () => {
           const y = window.scrollY;
           header?.classList.toggle("glass", y > 8);
@@ -223,6 +224,7 @@ const softwareAppLd = homepage ? {
             const max = document.documentElement.scrollHeight - window.innerHeight;
             (bar as HTMLElement).style.transform = `scaleX(${max > 80 ? Math.min(y / max, 1) : 0})`;
           }
+          if (hint) hint.classList.toggle("hidden", y > 40);
         };
         window.addEventListener("scroll", () => {
           if (!ticking) {
@@ -252,10 +254,15 @@ const softwareAppLd = homepage ? {
         }
 
         /* data-reveal scroll choreography. Only elements still below the fold
-           get hidden (no flash above the fold, no-JS users see everything). */
+           get hidden (no flash above the fold, no-JS users see everything).
+           Beyond explicit attributes, common content blocks across the whole
+           site are auto-instrumented so every page participates. */
         if (!reduceMotion) {
           const els: HTMLElement[] = Array.from(document.querySelectorAll("[data-reveal]"));
-          document.querySelectorAll("[data-reveal-stagger]").forEach((group) => {
+          const staggerGroups = document.querySelectorAll(
+            "[data-reveal-stagger], .pricing-grid, .ep-list, .changelog-items"
+          );
+          staggerGroups.forEach((group) => {
             Array.from(group.children).forEach((child, i) => {
               const el = child as HTMLElement;
               if (!el.hasAttribute("data-reveal")) el.setAttribute("data-reveal", "up");
@@ -263,12 +270,26 @@ const softwareAppLd = homepage ? {
               els.push(el);
             });
           });
+          const AUTO = ".docs-page > .card, .content > *, .about-section > *, .ep-card, .changelog-entry";
+          document.querySelectorAll(AUTO).forEach((node) => {
+            const el = node as HTMLElement;
+            if (el.hasAttribute("data-reveal")) return;
+            if (el.matches("[data-reveal-stagger], .pricing-grid, .ep-list, .changelog-items, script, style")) return;
+            el.setAttribute("data-reveal", "up");
+            els.push(el);
+          });
           const vh = window.innerHeight;
           const rio = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
               if (entry.isIntersecting) {
-                entry.target.classList.add("reveal-in");
-                rio.unobserve(entry.target);
+                const el = entry.target as HTMLElement;
+                el.classList.add("reveal-in");
+                /* Drop residual transform after the transition so 3D tilt /
+                   hover transforms aren't overridden later. */
+                el.addEventListener("transitionend", () => {
+                  el.classList.remove("reveal-init", "reveal-in");
+                }, { once: true });
+                rio.unobserve(el);
               }
             });
           }, { threshold: 0.1, rootMargin: "0px 0px -8% 0px" });
@@ -278,6 +299,52 @@ const softwareAppLd = homepage ? {
               rio.observe(el);
             }
           });
+        }
+
+        /* Terminal decode effect: section labels + [data-scramble] unscramble
+           when they enter view. Screen readers get the final text via aria-label. */
+        if (!reduceMotion) {
+          const CHARS = "!<>-_\\/[]{}=+*^?#";
+          const scramble = (el: HTMLElement) => {
+            const final = el.textContent || "";
+            if (!final.trim()) return;
+            el.setAttribute("aria-label", final.trim());
+            let frame = 0;
+            const total = 16;
+            const tick = () => {
+              frame++;
+              const settled = Math.floor((frame / total) * final.length);
+              let out = final.slice(0, settled);
+              for (let i = settled; i < final.length; i++) {
+                out += final[i] === " " ? " " : CHARS[(Math.random() * CHARS.length) | 0];
+              }
+              el.textContent = out;
+              if (frame < total) requestAnimationFrame(tick);
+              else el.textContent = final;
+            };
+            requestAnimationFrame(tick);
+          };
+          const sio = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                scramble(entry.target as HTMLElement);
+                sio.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.5 });
+          document.querySelectorAll(".section-label, [data-scramble]").forEach((el) => sio.observe(el));
+
+          /* Header tagline decodes the first time it swaps in. */
+          const headerHero = document.getElementById("header-hero-text");
+          if (headerHero && header) {
+            let done = false;
+            new MutationObserver(() => {
+              if (!done && header.classList.contains("scrolled")) {
+                done = true;
+                scramble(headerHero);
+              }
+            }).observe(header, { attributes: true, attributeFilter: ["class"] });
+          }
         }
 
         /* Cursor spotlight on source cards — pointer devices only. */
@@ -290,6 +357,27 @@ const softwareAppLd = homepage ? {
               (card as HTMLElement).style.setProperty("--my", `${me.clientY - r.top}px`);
             }, { passive: true });
           });
+
+          /* 3D tilt on pricing cards — inline transform so it composes with
+             (and overrides) any CSS hover transform while the pointer moves. */
+          if (!reduceMotion) {
+            document.querySelectorAll(".pricing-card").forEach((node) => {
+              const card = node as HTMLElement;
+              card.addEventListener("mousemove", (e) => {
+                const r = card.getBoundingClientRect();
+                const me = e as MouseEvent;
+                const rx = ((me.clientY - r.top) / r.height - 0.5) * -4;
+                const ry = ((me.clientX - r.left) / r.width - 0.5) * 4;
+                card.style.transition = "transform 0.08s ease-out";
+                card.style.transform =
+                  `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateY(-4px)`;
+              }, { passive: true });
+              card.addEventListener("mouseleave", () => {
+                card.style.transition = "";
+                card.style.transform = "";
+              });
+            });
+          }
         }
       })();
     </script>

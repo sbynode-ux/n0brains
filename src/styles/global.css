@@ -218,6 +218,15 @@ header .inner {
 
 .logo span { color: var(--accent); }
 
+/* RGB-split glitch on logo hover — one short burst, hacker-zine wink. */
+.logo:hover { animation: logoGlitch 0.35s steps(2, jump-none) 1; }
+@keyframes logoGlitch {
+  0%   { text-shadow: 2px 0 var(--accent-secondary), -2px 0 var(--accent); transform: translate(1px, 0); }
+  25%  { text-shadow: -2px 0 var(--accent-secondary), 2px 0 var(--accent); transform: translate(-1px, 1px); }
+  50%  { text-shadow: 1px 0 var(--accent-secondary), -1px 0 var(--accent); transform: translate(0, -1px); }
+  100% { text-shadow: none; transform: none; }
+}
+
 .header-hero-text {
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -267,6 +276,12 @@ main {
   margin: 0 auto;
   padding: 48px 24px;
   min-height: calc(100vh - var(--header-height) - 80px);
+  animation: pageIn 0.5s var(--ease-out) both;
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* ─── Footer ─── */
@@ -528,6 +543,17 @@ footer .footer-socials svg { display: block; }
   border-bottom: 1px solid var(--border);
 }
 
+/* Staggered entrance on article headers (blog + intel posts). */
+.post-header .date,
+.post-header h1,
+.post-header .description {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: fadeUp 0.55s var(--ease-out) forwards;
+}
+.post-header h1 { animation-delay: 0.12s; }
+.post-header .description { animation-delay: 0.24s; }
+
 .post-header .date {
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -665,6 +691,9 @@ footer .footer-socials svg { display: block; }
   letter-spacing: 0.05em;
   line-height: 1;
   margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeUp 0.6s var(--ease-out) 0.05s forwards;
 }
 
 .about-section p { margin-bottom: 16px; font-size: 1rem; }
