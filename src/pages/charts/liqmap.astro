@@ -34,9 +34,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-days="166" class="active" role="tab">max</button>
       </div>
       <div id="lm-zoom" class="lm-tabs" role="tablist" aria-label="price zoom">
-        <button data-zoom="0.06" role="tab">±6%</button>
-        <button data-zoom="0.12" class="active" role="tab">±12%</button>
-        <button data-zoom="0.25" role="tab">±25%</button>
+        <button data-zoom="0.03" role="tab">±3%</button>
+        <button data-zoom="0.06" class="active" role="tab">±6%</button>
+        <button data-zoom="0.12" role="tab">±12%</button>
         <button data-zoom="1" role="tab">full</button>
       </div>
       <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
@@ -161,7 +161,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
     let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
-    let FOCUS_PCT = 0.12;     // y-axis zoom: view = current price ± this fraction
+    let FOCUS_PCT = 0.06;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
@@ -244,6 +244,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         b.classList.toggle("active", +b.dataset.days === days));
       document.querySelectorAll("#lm-zoom button").forEach((b) =>
         b.classList.toggle("active", +b.dataset.zoom === FOCUS_PCT));
+      // zoom is DEX-only (CEX uses full range); hide it for CEX
+      const zoomEl = $("lm-zoom");
+      if (zoomEl) zoomEl.style.display = (venue === "dex") ? "" : "none";
       // range applies to BOTH now — CEX server-side (?days=), DEX client-side slice.
     }
     function banner(state, text) {
@@ -312,9 +315,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const curPrice = (cands.length ? cands[cands.length - 1].c
         : (rowPrices.length ? rowPrices[Math.floor(rowPrices.length / 2)] : (d.price_min + d.price_max) / 2));
       const fullSpan = (d.price_max - d.price_min) || 1;
-      // FOCUS_PCT from the zoom level (default 0.12 = ±12%); never wider than data.
-      const halfBand = Math.min(curPrice * FOCUS_PCT, fullSpan / 2 + 1);
-      let vMin = curPrice - halfBand, vMax = curPrice + halfBand;
+      // Focus the y-axis ONLY for DEX (its liq range is very wide → price buried
+      // in a sliver). CEX is already server-windowed sensibly, so it uses the
+      // FULL range untouched. zoom=full also means full range.
+      const focusOn = (venue === "dex" && FOCUS_PCT < 1);
+      const halfBand = focusOn ? Math.min(curPrice * FOCUS_PCT, fullSpan / 2 + 1) : fullSpan / 2;
+      const center = focusOn ? curPrice : (d.price_min + d.price_max) / 2;
+      let vMin = center - halfBand, vMax = center + halfBand;
       // clamp the window into the available data range
       if (vMin < d.price_min) { vMax += (d.price_min - vMin); vMin = d.price_min; }
       if (vMax > d.price_max) { vMin -= (vMax - d.price_max); vMax = d.price_max; }
