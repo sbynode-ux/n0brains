@@ -64,8 +64,8 @@ def main():
     d.text((64, 70), "// LIVE WIN-RATE SCOREBOARD", font=f(MONO_BOLD, 26), fill=ACCENT)
 
     # headline
-    d.text((60, 120), "We publish", font=f(SANS_BOLD, 84), fill=HEAD)
-    d.text((60, 212), "our win-rate.", font=f(SANS_BOLD, 84), fill=HEAD)
+    d.text((60, 120), "Every call.", font=f(SANS_BOLD, 84), fill=HEAD)
+    d.text((60, 212), "On the record.", font=f(SANS_BOLD, 84), fill=HEAD)
 
     # subhead
     d.text(

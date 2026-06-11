@@ -273,8 +273,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     rotTimer = setInterval(() => {
       // Card chrome stays put; only the text block crossfades.
       body.classList.add("swap");
-      setTimeout(() => { show(); body.classList.remove("swap"); }, 240);
-    }, 3600);
+      setTimeout(() => { show(); body.classList.remove("swap"); }, 420);
+    }, 7000);
   }
 
   /* THE GATE — candidates in, criteria, proven/demoted out. */
@@ -563,7 +563,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     padding: 1.4rem 1.6rem 1.2rem; text-align: left;
     opacity: 0; animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
   }
-  .ph-body { transition: opacity 0.24s ease; }
+  .ph-body { transition: opacity 0.42s ease; }
   .ph-body.swap { opacity: 0; }
   .ph-label {
     font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
