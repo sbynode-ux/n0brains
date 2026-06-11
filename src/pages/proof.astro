@@ -246,14 +246,48 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     setTimeout(() => wrap.classList.add("loaded"), 1600);
   }
 
-  /* Hero rotator — cycles the proven types' headline numbers. */
+  /* Hero rotator — values morph in place: the win-rate rolls to the next
+     number, the sub-line scramble-decodes into the next type. Nothing fades
+     out; the card content is always visible mid-transition. */
   let rotTimer = null;
+  let lastWin = null;
+
+  function tweenNum(el, from, to, dur = 850) {
+    const fmt = (v) => v.toFixed(1) + '<span class="ph-pct">%</span>';
+    if (REDUCE) { el.innerHTML = fmt(to); return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min((now - t0) / dur, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.innerHTML = fmt(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  const SCHARS = "!<>-_\\/[]{}=+*^?#0123456789";
+  function scrambleTo(el, finalText, finalHTML, dur = 750) {
+    if (REDUCE) { el.innerHTML = finalHTML; return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min((now - t0) / dur, 1);
+      const settled = Math.floor(p * finalText.length);
+      let out = finalText.slice(0, settled);
+      for (let k = settled; k < finalText.length; k++) {
+        out += finalText[k] === " " ? " " : SCHARS[(Math.random() * SCHARS.length) | 0];
+      }
+      el.textContent = out;
+      if (p < 1) requestAnimationFrame(step);
+      else el.innerHTML = finalHTML;   // green excess locks in at the end
+    };
+    requestAnimationFrame(step);
+  }
+
   function startHeroRotator(data) {
     const proven = data.types.filter((t) => t.tradeable);
-    const panel = document.getElementById("ph-panel");
     const num = document.getElementById("ph-num");
     const sub = document.getElementById("ph-sub");
-    if (!panel || !num) return;
+    if (!num) return;
     if (!proven.length) {
       num.innerHTML = "0";
       sub.textContent = "no type currently clears the gate";
@@ -263,18 +297,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const show = () => {
       i = (i + 1) % proven.length;
       const t = proven[i];
-      num.innerHTML = (t.win_rate * 100).toFixed(1) + '<span class="ph-pct">%</span>';
-      sub.innerHTML = `${t.signal_type} · n=${t.n} · <b class="pos">${pctRaw(t.excess_pct)}</b> excess vs BTC`;
+      const win = t.win_rate * 100;
+      // First paint rolls up from just below; afterwards rolls between values.
+      tweenNum(num, lastWin === null ? Math.max(0, win - 15) : lastWin, win);
+      lastWin = win;
+      const txt = `${t.signal_type} · n=${t.n} · ${pctRaw(t.excess_pct)} excess vs BTC`;
+      const html = `${t.signal_type} · n=${t.n} · <b class="pos">${pctRaw(t.excess_pct)}</b> excess vs BTC`;
+      scrambleTo(sub, txt, html);
     };
     if (rotTimer) { show(); return; }   // refresh: update values, keep cadence
     show();
     if (REDUCE || proven.length < 2) return;
-    const body = document.getElementById("ph-body");
-    rotTimer = setInterval(() => {
-      // Card chrome stays put; only the text block crossfades.
-      body.classList.add("swap");
-      setTimeout(() => { show(); body.classList.remove("swap"); }, 420);
-    }, 7000);
+    rotTimer = setInterval(show, 7000);
   }
 
   /* THE GATE — candidates in, criteria, proven/demoted out. */
@@ -563,8 +597,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     padding: 1.4rem 1.6rem 1.2rem; text-align: left;
     opacity: 0; animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
   }
-  .ph-body { transition: opacity 0.42s ease; }
-  .ph-body.swap { opacity: 0; }
+  /* Content morphs in place (number tween + text scramble) — no fade. */
   .ph-label {
     font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent);
