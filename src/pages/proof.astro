@@ -9,18 +9,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 >
   <section class="proof-page">
     <div class="section-label" data-reveal="fade">live audit · refreshed every 60s</div>
-    <h1 class="proof-h1">
-      <span class="hl"><span class="hli">WE PUBLISH</span></span>
-      <span class="hl"><span class="hli accent">OUR WIN-RATE.</span></span>
-    </h1>
-    <p class="proof-lede">
-      Most of the industry sells backtests you can't audit. We measure
-      <strong>every directional signal</strong> against real post-signal prices
-      and publish the result live — wins, losses, and the types we demote.
-      This page renders the <em>exact</em> gate the pipeline uses to flag
-      <code>conviction: strong</code>, so it can never claim edge the product
-      doesn't actually act on.
-    </p>
+
+    <div class="proof-hero">
+      <div class="proof-hero-copy">
+        <h1 class="proof-h1">
+          <span class="hl"><span class="hli">EVERY CALL.</span></span>
+          <span class="hl"><span class="hli accent">ON THE RECORD.</span></span>
+        </h1>
+        <p class="proof-lede">
+          No curated backtests. No survivor bias. Every directional signal is
+          measured against real post-signal prices and posted here live —
+          wins, losses, and the types we demote. This page renders the
+          <em>exact</em> gate the pipeline uses to flag
+          <code>conviction: strong</code>, so it can never claim edge the
+          product doesn't actually act on.
+        </p>
+      </div>
+      <!-- Rotating live stat — cycles through proven types, values from /proof -->
+      <div class="ph-panel" id="ph-panel" aria-live="off">
+        <div class="ph-label"><span class="live-dot-sm"></span>proven · live</div>
+        <div class="ph-num" id="ph-num">··<span class="ph-pct">%</span></div>
+        <div class="ph-sub" id="ph-sub">measuring…</div>
+        <div class="ph-foot" id="ph-foot">win rate · 24h forward return</div>
+      </div>
+    </div>
 
     <!-- Live stat band — every number from the same /proof endpoint -->
     <div class="stat-band" id="stat-band">
@@ -47,15 +59,57 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <span class="banner-text">loading results…</span>
     </div>
 
+    <!-- THE GATE — every type queues up, three criteria, two exits.
+         Same flow language as the homepage pipeline. -->
+    <h2 class="proof-h2">The gate</h2>
+    <p class="proof-sub">
+      Every signal type is forced through the same three checks, per direction,
+      regime-aware. Pass all three → the API flags it. Fail any → it stays
+      published here as <em>intel only</em>. No type is grandfathered in.
+    </p>
+    <div class="gate" id="gate">
+      <div class="gate-col">
+        <div class="gate-col-label">candidates <span id="gate-n-in"></span></div>
+        <div class="gate-pool" id="gate-pool"><span class="gate-chip dim">loading…</span></div>
+      </div>
+      <div class="gate-flow" aria-hidden="true">
+        <span class="gate-line"></span>
+        <span class="gate-line"></span>
+      </div>
+      <div class="gate-col">
+        <div class="gate-box">
+          <div class="gate-box-head"><span class="live-dot-sm"></span>forward-return gate</div>
+          <div class="gate-crit"><span class="gc-check">✓</span> n ≥ 30 measured signals</div>
+          <div class="gate-crit"><span class="gc-check">✓</span> beats BTC — excess CI low &gt; 0</div>
+          <div class="gate-crit"><span class="gc-check">✓</span> profitable on its own</div>
+        </div>
+      </div>
+      <div class="gate-flow" aria-hidden="true">
+        <span class="gate-line"></span>
+        <span class="gate-line gate-line-fail"></span>
+      </div>
+      <div class="gate-col">
+        <div class="gate-out pass">
+          <div class="gate-col-label pass">proven → conviction: strong <span id="gate-n-pass"></span></div>
+          <div class="gate-pool" id="gate-pass"></div>
+        </div>
+        <div class="gate-out fail">
+          <div class="gate-col-label">intel only — stays public <span id="gate-n-fail"></span></div>
+          <div class="gate-pool" id="gate-fail"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Proven types — the headline numbers -->
     <div class="proven-cards" id="proven-cards" aria-live="polite"></div>
 
     <h2 class="proof-h2">The full audit — failures included</h2>
     <p class="proof-sub">
       Types that don't clear the bar stay on the board as <em>intel only</em>.
-      Public demotion is the feature: when edge decays, this table says so
+      Public demotion is the feature: when edge decays, this board says so
       before our marketing does.
     </p>
+    <div class="wr-bars" id="wr-bars"></div>
     <div class="table-wrap" id="proof-table"></div>
     <p class="meta" id="proof-meta"></p>
 
@@ -186,6 +240,87 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div><span>95% CI low</span><b class="${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</b></div>
         </div>
       </div>`).join("");
+    // Entrance animation only on first render — 60s refreshes update silently.
+    setTimeout(() => wrap.classList.add("loaded"), 1600);
+  }
+
+  /* Hero rotator — cycles the proven types' headline numbers. */
+  let rotTimer = null;
+  function startHeroRotator(data) {
+    const proven = data.types.filter((t) => t.tradeable);
+    const panel = document.getElementById("ph-panel");
+    const num = document.getElementById("ph-num");
+    const sub = document.getElementById("ph-sub");
+    if (!panel || !num) return;
+    if (!proven.length) {
+      num.innerHTML = "0";
+      sub.textContent = "no type currently clears the gate";
+      return;
+    }
+    let i = -1;
+    const show = () => {
+      i = (i + 1) % proven.length;
+      const t = proven[i];
+      num.innerHTML = (t.win_rate * 100).toFixed(1) + '<span class="ph-pct">%</span>';
+      sub.innerHTML = `${t.signal_type} · n=${t.n} · <b class="pos">${pctRaw(t.excess_pct)}</b> excess vs BTC`;
+    };
+    if (rotTimer) { show(); return; }   // refresh: update values, keep cadence
+    show();
+    if (REDUCE || proven.length < 2) return;
+    rotTimer = setInterval(() => {
+      panel.classList.add("swap");
+      setTimeout(() => { show(); panel.classList.remove("swap"); }, 300);
+    }, 3600);
+  }
+
+  /* THE GATE — candidates in, criteria, proven/demoted out. */
+  function renderGate(data) {
+    const pool = document.getElementById("gate-pool");
+    const pass = document.getElementById("gate-pass");
+    const fail = document.getElementById("gate-fail");
+    if (!pool) return;
+    const chips = (arr, cls) => arr.map((t, i) =>
+      `<span class="gate-chip ${cls}" style="--gi:${i}">${t.signal_type}</span>`).join("");
+    const proven = data.types.filter((t) => t.tradeable);
+    const demoted = data.types.filter((t) => !t.tradeable);
+    pool.innerHTML = chips(data.types, "");
+    pass.innerHTML = proven.length ? chips(proven, "pass") : '<span class="gate-chip dim">none right now</span>';
+    fail.innerHTML = demoted.length ? chips(demoted, "dim") : '<span class="gate-chip dim">—</span>';
+    document.getElementById("gate-n-in").textContent = "×" + data.types.length;
+    document.getElementById("gate-n-pass").textContent = "×" + proven.length;
+    document.getElementById("gate-n-fail").textContent = "×" + demoted.length;
+    // Chip entrance only once; refreshes swap content silently.
+    setTimeout(() => document.getElementById("gate")?.classList.add("loaded"), 1400);
+  }
+
+  /* Win-rate bar board — every type, 50% reference line, proven glows. */
+  let barsAnimated = false;
+  function renderBars(data) {
+    const wrap = document.getElementById("wr-bars");
+    if (!wrap) return;
+    const rows = [...data.types].sort((a, b) => (b.win_rate || 0) - (a.win_rate || 0));
+    wrap.innerHTML = rows.map((t) => {
+      const w = Math.max(0, Math.min(100, (t.win_rate || 0) * 100));
+      const cls = t.tradeable ? "proven" : "demoted";
+      return `
+        <div class="wr-row ${cls}">
+          <span class="wr-name">${t.signal_type}</span>
+          <span class="wr-track">
+            <span class="wr-fill" style="width:${barsAnimated ? w : 0}%" data-w="${w}"></span>
+            <span class="wr-50" title="coin-flip line"></span>
+          </span>
+          <span class="wr-val">${pct(t.win_rate)}</span>
+          <span class="wr-badge">${t.tradeable ? '<span class="badge badge-yes">proven</span>' : '<span class="badge badge-no">intel only</span>'}</span>
+        </div>`;
+    }).join("");
+    if (!barsAnimated) {
+      barsAnimated = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        wrap.querySelectorAll(".wr-fill").forEach((f) => {
+          f.style.width = f.dataset.w + "%";
+        });
+      }));
+    }
   }
 
   function render(data) {
@@ -201,6 +336,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
 
     renderStats(data);
+    startHeroRotator(data);
+    renderGate(data);
+    renderBars(data);
     renderProvenCards(data);
 
     const tradeable = data.types.filter((t) => t.tradeable);
@@ -403,6 +541,161 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     animation: fadeUp 0.6s var(--ease-out) 0.35s forwards;
   }
   .proof-lede strong { color: var(--text-heading); }
+
+  /* Hero grid: copy left, live rotating stat right */
+  .proof-hero {
+    display: grid; grid-template-columns: 1.4fr 1fr;
+    gap: 2.5rem; align-items: center; margin-bottom: 2.25rem;
+  }
+  @media (max-width: 860px) { .proof-hero { grid-template-columns: 1fr; gap: 1.5rem; } }
+  .proof-hero .proof-lede { margin-bottom: 0; }
+
+  .ph-panel {
+    border: 1px solid var(--border-accent); border-radius: var(--radius);
+    background:
+      radial-gradient(ellipse 80% 100% at 50% 0%, rgba(0,255,65,0.06), transparent 70%),
+      var(--bg-card);
+    box-shadow: 0 0 44px -16px var(--accent-glow-strong);
+    padding: 1.4rem 1.6rem 1.2rem; text-align: left;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0; animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
+  }
+  .ph-panel.swap { opacity: 0 !important; transform: translateY(6px); animation: none; }
+  .ph-label {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.2em; color: var(--accent);
+    display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;
+  }
+  .live-dot-sm {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+    display: inline-block; animation: phPulse 2s infinite;
+  }
+  @keyframes phPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .ph-num {
+    font-family: var(--font-display); font-size: clamp(4rem, 7vw, 6rem);
+    line-height: 0.95; color: var(--text-heading); letter-spacing: 0.01em;
+  }
+  :global(.ph-pct) { font-size: 0.45em; color: var(--accent); }
+  .ph-sub {
+    font-family: var(--font-mono); font-size: 0.8rem; color: var(--text);
+    margin-top: 0.5rem; min-height: 1.2em;
+  }
+  :global(.ph-sub b.pos) { color: #4ade80; }
+  .ph-foot {
+    font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-faint); margin-top: 0.6rem;
+    padding-top: 0.6rem; border-top: 1px dashed rgba(255,255,255,0.07);
+  }
+
+  /* THE GATE */
+  .gate {
+    display: grid; grid-template-columns: 1fr 44px 1.15fr 44px 1.2fr;
+    align-items: center; margin: 1.5rem 0 3rem;
+  }
+  @media (max-width: 860px) {
+    .gate { grid-template-columns: 1fr; }
+    .gate-flow { flex-direction: row !important; height: 40px; justify-content: center; }
+    .gate-line { width: 2px !important; height: 100% !important; }
+    .gate-line::after {
+      background: repeating-linear-gradient(180deg, transparent 0 12px, var(--accent) 12px 20px) !important;
+      animation-name: gateDashV !important;
+    }
+  }
+  .gate-col { min-width: 0; }
+  .gate-col-label {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-muted);
+    margin-bottom: 0.6rem;
+  }
+  .gate-col-label.pass { color: var(--accent); }
+  .gate-pool { display: flex; flex-wrap: wrap; gap: 6px; }
+  :global(.gate-chip) {
+    font-family: var(--font-mono); font-size: 0.66rem;
+    border: 1px solid var(--border); border-radius: 3px;
+    padding: 3px 8px; color: var(--text);
+    opacity: 0; animation: gateChipIn 0.4s var(--ease-out) calc(var(--gi, 0) * 0.05s) forwards;
+  }
+  :global(.gate-chip.pass) {
+    border-color: var(--border-accent); color: var(--accent);
+    background: rgba(0,255,65,0.05);
+    box-shadow: 0 0 14px -6px var(--accent-glow-strong);
+  }
+  :global(.gate-chip.dim) { color: var(--text-muted); animation-name: gateChipInDim; }
+  @keyframes gateChipIn { to { opacity: 1; } }
+  @keyframes gateChipInDim { to { opacity: 0.55; } }
+  .gate.loaded :global(.gate-chip) { animation: none; opacity: 1; }
+  .gate.loaded :global(.gate-chip.dim) { animation: none; opacity: 0.55; }
+
+  .gate-flow { display: flex; flex-direction: column; gap: 16px; padding: 0 5px; }
+  .gate-line { position: relative; height: 2px; background: var(--border); overflow: hidden; }
+  .gate-line::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 12px, var(--accent) 12px 20px);
+    animation: gateDash 1.2s linear infinite; opacity: 0.8;
+  }
+  .gate-line-fail::after { opacity: 0.25; }
+  @keyframes gateDash  { from { transform: translateX(-20px); } to { transform: translateX(0); } }
+  @keyframes gateDashV { from { transform: translateY(-20px); } to { transform: translateY(0); } }
+
+  .gate-box {
+    border: 1px solid var(--border-accent); border-radius: var(--radius);
+    background: var(--bg-card); overflow: hidden;
+    box-shadow: 0 0 36px -16px var(--accent-glow-strong);
+  }
+  .gate-box-head {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.18em; color: var(--accent);
+    padding: 0.7rem 1rem; border-bottom: 1px solid var(--border);
+  }
+  .gate-crit {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-family: var(--font-mono); font-size: 0.74rem; color: var(--text);
+    padding: 0.55rem 1rem;
+  }
+  .gate-crit + .gate-crit { border-top: 1px dashed rgba(255,255,255,0.05); }
+  .gc-check { color: var(--accent); font-weight: 700; }
+
+  .gate-out { margin-bottom: 1rem; }
+  .gate-out.fail { margin-bottom: 0; }
+
+  /* Win-rate bar board */
+  .wr-bars { margin-bottom: 1.5rem; }
+  :global(.wr-row) {
+    display: grid; grid-template-columns: 120px 1fr 64px 90px;
+    gap: 0.9rem; align-items: center; padding: 0.45rem 0;
+  }
+  @media (max-width: 640px) {
+    :global(.wr-row) { grid-template-columns: 90px 1fr 56px; }
+    :global(.wr-badge) { display: none; }
+  }
+  :global(.wr-name) {
+    font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700;
+    color: var(--text-heading); text-transform: uppercase; letter-spacing: 0.06em;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  :global(.wr-row.demoted .wr-name) { color: var(--text-muted); font-weight: 400; }
+  :global(.wr-track) {
+    position: relative; height: 10px; background: var(--bg-alt);
+    border: 1px solid var(--border); border-radius: 3px; overflow: visible;
+  }
+  :global(.wr-fill) {
+    display: block; height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition: width 1.1s var(--ease-out);
+  }
+  :global(.wr-row.demoted .wr-fill) { background: #333; }
+  :global(.wr-50) {
+    position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px;
+    background: var(--text-faint); opacity: 0.7;
+  }
+  :global(.wr-val) {
+    font-family: var(--font-mono); font-size: 0.74rem; color: var(--text);
+    text-align: right;
+  }
+  :global(.wr-row.demoted .wr-val) { color: var(--text-muted); }
+
+  .proven-cards.loaded :global(.pv-card) { animation: none; opacity: 1; transform: none; }
 
   /* Live stat band */
   .stat-band {
