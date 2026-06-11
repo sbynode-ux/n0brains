@@ -7,127 +7,142 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   description="n0brains live win-rate scoreboard — every signal type's forward-return record vs BTC, win rate, and 95% confidence interval. Audited on real prices, refreshed live. The exact gate we flag signals on."
   ogImage="/og-proof.png"
 >
-  <section class="chart-page">
-    <div class="chart-head">
+  <section class="wr-page">
+    <div class="wr-head">
       <a href="/charts" class="back">← charts</a>
-      <p class="kicker"><span class="live-dot"></span>Audited live · refreshed every 60s</p>
+      <p class="kicker"><span class="live-dot"></span><span id="wr-status-text">audited live · refreshed every 60s</span></p>
       <h1>WIN-RATE<br /><span class="accent">SCOREBOARD</span></h1>
       <p class="lede">
-        Every directional signal type, measured against real post-signal price —
-        Hyperliquid 1h candles at the 24h horizon, rolling 30 days. A type is
-        <strong>proven</strong> only when it clears 30+ signals AND beats BTC AND
-        is profitable on its own (95% CI lower bound above zero). This is the exact
-        gate behind <code>conviction: strong</code>. <a href="/proof">Full methodology →</a>
+        Every directional signal type, scored against real post-signal price —
+        Hyperliquid 1h candles, 24h horizon, rolling 30 days. <strong>Proven</strong>
+        means 30+ signals, beats BTC, profitable on its own, 95% CI above zero.
+        The exact gate behind <code>conviction: strong</code>.
+        <a href="/proof">Full methodology →</a>
       </p>
     </div>
 
-    <div id="wr-banner" class="status-banner status-loading">
-      <span class="dot"></span><span class="banner-text">loading scoreboard…</span>
+    <!-- Headline stat band -->
+    <div class="stat-band" id="stat-band">
+      <div class="stat"><span class="stat-num" id="stat-proven">—</span><span class="stat-lbl">proven types</span></div>
+      <div class="stat"><span class="stat-num" id="stat-tracked">—</span><span class="stat-lbl">types tracked</span></div>
+      <div class="stat"><span class="stat-num pos" id="stat-bestwin">—</span><span class="stat-lbl">best win rate</span></div>
+      <div class="stat"><span class="stat-num pos" id="stat-bestedge">—</span><span class="stat-lbl">best edge vs BTC</span></div>
+      <div class="stat"><span class="stat-num" id="stat-n">—</span><span class="stat-lbl">signals measured</span></div>
     </div>
 
-    <!-- Bar visualization: excess vs BTC per proven type -->
-    <div class="panel">
-      <div class="panel-head">
-        <span class="panel-title">Excess return vs BTC — proven types</span>
-        <span class="panel-sub">bar = mean excess · whisker = 95% CI lower bound</span>
-      </div>
-      <div id="wr-bars" class="wr-bars">loading…</div>
-    </div>
+    <!-- Proven: hero cards -->
+    <div class="section-label"><span class="sl-tick"></span>PROVEN — these clear the gate</div>
+    <div id="wr-proven" class="proven-grid"><div class="wr-skel">loading…</div></div>
 
-    <!-- Full table -->
-    <div class="panel">
-      <div class="panel-head"><span class="panel-title">All signal types</span></div>
-      <div id="wr-table"></div>
-    </div>
+    <!-- Demoted: the honesty section -->
+    <div class="section-label demoted-label"><span class="sl-tick demoted"></span>DEMOTED — we publish what fails, too</div>
+    <div id="wr-demoted" class="demoted-list"></div>
 
     <p class="meta" id="wr-meta"></p>
 
     <div class="cta-strip">
       <div>
-        <strong>Pipe these into your agent.</strong>
-        <span>REST · WebSocket · MCP · x402 — conviction flags built in.</span>
+        <strong>Pipe proven signals into your agent.</strong>
+        <span>REST · WebSocket · MCP · x402 — <code>conviction: strong</code> flags built in.</span>
       </div>
       <a class="btn-primary" href="/signup?utm_source=charts&utm_medium=chart&utm_campaign=win-rate">Start free →</a>
     </div>
   </section>
 </BaseLayout>
 
-<script>
+<script is:inline>
+(function () {
+  "use strict";
   const ENDPOINT = "https://api.n0brains.com/charts/proof";
-  const PROVEN_COLORS = ["#00ff41", "#4ade80", "#60a5fa", "#f59e0b", "#c084fc", "#f472b6"];
+  const PALETTE = ["#00ff41", "#34d399", "#22d3ee", "#a3e635", "#fbbf24"];
 
-  const pct = (v) => (v === null || v === undefined) ? "—" : (Number(v) * 100).toFixed(1) + "%";
+  const $ = (id) => document.getElementById(id);
+  const pctWin = (v) => (v === null || v === undefined) ? "—" : Math.round(Number(v) * 100) + "%";
   const pctRaw = (v) => (v === null || v === undefined) ? "—" : (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%";
 
-  function renderBars(types) {
-    const el = document.getElementById("wr-bars");
+  function statBand(types) {
     const proven = types.filter((t) => t.tradeable);
-    if (!proven.length) { el.innerHTML = "<div class='wr-empty'>no proven types right now — we demote in the open</div>"; return; }
-    const maxExcess = Math.max(...proven.map((t) => Math.abs(t.excess_pct || 0)), 1);
+    $("stat-proven").textContent = proven.length;
+    $("stat-tracked").textContent = types.length;
+    const totalN = types.reduce((s, t) => s + (t.n || 0), 0);
+    $("stat-n").textContent = totalN.toLocaleString();
+    if (proven.length) {
+      const bw = proven.reduce((a, b) => (b.win_rate > a.win_rate ? b : a));
+      const be = proven.reduce((a, b) => (b.excess_pct > a.excess_pct ? b : a));
+      $("stat-bestwin").textContent = pctWin(bw.win_rate);
+      $("stat-bestedge").textContent = pctRaw(be.excess_pct);
+    } else {
+      $("stat-bestwin").textContent = "—"; $("stat-bestedge").textContent = "—";
+    }
+  }
+
+  function provenCards(types) {
+    const proven = types.filter((t) => t.tradeable).sort((a, b) => b.excess_pct - a.excess_pct);
+    const el = $("wr-proven");
+    if (!proven.length) { el.innerHTML = "<div class='wr-empty'>no proven types right now — and we'd tell you</div>"; return; }
+    const maxEdge = Math.max(...proven.map((t) => t.excess_pct), 1);
     el.innerHTML = proven.map((t, i) => {
-      const c = PROVEN_COLORS[i % PROVEN_COLORS.length];
-      const w = Math.max(2, (Math.abs(t.excess_pct) / maxExcess) * 100);
-      const ciW = Math.max(0, (Math.abs(t.ci_low_pct) / maxExcess) * 100);
+      const c = PALETTE[i % PALETTE.length];
+      const arcPct = Math.round((t.win_rate || 0) * 100);
+      // conic ring for win rate
+      const ring = `background:conic-gradient(${c} ${arcPct * 3.6}deg, #1a1a1a 0);`;
+      const edgeW = Math.max(4, (t.excess_pct / maxEdge) * 100);
       return `
-        <div class="wr-bar-row">
-          <div class="wr-bar-label">
-            <span class="wr-dot" style="background:${c}"></span>${t.signal_type}
-            <span class="wr-n">n=${t.n}</span>
+        <article class="pcard" style="--c:${c}">
+          <header class="pcard-top">
+            <span class="pcard-name">${t.signal_type}</span>
+            <span class="pcard-badge">PROVEN</span>
+          </header>
+          <div class="pcard-mid">
+            <div class="ring" style="${ring}">
+              <div class="ring-inner"><span class="ring-num">${arcPct}<span class="ring-pct">%</span></span><span class="ring-lbl">win</span></div>
+            </div>
+            <div class="pcard-stats">
+              <div class="ps"><span class="ps-k">excess vs BTC</span><span class="ps-v" style="color:${c}">${pctRaw(t.excess_pct)}</span></div>
+              <div class="ps"><span class="ps-k">avg return</span><span class="ps-v ${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</span></div>
+              <div class="ps"><span class="ps-k">signals</span><span class="ps-v">${t.n}</span></div>
+              <div class="ps"><span class="ps-k">CI low</span><span class="ps-v ${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</span></div>
+            </div>
           </div>
-          <div class="wr-bar-track">
-            <div class="wr-bar-fill" style="width:${w}%;background:${c}"></div>
-            <div class="wr-ci" style="left:${ciW}%" title="95% CI lower bound: ${pctRaw(t.ci_low_pct)}"></div>
-          </div>
-          <div class="wr-bar-val">
-            <span class="wr-excess">${pctRaw(t.excess_pct)}</span>
-            <span class="wr-win">${pct(t.win_rate)} win</span>
-          </div>
-        </div>`;
+          <div class="pcard-bar"><div class="pcard-bar-fill" style="width:${edgeW}%;background:${c}"></div></div>
+        </article>`;
     }).join("");
   }
 
-  function renderTable(types) {
-    const table = document.getElementById("wr-table");
-    let rows = "";
-    for (const t of types) {
-      const cls = t.tradeable ? "" : "row-untradeable";
-      const flag = t.tradeable
-        ? '<span class="badge badge-yes">proven</span>'
-        : '<span class="badge badge-no">intel only</span>';
-      rows += `<tr class="${cls}">
-        <td class="type">${t.signal_type}</td>
-        <td>${t.n}</td>
-        <td>${pct(t.win_rate)}</td>
-        <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</td>
-        <td class="${t.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.excess_pct)}</td>
-        <td class="${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</td>
-        <td>${flag}</td></tr>`;
-    }
-    table.innerHTML = `<table class="data-table">
-      <thead><tr><th>type</th><th>signals</th><th>win rate</th>
-        <th title="mean return of the trade itself">avg return</th>
-        <th title="mean return minus BTC, same window">excess vs BTC</th>
-        <th title="95% CI lower bound on excess — the conservative edge">CI low</th>
-        <th></th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
+  function demotedList(types) {
+    const demoted = types.filter((t) => !t.tradeable).sort((a, b) => b.excess_pct - a.excess_pct);
+    const el = $("wr-demoted");
+    el.innerHTML = demoted.map((t) => `
+      <div class="drow">
+        <span class="drow-name">${t.signal_type}</span>
+        <span class="drow-stat">${pctWin(t.win_rate)} <i>win</i></span>
+        <span class="drow-stat ${t.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.excess_pct)} <i>vs BTC</i></span>
+        <span class="drow-stat drow-n">${t.n} <i>n</i></span>
+        <span class="drow-why">${demoteReason(t)}</span>
+      </div>`).join("");
+  }
+  function demoteReason(t) {
+    if ((t.n || 0) < 30) return "too few signals";
+    if (t.ci_low_pct <= 0) return "edge not significant";
+    if (t.avg_net_pct < 0) return "loses money on its own";
+    if (t.excess_pct < 0) return "underperforms BTC";
+    return "below the gate";
   }
 
   function render(data) {
-    const banner = document.getElementById("wr-banner");
     if (!data || data.error || !data.types) {
-      banner.className = "status-banner status-unknown";
-      banner.querySelector(".banner-text").textContent = "scoreboard unavailable (" + (data?.error || "fetch failed") + ")";
+      $("wr-status-text").textContent = "scoreboard unavailable";
+      $("wr-proven").innerHTML = "<div class='wr-empty'>" + (data?.error || "fetch failed") + "</div>";
       return;
     }
-    const proven = data.types.filter((t) => t.tradeable);
-    banner.className = "status-banner status-up";
-    banner.querySelector(".banner-text").textContent =
-      proven.length + " signal type" + (proven.length === 1 ? "" : "s") + " forward-return proven · " +
-      data.window_days + "d window · " + data.horizon + " horizon";
-    renderBars(data.types);
-    renderTable(data.types);
+    const proven = data.types.filter((t) => t.tradeable).length;
+    $("wr-status-text").textContent =
+      proven + " of " + data.types.length + " proven · " + data.window_days + "d · " + data.horizon + " horizon · live";
+    statBand(data.types);
+    provenCards(data.types);
+    demotedList(data.types);
     const latest = Math.max(...data.types.map((t) => t.updated_at || 0));
-    if (latest) document.getElementById("wr-meta").textContent = "Last updated " + new Date(latest * 1000).toISOString();
+    if (latest) $("wr-meta").textContent = "Measured on real Hyperliquid prices · last updated " + new Date(latest * 1000).toISOString();
   }
 
   async function load() {
@@ -135,76 +150,101 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     catch (e) { render({ error: String(e) }); }
   }
   load(); setInterval(load, 60000);
+})();
 </script>
 
 <style>
-  .chart-page { max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 4rem; }
-  .chart-head { margin-bottom: 1.8rem; }
+  .wr-page { max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 4rem; }
+  .wr-head { margin-bottom: 2rem; }
   .back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
   .back:hover { color: var(--accent); }
   .kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
-    letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0 1rem; display: flex; align-items: center; gap: 0.6rem; }
-  .chart-head h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
-    line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+    letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0; display: flex; align-items: center; gap: 0.6rem; }
+  .wr-head h1 { font-family: var(--font-display); font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 0.88; color: var(--text-heading); margin-bottom: 1.1rem; letter-spacing: 0.01em; }
   .accent { color: var(--accent); }
-  .lede { font-size: 1rem; max-width: 660px; color: var(--text); }
-  .lede a { color: var(--accent); }
+  .lede { font-size: 1rem; max-width: 680px; color: var(--text); }
+  .lede a { color: var(--accent); } .lede code { color: var(--accent); font-family: var(--font-mono); font-size: 0.9em; }
 
-  .status-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px;
-    border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.86rem;
-    margin: 1.5rem 0; border: 1px solid var(--border); }
-  .status-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
-  .status-up { border-color: rgba(0,255,65,0.3); }
-  .status-up .dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-  .status-loading .dot { background: var(--accent); animation: blink 1.4s infinite; }
-  .status-unknown { border-color: var(--border); }
+  /* headline stat band */
+  .stat-band { display: grid; grid-template-columns: repeat(5, 1fr);
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    background: var(--bg-card); margin-bottom: 2.6rem; }
+  .stat { padding: 1.3rem 1.2rem; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.3rem; }
+  .stat:last-child { border-right: none; }
+  .stat-num { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; color: var(--text-heading); }
+  .stat-num.pos { color: var(--accent); }
+  .stat-lbl { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted); }
+  @media (max-width: 760px) {
+    .stat-band { grid-template-columns: repeat(2, 1fr); }
+    .stat { border-bottom: 1px solid var(--border); }
+    .stat-num { font-size: 2rem; }
+  }
 
-  .panel { border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--bg-card); padding: 1.2rem 1.4rem 1.4rem; margin-bottom: 1.3rem; }
-  .panel-head { display: flex; align-items: baseline; justify-content: space-between;
-    gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem; }
-  .panel-title { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-heading);
-    text-transform: uppercase; letter-spacing: 0.08em; }
-  .panel-sub { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+  .section-label { font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--text-heading); margin: 0 0 1.1rem;
+    display: flex; align-items: center; gap: 0.6rem; }
+  .demoted-label { color: var(--text-muted); margin-top: 2.8rem; }
+  .sl-tick { width: 10px; height: 10px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .sl-tick.demoted { background: #ef4444; box-shadow: none; opacity: 0.6; }
 
-  /* bar viz */
-  .wr-bars { display: flex; flex-direction: column; gap: 0.7rem; }
-  .wr-bar-row { display: grid; grid-template-columns: 180px 1fr 130px; align-items: center; gap: 1rem; }
-  @media (max-width: 640px) { .wr-bar-row { grid-template-columns: 110px 1fr 92px; gap: 0.5rem; } }
-  .wr-bar-label { font-family: var(--font-mono); font-size: 0.84rem; color: var(--text-heading);
-    display: flex; align-items: center; gap: 0.45rem; }
-  .wr-dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
-  .wr-n { color: var(--text-muted); font-size: 0.72rem; }
-  .wr-bar-track { position: relative; height: 22px; background: var(--bg-code);
-    border-radius: 4px; overflow: hidden; }
-  .wr-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(.22,1,.36,1); }
-  .wr-ci { position: absolute; top: -2px; bottom: -2px; width: 2px; background: rgba(255,255,255,0.55); }
-  .wr-bar-val { text-align: right; font-family: var(--font-mono); }
-  .wr-excess { display: block; color: var(--accent); font-size: 0.9rem; font-weight: 700; }
-  .wr-win { display: block; color: var(--text-muted); font-size: 0.72rem; }
-  .wr-empty { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.85rem; }
+  /* proven hero cards */
+  .proven-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  @media (max-width: 900px) { .proven-grid { grid-template-columns: 1fr; } }
+  .pcard { border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card);
+    padding: 1.3rem 1.4rem 1rem; position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s; }
+  .pcard::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: var(--c); opacity: 0.8; }
+  .pcard:hover { border-color: var(--c); transform: translateY(-2px); }
+  .pcard-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+  .pcard-name { font-family: var(--font-mono); font-size: 1.05rem; font-weight: 700; color: var(--text-heading); text-transform: lowercase; }
+  .pcard-badge { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em;
+    color: var(--c); border: 1px solid var(--c); border-radius: 100px; padding: 2px 8px; opacity: 0.9; }
+  .pcard-mid { display: flex; align-items: center; gap: 1.2rem; }
+  .ring { width: 86px; height: 86px; border-radius: 50%; flex: none; display: grid; place-items: center; }
+  .ring-inner { width: 66px; height: 66px; border-radius: 50%; background: var(--bg-card);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-num { font-family: var(--font-display); font-size: 1.9rem; line-height: 1; color: var(--text-heading); }
+  .ring-pct { font-size: 0.9rem; }
+  .ring-lbl { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .pcard-stats { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 0.8rem; }
+  .ps { display: flex; flex-direction: column; }
+  .ps-k { font-family: var(--font-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .ps-v { font-family: var(--font-mono); font-size: 0.95rem; color: var(--text-heading); font-weight: 600; }
+  .ps-v.pos { color: #4ade80; } .ps-v.neg { color: #ef4444; }
+  .pcard-bar { height: 4px; background: var(--bg-code); border-radius: 4px; margin-top: 1.1rem; overflow: hidden; }
+  .pcard-bar-fill { height: 100%; border-radius: 4px; transition: width 0.7s cubic-bezier(.22,1,.36,1); }
 
-  /* table */
-  .data-table { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 0.86rem; }
-  .data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-  .data-table th { color: var(--text-muted); font-weight: 500; }
-  .data-table td.type { font-weight: 700; color: var(--text-heading); }
-  .data-table .pos { color: #4ade80; } .data-table .neg { color: #ef4444; }
-  .row-untradeable { opacity: 0.5; }
-  .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); }
-  .badge-yes { color: var(--accent); border-color: rgba(0,255,65,0.3); }
-  .badge-no { color: var(--text-muted); }
+  /* demoted list */
+  .demoted-list { display: flex; flex-direction: column; border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; background: var(--bg-card); }
+  .drow { display: grid; grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 1.6fr; align-items: center;
+    gap: 1rem; padding: 0.7rem 1.2rem; border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 0.84rem; opacity: 0.72; }
+  .drow:last-child { border-bottom: none; }
+  .drow:hover { opacity: 1; background: var(--bg-hover); }
+  .drow-name { color: var(--text-heading); font-weight: 600; text-transform: lowercase; }
+  .drow-stat { color: var(--text); } .drow-stat i { color: var(--text-muted); font-style: normal; font-size: 0.72rem; }
+  .drow-stat.pos { color: #4ade80; } .drow-stat.neg { color: #ef4444; }
+  .drow-why { color: var(--text-muted); font-size: 0.78rem; text-align: right; }
+  @media (max-width: 760px) {
+    .drow { grid-template-columns: 1fr 1fr; gap: 0.4rem 1rem; }
+    .drow-why { grid-column: 1 / -1; text-align: left; }
+    .drow-n { display: none; }
+  }
 
-  .meta { color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono); margin-top: 0.4rem; }
+  .wr-skel, .wr-empty { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); padding: 1.5rem; }
+  .meta { color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono); margin-top: 1.4rem; }
 
   .cta-strip { display: flex; align-items: center; justify-content: space-between; gap: 1.4rem;
-    flex-wrap: wrap; margin-top: 2.4rem; padding: 1.4rem 1.6rem; border: 1px solid var(--border-accent);
+    flex-wrap: wrap; margin-top: 2.8rem; padding: 1.5rem 1.7rem; border: 1px solid var(--border-accent);
     border-radius: var(--radius); background: var(--accent-glow); }
-  .cta-strip strong { color: var(--text-heading); display: block; }
-  .cta-strip span { color: var(--text); font-size: 0.9rem; }
+  .cta-strip strong { color: var(--text-heading); display: block; margin-bottom: 0.2rem; }
+  .cta-strip span { color: var(--text); font-size: 0.9rem; } .cta-strip code { color: var(--accent); font-family: var(--font-mono); }
   .btn-primary { background: var(--accent); color: #000; font-family: var(--font-mono); font-weight: 700;
-    padding: 0.7rem 1.4rem; border-radius: var(--radius-sm); text-decoration: none; white-space: nowrap;
-    transition: filter 0.15s; }
+    padding: 0.7rem 1.4rem; border-radius: var(--radius-sm); text-decoration: none; white-space: nowrap; transition: filter 0.15s; }
   .btn-primary:hover { filter: brightness(1.12); }
 
   .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
