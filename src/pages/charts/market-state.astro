@@ -63,24 +63,27 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   const isPro = () => (localStorage.getItem("tier") || "free") === "pro" && !!jwt();
 
   function gaugeSVG(bull, bear, neutral, direction) {
-    // semicircle gauge: bear (left/red) → neutral (mid/grey) → bull (right/green)
+    // semicircle gauge, pivot at bottom-center. Fraction 0 = LEFT (bear),
+    // 0.5 = TOP, 1 = RIGHT (bull). Canvas y is down, so point(f) sweeps from
+    // 180° (left) → 90° (top) → 0° (right): angle = 180 - f*180.
     const W = 300, H = 170, cx = 150, cy = 150, r = 120;
     const total = (bull + bear + neutral) || 1;
-    const b = bear / total, n = neutral / total, u = bull / total;
-    // needle angle: -90 (full bear) .. +90 (full bull); score = bull - bear
-    const net = (bull - bear) / total; // -1..1
-    const ang = net * 90;
-    const rad = (deg) => (deg - 90) * Math.PI / 180;
+    const b = bear / total, n = neutral / total;
+    const pt = (f, rr) => {
+      const a = (180 - f * 180) * Math.PI / 180;
+      return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)];
+    };
     function arc(startFrac, endFrac, color) {
-      const a0 = rad(startFrac * 180), a1 = rad(endFrac * 180);
-      const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
-      const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
-      const large = (endFrac - startFrac) > 0.5 ? 1 : 0;
-      return `<path d="M${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 ${large} 1 ${x1.toFixed(1)},${y1.toFixed(1)}"
+      const [x0, y0] = pt(startFrac, r), [x1, y1] = pt(endFrac, r);
+      // Spans are fractions of a 180° semicircle → always < 180° of the full
+      // circle, so large-arc-flag is always 0. sweep-flag 1 = over the top.
+      return `<path d="M${x0.toFixed(1)},${y0.toFixed(1)} A${r},${r} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}"
         fill="none" stroke="${color}" stroke-width="22" stroke-linecap="butt"/>`;
     }
-    const nx = cx + (r - 18) * Math.cos(rad(((net + 1) / 2) * 180));
-    const ny = cy + (r - 18) * Math.sin(rad(((net + 1) / 2) * 180));
+    // needle fraction: 0 (all bear) .. 1 (all bull). Use bull/bear share so it
+    // sits where the consensus actually is.
+    const needleFrac = (bull + 0.5 * neutral) / total;   // neutral pulls to center
+    const [nx, ny] = pt(needleFrac, r - 22);
     return `<svg viewBox="0 0 ${W} ${H}" class="gauge-svg">
       ${arc(0, b, "#ef4444")}
       ${arc(b, b + n, "#555")}
@@ -113,10 +116,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     document.getElementById("ms-gauge").innerHTML = gaugeSVG(d.bull_score || 0, d.bear_score || 0, d.neutral_score || 0, d.direction);
 
     const total = (d.bull_score + d.bear_score + d.neutral_score) || 1;
-    document.getElementById("ms-splits").innerHTML = `
-      <div class="split"><span class="split-bar" style="background:#00ff41;width:${(d.bull_score/total*100).toFixed(0)}%"></span><b class="pos">Bull</b> ${(d.bull_score/total*100).toFixed(0)}%</div>
-      <div class="split"><span class="split-bar" style="background:#555;width:${(d.neutral_score/total*100).toFixed(0)}%"></span><b class="neu">Neutral</b> ${(d.neutral_score/total*100).toFixed(0)}%</div>
-      <div class="split"><span class="split-bar" style="background:#ef4444;width:${(d.bear_score/total*100).toFixed(0)}%"></span><b class="neg">Bear</b> ${(d.bear_score/total*100).toFixed(0)}%</div>`;
+    const splitS = "font-family:var(--font-mono);font-size:0.8rem;display:flex;align-items:center;gap:0.5rem;color:var(--text);margin-bottom:0.4rem;";
+    const barW = "height:8px;border-radius:3px;min-width:2px;display:inline-block;";
+    const split = (label, color, lblColor, val) =>
+      `<div style="${splitS}"><span style="${barW}background:${color};width:${val}%"></span>`
+      + `<b style="width:58px;color:${lblColor}">${label}</b> ${val}%</div>`;
+    document.getElementById("ms-splits").innerHTML =
+      split("Bull", "#00ff41", "var(--accent)", (d.bull_score/total*100).toFixed(0)) +
+      split("Neutral", "#555", "var(--text-muted)", (d.neutral_score/total*100).toFixed(0)) +
+      split("Bear", "#ef4444", "#ef4444", (d.bear_score/total*100).toFixed(0));
 
     if (d.as_of) document.getElementById("ms-meta").textContent = "as of " + new Date(d.as_of * 1000).toISOString();
   }
@@ -124,32 +132,45 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   function renderDetailLocked() {
     document.getElementById("ms-tier-pill").textContent = "PRO";
     document.getElementById("ms-tier-pill").className = "pro-pill";
+    // Styles inlined: these nodes are injected via innerHTML, so Astro's scoped
+    // CSS never matches them.
+    const rowS = "display:flex;justify-content:space-between;align-items:center;gap:1.5rem;"
+      + "padding:0.7rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.86rem;";
+    const kS = "color:var(--text-muted);white-space:nowrap;";
+    const blurS = "color:var(--text-heading);filter:blur(5px);user-select:none;";
+    const row = (k, v) => `<div style="${rowS}"><span style="${kS}">${k}</span><span style="${blurS}">${v}</span></div>`;
     document.getElementById("ms-detail").innerHTML = `
-      <div class="locked">
-        <div class="lock-rows">
-          <div class="lock-row"><span>Top drivers</span><span class="blur">whale_position · funding · sentiment</span></div>
-          <div class="lock-row"><span>Invalidation level</span><span class="blur">$00,000</span></div>
-          <div class="lock-row"><span>Liq-map target</span><span class="blur">$00,000</span></div>
+      <div style="text-align:center;">
+        <div style="margin-bottom:1.2rem;">
+          ${row("Top drivers", "whale_position · funding")}
+          ${row("Invalidation level", "$00,000")}
+          ${row("Liq-map target", "$00,000")}
         </div>
         <a class="btn-primary" href="/pricing?utm_source=charts&utm_medium=chart&utm_campaign=market-state">Unlock with Pro — code RACE →</a>
-        <p class="lock-foot">Founding 20: <code>RACE</code> at checkout = 1 month Pro free.</p>
+        <p style="font-family:var(--font-mono);font-size:0.74rem;color:var(--text-muted);margin-top:0.8rem;">Founding 20: <code style="color:var(--accent)">RACE</code> at checkout = 1 month Pro free.</p>
       </div>`;
   }
 
   function renderDetailPro(d) {
     document.getElementById("ms-tier-pill").textContent = "PRO ✓";
     document.getElementById("ms-tier-pill").className = "pro-pill pro-on";
+    const chipS = "display:inline-block;background:var(--bg-code);border:1px solid var(--border);"
+      + "border-radius:4px;padding:2px 7px;margin:0 0 3px 4px;font-size:0.78rem;";
     const drivers = (d.top_drivers || []).map((x) => {
-      if (typeof x === "string") return `<span class="driver">${x}</span>`;
+      if (typeof x === "string") return `<span style="${chipS}">${x}</span>`;
       const dir = x.dir === "bullish" ? "▲" : x.dir === "bearish" ? "▼" : "";
-      const dcls = x.dir === "bullish" ? "pos" : x.dir === "bearish" ? "neg" : "";
-      return `<span class="driver"><span class="${dcls}">${dir}</span> ${x.type || x.name || "?"}</span>`;
+      const dcol = x.dir === "bullish" ? "var(--accent)" : x.dir === "bearish" ? "#ef4444" : "var(--text-muted)";
+      return `<span style="${chipS}"><span style="color:${dcol}">${dir}</span> ${x.type || x.name || "?"}</span>`;
     }).join("");
+    const rowS = "display:flex;justify-content:space-between;align-items:center;gap:1.5rem;"
+      + "padding:0.7rem 0;border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:0.86rem;";
+    const kS = "color:var(--text-muted);white-space:nowrap;";
+    const vS = "color:var(--text-heading);text-align:right;";
     document.getElementById("ms-detail").innerHTML = `
-      <div class="detail-rows">
-        <div class="d-row"><span class="d-k">Top drivers</span><span class="d-v">${drivers || "—"}</span></div>
-        <div class="d-row"><span class="d-k">Invalidation level</span><span class="d-v">${d.invalidation_level != null ? "$" + Number(d.invalidation_level).toLocaleString() : "—"}</span></div>
-        <div class="d-row"><span class="d-k">Liq-map target</span><span class="d-v">${d.liqmap_target != null ? "$" + Number(d.liqmap_target).toLocaleString() : "—"}</span></div>
+      <div>
+        <div style="${rowS}"><span style="${kS}">Top drivers</span><span style="${vS}">${drivers || "—"}</span></div>
+        <div style="${rowS}"><span style="${kS}">Invalidation level</span><span style="${vS}">${d.invalidation_level != null ? "$" + Number(d.invalidation_level).toLocaleString() : "—"}</span></div>
+        <div style="${rowS}"><span style="${kS}">Liq-map target</span><span style="${vS}">${d.liqmap_target != null ? "$" + Number(d.liqmap_target).toLocaleString() : "—"}</span></div>
       </div>`;
   }
 
