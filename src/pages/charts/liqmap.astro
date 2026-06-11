@@ -160,7 +160,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
+    // per-venue default time range: DEX → 24h (1), CEX → 7d (7).
+    const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
+    let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
     let FOCUS_PCT = 0.06;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
@@ -220,7 +222,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
     function bindVenue() {
       document.querySelectorAll("#lm-venue button").forEach((b) =>
-        b.addEventListener("click", () => { venue = b.dataset.venue; syncTabs(); load(); }));
+        b.addEventListener("click", () => {
+          venue = b.dataset.venue;
+          days = VENUE_DEFAULT_DAYS[venue] ?? days;   // snap range to venue default
+          syncTabs(); load();
+        }));
     }
     function bindRange() {
       document.querySelectorAll("#lm-range button").forEach((b) =>
