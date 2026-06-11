@@ -7,32 +7,78 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   description="n0brains live forward-return proof — every signal type measured against real post-signal price action, with win rate, excess vs BTC, and confidence intervals. The exact gate we use to flag signals. Not advice."
   ogImage="/og-proof.png"
 >
-  <section class="about-section">
-    <h1>proof</h1>
-    <p class="legal-updated">
-      We measure <strong>every directional signal</strong> against real
-      post-signal price action — Hyperliquid 1-hour candles — at the 24h horizon
-      over a rolling 30-day window. For each signal type we publish the win rate,
-      the mean return of the trade itself, the mean <strong>excess vs BTC over
-      the same window</strong>, and 95% confidence intervals. A type is marked
-      <strong>proven</strong> only when it clears 30+ measured signals AND both
-      beats BTC AND is profitable on its own (excess-return CI lower
-      bound above zero). This is the <em>exact</em> gate the pipeline uses to flag
-      <code>conviction: strong</code> — so this page can never claim edge the
-      product doesn't actually act on. Refreshed live.
+  <section class="proof-page">
+    <div class="section-label" data-reveal="fade">live audit · refreshed every 60s</div>
+    <h1 class="proof-h1">
+      <span class="hl"><span class="hli">WE PUBLISH</span></span>
+      <span class="hl"><span class="hli accent">OUR WIN-RATE.</span></span>
+    </h1>
+    <p class="proof-lede">
+      Most of the industry sells backtests you can't audit. We measure
+      <strong>every directional signal</strong> against real post-signal prices
+      and publish the result live — wins, losses, and the types we demote.
+      This page renders the <em>exact</em> gate the pipeline uses to flag
+      <code>conviction: strong</code>, so it can never claim edge the product
+      doesn't actually act on.
     </p>
+
+    <!-- Live stat band — every number from the same /proof endpoint -->
+    <div class="stat-band" id="stat-band">
+      <div class="stat">
+        <span class="stat-num" id="st-proven">–</span>
+        <span class="stat-label">proven signal types</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="st-signals">–</span>
+        <span class="stat-label">signals measured · 30d</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="st-best">–</span>
+        <span class="stat-label">best proven win-rate</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">24h</span>
+        <span class="stat-label">horizon · real HL prices</span>
+      </div>
+    </div>
 
     <div id="proof-banner" class="proof-banner proof-loading">
       <span class="dot"></span>
       <span class="banner-text">loading results…</span>
     </div>
 
-    <div id="proof-table"></div>
+    <!-- Proven types — the headline numbers -->
+    <div class="proven-cards" id="proven-cards" aria-live="polite"></div>
 
+    <h2 class="proof-h2">The full audit — failures included</h2>
+    <p class="proof-sub">
+      Types that don't clear the bar stay on the board as <em>intel only</em>.
+      Public demotion is the feature: when edge decays, this table says so
+      before our marketing does.
+    </p>
+    <div class="table-wrap" id="proof-table"></div>
     <p class="meta" id="proof-meta"></p>
 
-    <h2 class="tier-heading">Edge accumulation</h2>
-    <p class="tier-blurb">
+    <!-- Methodology — the fine print, in the open -->
+    <div class="method-panel">
+      <div class="method-head">methodology</div>
+      <p>
+        Every directional signal is measured against real post-signal price
+        action — Hyperliquid 1-hour candles — at the 24h horizon over a rolling
+        30-day window. For each signal type we publish the win rate, the mean
+        return of the trade itself, the mean <strong>excess vs BTC over the
+        same window</strong>, and 95% confidence intervals. A type is marked
+        <strong>proven</strong> only when it clears 30+ measured signals AND
+        both beats BTC AND is profitable on its own (excess-return CI lower
+        bound above zero). Beating BTC alone isn't enough — a type that only
+        looks good by being short in a downtrend, while still losing money,
+        does not qualify. The live <code>trade_signal</code> gate applies this
+        same test per (type, direction) and is regime-aware.
+      </p>
+    </div>
+
+    <h2 class="proof-h2">Edge accumulation</h2>
+    <p class="proof-sub">
       Does the per-signal edge above actually compound, or is it a few lucky
       outliers? Below is an illustrative account starting at index 100 that takes
       <strong>every proven-type signal</strong>, one at a time, risking
@@ -51,18 +97,28 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       A type is shown as <strong>forward-return proven</strong> only when its
       live post-signal price record clears 30+ measured signals AND both beats
       BTC and is profitable on its own, with a 95% confidence interval
-      above zero. (Beating BTC alone isn't enough — a type that only
-      looks good by being short in a downtrend, while still losing money, does
-      not qualify.) These are the types we flag <code>conviction: strong</code>
+      above zero. These are the types we flag <code>conviction: strong</code>
       in the API. Measured on real prices for informational purposes only — not
       financial advice, and past performance does not guarantee future results.
       See <a href="/terms">terms</a>.
     </p>
+
+    <!-- Conversion path -->
+    <div class="proof-cta" data-reveal>
+      <h3>These numbers update whether they flatter us or not.</h3>
+      <p>Pipe the proven signals straight into your agent — REST, WebSocket, Webhook, MCP, or x402.</p>
+      <div class="cta-row">
+        <a href="/signup" class="btn btn-primary">Start Free →</a>
+        <a href="/docs/" class="btn btn-secondary">API Docs ↗</a>
+      </div>
+    </div>
   </section>
 </BaseLayout>
 
 <script>
   const ENDPOINT = "https://api.n0brains.com/proof";
+  const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let countedUp = false;
 
   function pct(v) {
     if (v === null || v === undefined) return "—";
@@ -73,10 +129,63 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     if (v === null || v === undefined) return "—";
     return (Number(v) >= 0 ? "+" : "") + Number(v).toFixed(2) + "%";
   }
-  function usd(v) {
-    if (v === null || v === undefined) return "—";
-    const n = Number(v);
-    return (n >= 0 ? "+$" : "-$") + Math.abs(n).toFixed(2);
+
+  function countUp(el, target, fmt, dur = 900) {
+    if (REDUCE) { el.textContent = fmt(target); return; }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min((now - t0) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function renderStats(data) {
+    const proven = data.types.filter((t) => t.tradeable);
+    const totalN = data.types.reduce((a, t) => a + (t.n || 0), 0);
+    const best = proven.length ? Math.max(...proven.map((t) => t.win_rate || 0)) : null;
+    const stP = document.getElementById("st-proven");
+    const stS = document.getElementById("st-signals");
+    const stB = document.getElementById("st-best");
+    if (countedUp) {
+      // Subsequent refreshes: update silently, no re-animation.
+      stP.textContent = String(proven.length);
+      stS.textContent = totalN.toLocaleString();
+      stB.textContent = best === null ? "—" : (best * 100).toFixed(1) + "%";
+      return;
+    }
+    countedUp = true;
+    countUp(stP, proven.length, (v) => Math.round(v).toString());
+    countUp(stS, totalN, (v) => Math.round(v).toLocaleString());
+    if (best === null) stB.textContent = "—";
+    else countUp(stB, best * 100, (v) => v.toFixed(1) + "%");
+  }
+
+  function renderProvenCards(data) {
+    const wrap = document.getElementById("proven-cards");
+    const proven = data.types
+      .filter((t) => t.tradeable)
+      .sort((a, b) => (b.excess_pct || 0) - (a.excess_pct || 0));
+    if (!proven.length) {
+      wrap.innerHTML = `<div class="pv-empty">0 types currently clear the bar.
+        The gate is real — when edge decays, this page says so first.</div>`;
+      return;
+    }
+    wrap.innerHTML = proven.map((t, i) => `
+      <div class="pv-card" style="--pvi:${i}">
+        <div class="pv-head">
+          <span class="pv-type">${t.signal_type}</span>
+          <span class="badge badge-yes">proven</span>
+        </div>
+        <div class="pv-win">${pct(t.win_rate)}<span>win rate · n=${t.n}</span></div>
+        <div class="pv-rows">
+          <div><span>avg return</span><b class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</b></div>
+          <div><span>excess vs BTC</span><b class="${t.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.excess_pct)}</b></div>
+          <div><span>95% CI low</span><b class="${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</b></div>
+        </div>
+      </div>`).join("");
   }
 
   function render(data) {
@@ -90,6 +199,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         "proof unavailable (" + (data?.error || "fetch failed") + ")";
       return;
     }
+
+    renderStats(data);
+    renderProvenCards(data);
 
     const tradeable = data.types.filter((t) => t.tradeable);
     banner.className = "proof-banner proof-up";
@@ -267,11 +379,56 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 </script>
 
 <style>
+  .proof-page { max-width: 1000px; margin: 0 auto; }
+
+  .proof-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 400; line-height: 0.95; letter-spacing: 0.02em;
+    color: var(--text-heading); margin-bottom: 1.25rem;
+  }
+  .proof-h1 .hl { display: block; overflow: hidden; padding-bottom: 0.05em; }
+  .proof-h1 .hli {
+    display: block; transform: translateY(110%);
+    animation: proofLineUp 0.8s var(--ease-out) forwards;
+  }
+  .proof-h1 .hl:nth-child(2) .hli { animation-delay: 0.14s; }
+  @keyframes proofLineUp { to { transform: translateY(0); } }
+  .proof-h1 .accent { color: var(--accent); text-shadow: 0 0 36px var(--accent-glow-strong); }
+
+  .proof-lede {
+    font-size: 1.05rem; color: var(--text); max-width: 640px;
+    line-height: 1.65; margin-bottom: 2.25rem;
+    opacity: 0; transform: translateY(10px);
+    animation: fadeUp 0.6s var(--ease-out) 0.35s forwards;
+  }
+  .proof-lede strong { color: var(--text-heading); }
+
+  /* Live stat band */
+  .stat-band {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem;
+    opacity: 0; animation: fadeUp 0.6s var(--ease-out) 0.5s forwards;
+  }
+  .stat { background: var(--bg-alt); padding: 1.1rem 1.2rem 1rem; }
+  .stat-num {
+    display: block; font-family: var(--font-display);
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem); line-height: 1;
+    color: var(--accent); letter-spacing: 0.02em;
+  }
+  .stat-label {
+    display: block; margin-top: 0.35rem;
+    font-family: var(--font-mono); font-size: 0.62rem;
+    text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted);
+  }
+  @media (max-width: 720px) { .stat-band { grid-template-columns: 1fr 1fr; } }
+
   .proof-banner {
     display: flex; align-items: center; gap: 12px;
-    padding: 16px 20px; border-radius: 6px;
-    font-family: var(--font-mono); font-size: 0.9rem;
-    margin: 1.5rem 0 2rem; border: 1px solid var(--border);
+    padding: 12px 16px; border-radius: 6px;
+    font-family: var(--font-mono); font-size: 0.85rem;
+    margin: 0 0 1.5rem; border: 1px solid var(--border);
   }
   .proof-banner .dot {
     width: 10px; height: 10px; border-radius: 50%;
@@ -282,61 +439,99 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .proof-unknown { border-color: var(--border); }
   .proof-loading .dot { background: var(--accent); }
 
-  .proof-table {
-    width: 100%; border-collapse: collapse;
-    font-family: var(--font-mono); font-size: 0.88rem;
+  /* Proven type cards — JS-injected, style with :global */
+  .proven-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; margin-bottom: 3rem;
   }
-  .proof-table th, .proof-table td {
+  @media (max-width: 820px) { .proven-cards { grid-template-columns: 1fr; } }
+  :global(.pv-card) {
+    border: 1px solid var(--border-accent); border-radius: var(--radius);
+    background: var(--bg-card); padding: 1.2rem 1.3rem;
+    box-shadow: 0 0 36px -18px var(--accent-glow-strong);
+    opacity: 0; transform: translateY(14px);
+    animation: fadeUp 0.6s var(--ease-out) calc(0.1s + var(--pvi, 0) * 0.12s) forwards;
+  }
+  :global(.pv-head) {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.6rem;
+  }
+  :global(.pv-type) {
+    font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-heading);
+  }
+  :global(.pv-win) {
+    font-family: var(--font-display); font-size: 3rem; line-height: 1;
+    color: var(--accent); margin-bottom: 0.9rem;
+  }
+  :global(.pv-win span) {
+    display: block; font-family: var(--font-mono); font-size: 0.62rem;
+    text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted);
+    margin-top: 0.4rem;
+  }
+  :global(.pv-rows > div) {
+    display: flex; justify-content: space-between;
+    font-family: var(--font-mono); font-size: 0.78rem;
+    padding: 0.3rem 0; border-top: 1px dashed rgba(255,255,255,0.06);
+  }
+  :global(.pv-rows span) { color: var(--text-muted); text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em; }
+  :global(.pv-rows .pos) { color: #4ade80; }
+  :global(.pv-rows .neg) { color: #ef4444; }
+  :global(.pv-empty) {
+    grid-column: 1 / -1; border: 1px dashed var(--border); border-radius: var(--radius);
+    padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem;
+    color: var(--text-muted); text-align: center;
+  }
+
+  .proof-h2 {
+    font-family: var(--font-display); font-size: 2rem; font-weight: 400;
+    letter-spacing: 0.04em; color: var(--text-heading); margin: 2.5rem 0 0.4rem;
+  }
+  .proof-sub { color: var(--text-muted); font-size: 0.9rem; max-width: 640px; margin-bottom: 1.25rem; }
+
+  /* Full audit table — horizontal scroll on phones */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  :global(.proof-table) {
+    width: 100%; border-collapse: collapse;
+    font-family: var(--font-mono); font-size: 0.88rem; min-width: 640px;
+  }
+  :global(.proof-table th), :global(.proof-table td) {
     padding: 10px 12px; text-align: left;
     border-bottom: 1px solid var(--border);
   }
-  .proof-table th { color: var(--text-muted); font-weight: 500; }
-  .proof-table td.type { font-weight: 600; }
-  .proof-table .pos { color: #4ade80; }
-  .proof-table .neg { color: #ef4444; }
-  .row-untradeable { opacity: 0.55; }
+  :global(.proof-table th) { color: var(--text-muted); font-weight: 500; }
+  :global(.proof-table td.type) { font-weight: 600; }
+  :global(.proof-table .pos) { color: #4ade80; }
+  :global(.proof-table .neg) { color: #ef4444; }
+  :global(.proof-table tbody tr) { transition: background 0.15s ease; }
+  :global(.proof-table tbody tr:hover) { background: rgba(255,255,255,0.02); }
+  :global(.row-untradeable) { opacity: 0.55; }
 
-  .badge {
+  :global(.badge) {
     font-size: 0.72rem; padding: 2px 8px; border-radius: 10px;
     border: 1px solid var(--border);
   }
-  .badge-yes { color: #4ade80; border-color: #2a7a2a; }
-  .badge-no  { color: var(--text-muted); }
+  :global(.badge-yes) { color: #4ade80; border-color: #2a7a2a; }
+  :global(.badge-no)  { color: var(--text-muted); }
 
   .meta { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;
           font-family: var(--font-mono); }
 
-  .tier-heading { margin-top: 2.5rem; }
-  .tier-blurb { color: var(--text-muted); font-size: 0.9rem; }
-  .tier-cards {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 1rem; margin-top: 1rem;
+  /* Methodology panel */
+  .method-panel {
+    border: 1px solid var(--border); border-left: 2px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: rgba(0,255,65,0.025);
+    padding: 1.1rem 1.4rem; margin: 2.5rem 0 0;
   }
-  @media (max-width: 900px) {
-    .tier-cards { grid-template-columns: 1fr; }
+  .method-head {
+    font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.25em; color: var(--accent);
+    margin-bottom: 0.6rem;
   }
-  .tier-card {
-    border: 1px solid var(--border); border-radius: 6px;
-    padding: 1rem 1.1rem; background: rgba(255,255,255,0.02);
-    font-family: var(--font-mono);
-  }
-  .tier-card h3 { margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 600; }
-  .tier-summary {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 4px 8px; font-size: 0.82rem; margin-bottom: 0.6rem;
-  }
-  .tier-summary .muted { color: var(--text-muted); margin-right: 4px; }
-  .tier-table {
-    width: 100%; border-collapse: collapse; font-size: 0.78rem;
-    margin-top: 0.3rem;
-  }
-  .tier-table th, .tier-table td {
-    padding: 6px 6px; text-align: left; border-bottom: 1px solid var(--border);
-  }
-  .tier-table th { color: var(--text-muted); font-weight: 500; }
-  .tier-table .pos { color: #4ade80; }
-  .tier-table .neg { color: #ef4444; }
-  .tier-foot { font-size: 0.75rem; margin-top: 0.5rem; }
+  .method-panel p { font-size: 0.9rem; line-height: 1.7; color: var(--text); margin: 0; }
+  .method-panel strong { color: var(--text-heading); }
+
   .tier-err { color: #ef4444; font-size: 0.8rem; }
 
   /* Equity curve */
@@ -369,4 +564,30 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   :global(.equity-legend b) { font-weight: 600; }
   :global(.equity-legend .pos) { color: #4ade80; }
   :global(.equity-legend .neg) { color: #ef4444; }
+
+  /* Conversion */
+  .proof-cta {
+    margin-top: 3.5rem; padding: 2.25rem 1.5rem; text-align: center;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background:
+      radial-gradient(ellipse 60% 120% at 50% 0%, rgba(0,255,65,0.05), transparent 70%),
+      var(--bg-alt);
+  }
+  .proof-cta h3 {
+    font-family: var(--font-display); font-size: 1.7rem; font-weight: 400;
+    letter-spacing: 0.04em; color: var(--text-heading); margin-bottom: 0.4rem;
+  }
+  .proof-cta p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.4rem; }
+  .cta-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.85rem 1.6rem; border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    transition: all 0.2s ease; cursor: pointer; border: none;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #fff; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
 </style>
