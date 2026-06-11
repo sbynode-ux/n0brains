@@ -230,6 +230,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
   .ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.3rem; }
   @media (max-width: 760px) { .ms-grid { grid-template-columns: 1fr; } }
+  @media (pointer: coarse) { .coin-tab { min-height: 40px; padding: 0.6rem 1rem; } }
+  @media (max-width: 640px) { .chart-head h1 { font-size: 2.4rem; } .coin-tab { font-size: 0.8rem; padding: 0.5rem 0.7rem; } }
   .panel { border: 1px solid var(--border); border-radius: var(--radius);
     background: var(--bg-card); padding: 1.2rem 1.4rem 1.4rem; }
   .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }

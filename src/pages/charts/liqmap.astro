@@ -33,6 +33,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-days="90" role="tab">90d</button>
         <button data-days="166" class="active" role="tab">max</button>
       </div>
+      <div id="lm-zoom" class="lm-tabs" role="tablist" aria-label="price zoom">
+        <button data-zoom="0.06" role="tab">±6%</button>
+        <button data-zoom="0.12" class="active" role="tab">±12%</button>
+        <button data-zoom="0.25" role="tab">±25%</button>
+        <button data-zoom="1" role="tab">full</button>
+      </div>
       <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
         liquidity threshold <span id="lm-thresh-val">0.85</span>
         <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0.85" aria-label="liquidity threshold" />
@@ -106,8 +112,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       height:24px; touch-action:pan-y; }
     @media (pointer:coarse) {            /* bigger tap targets on touch devices */
       .lm-thresh input[type=range] { width:170px; }
-      .lm-swatches button { width:38px; height:24px; }
-      .lm-tabs button { padding:.55rem 1rem; }
+      .lm-swatches button { width:38px; height:26px; }
+      .lm-tabs :global(button) { padding:.6rem 1.05rem; min-height:40px; }  /* ~44px touch target */
+    }
+    /* Narrow screens: tighten controls, give threshold its own full row, shrink fonts */
+    @media (max-width: 640px) {
+      .lm-controls { gap:.7rem; }
+      .lm-tabs :global(button) { font-size:.78rem; padding:.5rem .7rem; }
+      .lm-thresh { width:100%; }
+      .lm-thresh input[type=range] { flex:1; width:auto; }
+      .lm-swatches { width:100%; }
     }
     #lm-thresh-val { color:#cfd2dc; font-variant-numeric:tabular-nums; min-width:2.5em; }
     .lm-swatches { display:flex; gap:.3rem; }
@@ -147,6 +161,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
     let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
+    let FOCUS_PCT = 0.12;     // y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
@@ -211,6 +226,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       document.querySelectorAll("#lm-range button").forEach((b) =>
         b.addEventListener("click", () => { days = +b.dataset.days; syncTabs(); load(); }));
     }
+    function bindZoom() {
+      // price-axis zoom: view-only, no refetch — just re-render lastData.
+      document.querySelectorAll("#lm-zoom button").forEach((b) =>
+        b.addEventListener("click", () => {
+          FOCUS_PCT = +b.dataset.zoom;
+          syncTabs();
+          if (lastData) render(lastData);
+        }));
+    }
     function syncTabs() {
       document.querySelectorAll("#lm-coins button").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
@@ -218,6 +242,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         b.classList.toggle("active", b.dataset.venue === venue));
       document.querySelectorAll("#lm-range button").forEach((b) =>
         b.classList.toggle("active", +b.dataset.days === days));
+      document.querySelectorAll("#lm-zoom button").forEach((b) =>
+        b.classList.toggle("active", +b.dataset.zoom === FOCUS_PCT));
       // range applies to BOTH now — CEX server-side (?days=), DEX client-side slice.
     }
     function banner(state, text) {
@@ -275,25 +301,55 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const cellW = plotW / cols, cellH = plotH / rows;
       // stash geometry (CSS px) so the hover handler can map cursor → cell
       lastGeom = { padL, padT, plotW, plotH, cellW, cellH, rows, cols, W, H, dpr };
-      const pMin = d.price_min, pMax = d.price_max, pSpan = (pMax - pMin) || 1;
+      // (vMin/vMax/vSpan added to lastGeom just below, once the focus window is computed)
+      // FOCUS the y-axis on a band around current price. The full liq range
+      // (price_min..price_max) can be ±40% wide, which buries price + the dense
+      // near-price liquidity in a thin sliver (most of the chart is empty). Like
+      // Coinglass, we default the view to current price ± FOCUS_PCT so the
+      // relevant zone fills the chart; the "zoom" buttons widen it.
+      const rowPrices = d.prices || [];
+      const cands = d.candles || [];
+      const curPrice = (cands.length ? cands[cands.length - 1].c
+        : (rowPrices.length ? rowPrices[Math.floor(rowPrices.length / 2)] : (d.price_min + d.price_max) / 2));
+      const fullSpan = (d.price_max - d.price_min) || 1;
+      // FOCUS_PCT from the zoom level (default 0.12 = ±12%); never wider than data.
+      const halfBand = Math.min(curPrice * FOCUS_PCT, fullSpan / 2 + 1);
+      let vMin = curPrice - halfBand, vMax = curPrice + halfBand;
+      // clamp the window into the available data range
+      if (vMin < d.price_min) { vMax += (d.price_min - vMin); vMin = d.price_min; }
+      if (vMax > d.price_max) { vMin -= (vMax - d.price_max); vMax = d.price_max; }
+      vMin = Math.max(d.price_min, vMin); vMax = Math.min(d.price_max, vMax);
+      const vSpan = (vMax - vMin) || 1;
+      lastGeom.vMin = vMin; lastGeom.vMax = vMax; lastGeom.vSpan = vSpan;
       const xOfTime = (ts) => {
         const times = d.times || [];
         if (times.length < 2) return padL + plotW/2;
         const f = (ts - times[0]) / (times[times.length-1] - times[0]);
         return padL + Math.max(0, Math.min(1, f)) * plotW;
       };
-      const yOfPrice = (p) => padT + Math.max(0, Math.min(1, (pMax - p) / pSpan)) * plotH;
+      // map a price into the FOCUS window; returns null if outside (so we can skip)
+      const yOfPrice = (p) => padT + (vMax - p) / vSpan * plotH;
+      const inBand = (p) => p >= vMin && p <= vMax;
 
-      // heatmap cells
+      // heatmap cells — draw each row at its true price position in the focus
+      // window (rows are evenly binned across the FULL range, so we place them by
+      // price, not by row index, and skip rows outside the band).
+      const rowH = plotH * ( (fullSpan / rows) / vSpan );  // a full-range bin's height in the zoomed view
+      ctx.save();
+      ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
       for (let ri = 0; ri < rows; ri++) {
+        const rp = rowPrices[ri];
+        if (rp == null || !inBand(rp)) continue;
+        const y = yOfPrice(rp) - rowH / 2;
         for (let ci = 0; ci < cols; ci++) {
           const t = norm(grid[ri][ci]);
-          if (t >= 0) {                             // -1 = below threshold / empty → skip
+          if (t >= 0) {
             ctx.fillStyle = heatColor(t);
-            ctx.fillRect(padL + ci*cellW, padT + ri*cellH, Math.ceil(cellW)+0.5, Math.ceil(cellH)+0.5);
+            ctx.fillRect(padL + ci*cellW, y, Math.ceil(cellW)+0.5, Math.ceil(rowH)+0.5);
           }
         }
       }
+      ctx.restore();
 
       // price candles overlay (OHLC). CoinGecko's /ohlc buckets are NOT continuous
       // (close[i] != open[i+1], ~66$ gaps) — that leaves visible breaks between
@@ -307,30 +363,30 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         const stitched = candles.map((k, i) => i === 0 ? k
           : { ...k, o: candles[i-1].c });
         const cw = Math.max(1.5, plotW / stitched.length * 0.85);
+        // clip to the plot rect so candles outside the focus band don't bleed out
+        ctx.save();
+        ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
         for (const k of stitched) {
           const x = xOfTime(k.t);
           const up = k.c >= k.o;
-          ctx.strokeStyle = up ? "rgba(120,230,160,0.9)" : "rgba(255,120,110,0.9)";
+          ctx.strokeStyle = up ? "rgba(120,230,160,0.95)" : "rgba(255,120,110,0.95)";
           ctx.fillStyle = ctx.strokeStyle;
           ctx.lineWidth = 1;
-          // wick (high–low)
           ctx.beginPath(); ctx.moveTo(x, yOfPrice(k.h)); ctx.lineTo(x, yOfPrice(k.l)); ctx.stroke();
-          // body (open–close), min 1px tall so dojis show
           const yo = yOfPrice(k.o), yc = yOfPrice(k.c);
           ctx.fillRect(x - cw/2, Math.min(yo,yc), cw, Math.max(1, Math.abs(yc-yo)));
         }
+        ctx.restore();
       }
 
-      // price axis (Y)
+      // price axis (Y) — ticks stepped evenly across the FOCUS window (vMin..vMax)
       ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "right";
-      const prices = d.prices || [], yticks = 7;
+      const yticks = 7;
       for (let k = 0; k <= yticks; k++) {
-        const idx = Math.round((rows - 1) * k / yticks);
-        const py = padT + idx*cellH + cellH/2, price = prices[idx];
-        if (price != null) {
-          ctx.fillStyle = "rgba(35,38,47,0.6)"; ctx.fillRect(padL, py, plotW, 0.5);
-          ctx.fillStyle = "#8b909c"; ctx.fillText(fmtPx(price), padL-6, py+3);
-        }
+        const price = vMax - vSpan * k / yticks;
+        const py = padT + (k / yticks) * plotH;
+        ctx.fillStyle = "rgba(35,38,47,0.6)"; ctx.fillRect(padL, py, plotW, 0.5);
+        ctx.fillStyle = "#8b909c"; ctx.fillText(fmtPx(price), padL-6, py+3);
       }
 
       // time axis (X) — format by SPAN: short (hours) → HH:MM, longer → M/D.
@@ -498,9 +554,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         // only react inside the plot area
         if (x < g.padL || x > g.padL + g.plotW || y < g.padT || y > g.padT + g.plotH) { hide(); return; }
         let ci = Math.floor((x - g.padL) / g.cellW);
-        let ri = Math.floor((y - g.padT) / g.cellH);
         ci = Math.max(0, Math.min(g.cols - 1, ci));
-        ri = Math.max(0, Math.min(g.rows - 1, ri));
+        // cursor-y → price via the focus window, then nearest grid row BY PRICE
+        // (rows are drawn at their price position now, not by uniform cellH).
+        const cursorPrice = (g.vMax != null)
+          ? g.vMax - ((y - g.padT) / g.plotH) * g.vSpan
+          : null;
+        let ri = 0;
+        if (cursorPrice != null && (d.prices || []).length) {
+          let bestD = 1e9;
+          for (let r = 0; r < g.rows; r++) {
+            const rp = d.prices[r];
+            if (rp == null) continue;
+            const dd = Math.abs(rp - cursorPrice);
+            if (dd < bestD) { bestD = dd; ri = r; }
+          }
+        } else {
+          ri = Math.max(0, Math.min(g.rows - 1, Math.floor((y - g.padT) / g.cellH)));
+        }
         let usd = (d.grid[ri] || [])[ci] || 0;
         // empty cell → snap to the nearest band in this column so the popup always
         // gives feedback (find the closest row with liquidity)
@@ -547,7 +618,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoinTabs(); bindVenue(); bindRange(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
+      buildCoinTabs(); bindVenue(); bindRange(); bindZoom(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
