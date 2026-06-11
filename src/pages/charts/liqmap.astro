@@ -34,8 +34,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-days="166" class="active" role="tab">max</button>
       </div>
       <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
-        liquidity threshold <span id="lm-thresh-val">0.00</span>
-        <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0" aria-label="liquidity threshold" />
+        liquidity threshold <span id="lm-thresh-val">0.85</span>
+        <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0.85" aria-label="liquidity threshold" />
       </label>
       <div id="lm-palette" class="lm-swatches" role="group" aria-label="color scheme">
         <button data-pal="viridis" class="active" title="viridis" style="background:linear-gradient(90deg,#28165a,#149696,#28c85a,#f0f028)"></button>
@@ -146,7 +146,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0;
+    let coin = "BTC", venue = "cex", days = 166, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = 0.85;
     let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
@@ -218,9 +218,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         b.classList.toggle("active", b.dataset.venue === venue));
       document.querySelectorAll("#lm-range button").forEach((b) =>
         b.classList.toggle("active", +b.dataset.days === days));
-      // range applies to CEX only (DEX history too short yet) — hide for DEX
-      const rng = $("lm-range");
-      if (rng) rng.style.display = (venue === "cex") ? "" : "none";
+      // range applies to BOTH now — CEX server-side (?days=), DEX client-side slice.
     }
     function banner(state, text) {
       const b = $("lm-banner");
@@ -464,6 +462,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     function bindThreshold() {
       const inp = $("lm-thresh-input"), val = $("lm-thresh-val");
       if (!inp) return;
+      inp.value = threshold;                        // sync slider to the 0.85 default
+      val.textContent = threshold.toFixed(2);
       inp.addEventListener("input", () => {
         threshold = +inp.value;
         val.textContent = threshold.toFixed(2);
