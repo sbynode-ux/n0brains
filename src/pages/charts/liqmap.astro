@@ -164,7 +164,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // above/below asymmetry (one side can be 4x the other), so a high threshold
     // amputates the smaller side — DEX uses a lower floor to show BOTH sides.
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
-    const VENUE_DEFAULT_THR  = { dex: 0.55, cex: 0.85 };
+    const VENUE_DEFAULT_THR  = { dex: 0.8, cex: 0.85 };
     let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.cex;
     let FOCUS_PCT = 0.03;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
