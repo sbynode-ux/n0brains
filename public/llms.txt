@@ -26,7 +26,7 @@ n0brains is a crypto signal API built for autonomous trading agents and systemat
 ## Pricing
 
 - **Free** — $0/mo. 60 req/min, 15-minute signal delay, REST only.
-- **Pro** — $19.99/mo. 600 req/min, real-time signals, REST + WebSocket + Webhooks, all sources and intelligence layers.
+- **Pro** — $39.99/mo. 600 req/min, real-time signals, REST + WebSocket + Webhooks, all sources and intelligence layers.
 
 ## API
 

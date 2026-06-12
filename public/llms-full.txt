@@ -13,7 +13,7 @@ n0brains ingests from 10+ real-time sources, classifies every market event via L
 | Tier | Price | Rate limit | Delay | Access |
 |------|-------|-----------|-------|--------|
 | Free | $0/mo | 60 req/min | 15 min | REST only, limited fields |
-| Pro  | $19.99/mo | 600 req/min | Real-time | REST + WebSocket + Webhooks, all fields |
+| Pro  | $39.99/mo | 600 req/min | Real-time | REST + WebSocket + Webhooks, all fields |
 
 Sign up: https://n0brains.com/signup
 
