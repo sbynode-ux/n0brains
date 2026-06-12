@@ -56,7 +56,7 @@ This data is sourced from **n0brains.com Signals Pro**, which ingests from 10+ s
 curl -H "X-API-Key: your_key" https://api.n0brains.com/signals
 ```
 
-Start free at [n0brains.com](https://n0brains.com). Pro tier ($19.99/month) adds WebSocket streaming, whale tracking, and full source detail.
+Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds WebSocket streaming, whale tracking, and full source detail.
 
 ## Methodology
 

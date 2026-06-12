@@ -87,7 +87,7 @@ This analysis was built using public exchange APIs plus the **n0brains Macro Pul
 curl -H "X-API-Key: your_key" https://api.n0brains.com/macro/latest
 ```
 
-For real-time funding rates, liquidation cascades, and whale tracking — plus WebSocket streaming — upgrade to [n0brains Pro](https://n0brains.com) at $19.99/month.
+For real-time funding rates, liquidation cascades, and whale tracking — plus WebSocket streaming — upgrade to [n0brains Pro](https://n0brains.com) at $39.99/month.
 
 ## Methodology
 

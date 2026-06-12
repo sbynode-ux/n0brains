@@ -1,76 +1,119 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import MonoChip from "../components/MonoChip.astro";
 
 const channels = [
-  { chip: "@",   title: "Email",       href: "mailto:hello@n0brains.com",
-    value: "hello@n0brains.com",       note: "For general inquiries and partnership requests." },
-  { chip: "API", title: "API Support", href: "mailto:support@n0brains.com",
-    value: "support@n0brains.com",     note: "Pro tier users get priority response. Include your API key in the subject line." },
-  { chip: "BS",  title: "Bluesky",     href: "https://bsky.app/profile/n0brains.com",
-    value: "@n0brains.com",            note: "Signal highlights, market commentary, and new feature announcements." },
-  { chip: "TG",  title: "Telegram",    href: "https://t.me/n0brains_signals",
-    value: "t.me/n0brains_signals",    note: "Community channel for signal discussions and real-time updates." },
+  { chip: "@",   title: "EMAIL",       value: "hello@n0brains.com",        href: "mailto:hello@n0brains.com",            meta: "general",          note: "For general inquiries and partnership requests." },
+  { chip: "SUP", title: "SUPPORT",     value: "support@n0brains.com",      href: "mailto:support@n0brains.com",          meta: "pro · priority",   note: "Pro tier users get priority response." },
+  { chip: "X",   title: "X / TWITTER", value: "@n0brainsai",               href: "https://x.com/n0brainsai",             meta: "live commentary",  note: "Signal highlights, market commentary, and product updates." },
+  { chip: "YT",  title: "YOUTUBE",     value: "youtube.com/@n0brainsai",   href: "https://youtube.com/@n0brainsai",      meta: "video",            note: "Video episodes and walkthroughs from the n0brains channel." },
+  { chip: "IG",  title: "INSTAGRAM",   value: "@n0brainsai",               href: "https://www.instagram.com/n0brainsai", meta: "highlights",       note: "Signal highlights and visuals from the audit desk." },
+  { chip: "BS",  title: "BLUESKY",     value: "@n0brains.com",             href: "https://bsky.app/profile/n0brains.com", meta: "announcements",   note: "Signal highlights, market commentary, and new feature announcements." },
+  { chip: "TG",  title: "TELEGRAM",    value: "t.me/n0brainssignals",      href: "https://t.me/n0brainssignals",         meta: "community",        note: "Community channel for signal discussions and real-time updates." },
 ];
 ---
 
 <BaseLayout
   title="contact"
-  description="Get in touch with n0brains — email, API support, Bluesky, Telegram community."
+  description="Contact n0brains — email, support, X, YouTube, Instagram, Bluesky, and Telegram. Questions, feedback, or issues with the signals API: we read everything, reply to most."
 >
-  <section class="about-section">
-    <h1>contact</h1>
-    <p>Questions, feedback, or issues with the signals API? Reach out through the channels below.</p>
+  <section class="contact-page">
+    <div class="ct-hero">
+      <div class="ct-hero-grid" aria-hidden="true"></div>
+      <p class="ct-kicker"><span class="ct-dash"></span><span data-scramble>contact · open channels</span></p>
+      <h1 class="ct-h1">WE READ <span class="accent">EVERYTHING.</span></h1>
+      <p class="ct-lede">
+        Questions, feedback, or issues with the signals API? Reach out through
+        the channels below — and yes, we reply to most.
+      </p>
+    </div>
 
-    <div class="contact-grid">
+    <div class="ct-grid">
       {channels.map((c) => (
-        <div class="contact-card">
-          <div class="contact-icon"><MonoChip text={c.chip} /></div>
-          <h3>{c.title}</h3>
-          <p><a href={c.href}>{c.value}</a></p>
-          <p class="contact-note">{c.note}</p>
-        </div>
+        <a class="ct-card" href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel={c.href.startsWith("http") ? "noopener noreferrer" : undefined}>
+          <div class="ct-card-top">
+            <span class="ct-chip">{c.chip}</span>
+            <span class="ct-meta">{c.meta}</span>
+          </div>
+          <div class="ct-title">{c.title}</div>
+          <div class="ct-value">{c.value}</div>
+          <p class="ct-note">{c.note}</p>
+        </a>
       ))}
     </div>
 
-    <p style="margin-top: 48px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text);">
-      // we read everything, reply to most
-    </p>
+    <p class="ct-signoff">// we read everything, reply to most</p>
   </section>
+
+  <style>
+    .contact-page { max-width: 1100px; margin: 0 auto; }
+
+    .ct-hero { position: relative; padding: 2rem 0 3rem; }
+    .ct-hero-grid {
+      position: absolute; inset: -40px -10% 0; pointer-events: none;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 54px 54px;
+      -webkit-mask-image: radial-gradient(ellipse 50% 70% at 30% 25%, #000 0%, transparent 75%);
+      mask-image: radial-gradient(ellipse 50% 70% at 30% 25%, #000 0%, transparent 75%);
+      opacity: 0.5;
+    }
+    .ct-kicker {
+      position: relative;
+      font-family: var(--font-mono); font-size: 0.69rem;
+      letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent);
+      margin-bottom: 18px; display: flex; align-items: center; gap: 12px;
+    }
+    .ct-dash { display: block; width: 32px; height: 1px; background: var(--accent); }
+    .ct-h1 {
+      position: relative; margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(3rem, 8.5vw, 6.5rem);
+      font-weight: 400; line-height: 0.9; letter-spacing: 0.02em;
+      color: var(--text-heading);
+    }
+    .ct-h1 .accent { color: var(--accent); text-shadow: 0 0 40px var(--accent-glow-strong); }
+    .ct-lede {
+      position: relative;
+      font-size: 1rem; line-height: 1.65; color: var(--text);
+      max-width: 540px; margin: 24px 0 0;
+    }
+
+    .ct-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    }
+    @media (max-width: 720px) { .ct-grid { grid-template-columns: 1fr; } }
+    .ct-card {
+      display: block;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px 28px;
+      color: var(--text);
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .ct-card:hover { border-color: rgba(0,255,65,0.35); background: var(--bg-hover); color: var(--text); }
+    .ct-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .ct-chip {
+      font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700;
+      color: var(--accent); border: 1px solid var(--border-accent);
+      border-radius: 3px; padding: 3px 9px; letter-spacing: 0.08em;
+    }
+    .ct-meta {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint);
+    }
+    .ct-title {
+      font-family: var(--font-display); font-size: 1.75rem; font-weight: 400;
+      letter-spacing: 0.03em; color: var(--text-heading); line-height: 1.1;
+    }
+    .ct-value {
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent);
+      margin: 4px 0 10px; word-break: break-all;
+    }
+    .ct-note { margin: 0; font-size: 0.84rem; line-height: 1.6; color: var(--text); }
+
+    .ct-signoff {
+      margin: 36px 0 0;
+      font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted);
+    }
+  </style>
 </BaseLayout>
-
-<style>
-  .contact-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 1.5rem; margin-top: 2rem;
-  }
-  @media (max-width: 600px) { .contact-grid { grid-template-columns: 1fr; } }
-
-  .contact-card {
-    background: var(--bg-alt);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    transition: border-color 0.2s ease;
-  }
-  .contact-card:hover { border-color: var(--accent); }
-
-  .contact-icon { margin-bottom: 0.85rem; }
-
-  .contact-card h3 {
-    font-family: var(--font-mono); font-size: 0.85rem;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--accent); margin-bottom: 0.5rem;
-  }
-  .contact-card p { font-size: 0.92rem; margin-bottom: 0.25rem; }
-  .contact-card a {
-    color: var(--text-heading);
-    text-decoration: underline; text-underline-offset: 3px;
-  }
-  .contact-card a:hover { color: var(--accent); }
-  .contact-note {
-    font-size: 0.82rem !important;
-    color: var(--text);
-    margin-top: 0.5rem !important;
-  }
-</style>

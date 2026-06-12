@@ -53,7 +53,7 @@ The n0brains Macro Pulse calls the regime **unknown** with BTC bias **neutral** 
 curl -H "X-API-Key: your_key" "https://api.n0brains.com/signals?signal_type=whale"
 ```
 
-Start free at [n0brains.com](https://n0brains.com). Pro tier ($19.99/month) adds full whale tracking detail and WebSocket streaming.
+Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds full whale tracking detail and WebSocket streaming.
 
 ## Methodology
 

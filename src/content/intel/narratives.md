@@ -155,7 +155,7 @@ curl https://api.n0brains.com/performance
 curl -H "X-API-Key: your_key" https://api.n0brains.com/macro/latest
 ```
 
-For real-time signals with entry, stop-loss, and take-profit levels across 10+ data sources — start free at [n0brains.com](https://n0brains.com). Pro tier ($19.99/month) adds WebSocket streaming, whale tracking, and full source detail.
+For real-time signals with entry, stop-loss, and take-profit levels across 10+ data sources — start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds WebSocket streaming, whale tracking, and full source detail.
 
 ## Methodology
 

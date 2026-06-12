@@ -24,6 +24,7 @@ const {
 } = Astro.props;
 
 const url        = canonicalURL ?? Astro.url;
+const navPath    = Astro.url.pathname;
 const siteUrl    = "https://n0brains.com";
 const fullTitle  = homepage ? "n0brains — Crypto signals that prove their own edge" : `${title} — n0brains`;
 const absoluteOg = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
@@ -68,7 +69,7 @@ const softwareAppLd = homepage ? {
   operatingSystem: "Web",
   offers: [
     { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tier — 60 req/min, 15-minute signal delay, REST API" },
-    { "@type": "Offer", price: "19.99", priceCurrency: "USD", description: "Pro tier — 600 req/min, real-time signals, REST + WebSocket + Webhooks" },
+    { "@type": "Offer", price: "39.99", priceCurrency: "USD", description: "Pro tier — 600 req/min, real-time signals, REST + WebSocket + Webhooks" },
   ],
   featureList: [
     "Real-time whale tracking",
@@ -159,21 +160,63 @@ const softwareAppLd = homepage ? {
             // Every call. On the record.
           </span>
         )}
-        <nav aria-label="Primary">
-          <a href="/docs/">docs</a>
-          <a href="/docs/quickstart">quickstart</a>
-          <a href="/proof">proof</a>
-          <a href="/charts">charts</a>
-          <a href="/about">about</a>
-          <a href="/intel">intel</a>
-          <a href="/blog">blog</a>
-          <a href="/podcast">podcast</a>
-          <a href="/login" id="nav-login">login</a>
-          <a href="/dashboard" id="nav-account">account</a>
-          <a href="#" id="nav-logout" hidden>logout</a>
+        <nav class="rail" aria-label="Primary">
+          <div class="rail-cluster">
+            <span class="rail-label">product</span>
+            <div class="rail-links">
+              <a href="/docs/" class={navPath.startsWith("/docs") ? "active" : ""}>docs</a>
+              <a href="/proof" class={navPath.startsWith("/proof") ? "active" : ""}>proof</a>
+              <a href="/charts/liqmap" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
+              <a href="/pricing" class={navPath.startsWith("/pricing") ? "active" : ""}>pricing</a>
+            </div>
+          </div>
+          <span class="rail-divider" aria-hidden="true"></span>
+          <div class="rail-cluster">
+            <span class="rail-label">research</span>
+            <div class="rail-links">
+              <a href="/intel" class={navPath.startsWith("/intel") ? "active" : ""}>intel</a>
+              <a href="/blog" class={navPath.startsWith("/blog") ? "active" : ""}>blog</a>
+              <a href="/podcast" class={navPath.startsWith("/podcast") ? "active" : ""}>podcast</a>
+            </div>
+          </div>
+          <span class="rail-divider" aria-hidden="true"></span>
+          <div class="rail-auth">
+            <a href="/login" class={navPath.startsWith("/login") ? "active" : ""}>login</a>
+            <a href="/signup" class="rail-cta">start free →</a>
+          </div>
         </nav>
+        <button id="nav-burger" class="nav-burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-sheet">
+          <span></span><span></span><span></span>
+        </button>
       </div>
     </header>
+
+    <div id="nav-sheet" class="nav-sheet" hidden>
+      <nav aria-label="Mobile">
+        {[
+          ["/docs/", "docs", "01"],
+          ["/proof", "proof", "02"],
+          ["/charts/liqmap", "charts", "03"],
+          ["/pricing", "pricing", "04"],
+          ["/intel", "intel", "05"],
+          ["/blog", "blog", "06"],
+          ["/podcast", "podcast", "07"],
+        ].map(([href, label, idx]) => {
+          const active = navPath.startsWith(href === "/charts/liqmap" ? "/charts" : (href === "/docs/" ? "/docs" : href));
+          return (
+            <a href={href} class={`sheet-link ${active ? "active" : ""}`}>
+              <span class="sheet-name">{label}{active && <span class="sheet-here"> · here</span>}</span>
+              <span class="sheet-idx">{idx}</span>
+            </a>
+          );
+        })}
+        <div class="sheet-actions">
+          <a href="/login" class="sheet-btn sheet-btn-ghost">login</a>
+          <a href="/signup" class="sheet-btn sheet-btn-solid">start free →</a>
+        </div>
+        <p class="sheet-signoff" aria-hidden="true">// every call. on the record.</p>
+      </nav>
+    </div>
 
     <main id="main">
       <slot />
@@ -194,6 +237,9 @@ const softwareAppLd = homepage ? {
           </a>
         </div>
         <p class="footer-links">
+          <a href="/about">about</a>
+          <a href="/status">status</a>
+          <a href="/changelog">changelog</a>
           <a href="/privacy">privacy</a>
           <a href="/terms">terms</a>
           <a href="/rss.xml">rss</a>
@@ -207,43 +253,6 @@ const softwareAppLd = homepage ? {
         </p>
       </div>
     </footer>
-
-    <script>
-      /* Auth-aware nav: hide "login" + show "logout" once a session exists.
-         Static site → auth state lives in localStorage (set by login/signup). */
-      (() => {
-        const token = localStorage.getItem("auth_token");
-        const login = document.getElementById("nav-login");
-        const logout = document.getElementById("nav-logout");
-        if (token) {
-          if (login) login.hidden = true;
-          if (logout) logout.hidden = false;
-        }
-        if (logout) logout.addEventListener("click", (e) => {
-          e.preventDefault();
-          ["auth_token", "tier", "api_key"].forEach((k) => localStorage.removeItem(k));
-          window.location.href = "/";
-        });
-        // Refresh cached tier from the server so an upgrade (or expiry) reflects
-        // everywhere without a re-login. Cached localStorage.tier was going stale
-        // after a Stripe upgrade, leaving Pro users looking like free.
-        if (token) {
-          const base = (location.hostname === "127.0.0.1" || location.hostname === "localhost")
-            ? "http://127.0.0.1:8000" : "https://api.n0brains.com";
-          fetch(base + "/auth/me", { headers: { Authorization: "Bearer " + token } })
-            .then((r) => r.ok ? r.json() : null)
-            .then((me) => {
-              if (!me) return;
-              if (me.tier) localStorage.setItem("tier", me.tier);
-              const k = (me.api_keys && me.api_keys[0]) || null;
-              // store the full key only if the API ever returns it (it returns
-              // key_prefix only; charts use the JWT, so this is best-effort).
-              if (k && k.key) localStorage.setItem("api_key", k.key);
-            })
-            .catch(() => {});
-        }
-      })();
-    </script>
 
     <script>
       (() => {
@@ -273,6 +282,26 @@ const softwareAppLd = homepage ? {
           }
         }, { passive: true });
         update();
+
+        /* Mobile nav sheet. */
+        const burger = document.getElementById("nav-burger");
+        const sheet = document.getElementById("nav-sheet");
+        if (burger && sheet) {
+          const setOpen = (open: boolean) => {
+            sheet.hidden = !open;
+            burger.setAttribute("aria-expanded", String(open));
+            burger.classList.toggle("open", open);
+            document.documentElement.style.overflow = open ? "hidden" : "";
+          };
+          burger.addEventListener("click", () =>
+            setOpen(sheet.hidden));
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !sheet.hidden) setOpen(false);
+          });
+          sheet.addEventListener("click", (e) => {
+            if ((e.target as HTMLElement).closest("a")) setOpen(false);
+          });
+        }
 
         /* Legacy .post-card reveal (blog / intel lists). */
         const cards = document.querySelectorAll(".post-card");

@@ -97,7 +97,7 @@ These levels are computed and served by the **n0brains S/R Levels API**, which t
 curl -H "X-API-Key: your_key" https://api.n0brains.com/levels/BTC
 ```
 
-For real-time liquidation cascade detection via Binance WebSocket, whale tracking, and full signal detail — upgrade to [n0brains Pro](https://n0brains.com) at $19.99/month.
+For real-time liquidation cascade detection via Binance WebSocket, whale tracking, and full signal detail — upgrade to [n0brains Pro](https://n0brains.com) at $39.99/month.
 
 ## Methodology
 
