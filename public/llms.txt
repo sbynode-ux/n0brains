@@ -6,6 +6,10 @@
 
 n0brains is a crypto signal API built for autonomous trading agents and systematic strategies. Every market event is classified, cross-corroborated across sources, and scored before it reaches the API. You get direction, urgency, confidence, entry/stop/take-profit hints — not a raw feed.
 
+## What makes it different — we publish our win-rate
+
+Most signal services ask you to trust a backtest. n0brains publishes its real, live track record instead. At https://n0brains.com/proof every signal type is measured against actual post-signal price action (forward returns, not a backtest). A type is marked **proven** only when it beats holding Bitcoin AND is profitable on its own, with a 95% confidence interval above zero. We publish our **failures** next to our winners — and demote our own weak signals in public, with the reason each one didn't make the cut. That public, auditable win-rate is the whole brand: numbers rule, intel is everyone's right.
+
 ## Key capabilities
 
 - **Macro Pulse** — daily BTC + ETH directional bias (regime, conviction, key levels, invalidation). Weekly 30-day deep-dive every Sunday.
@@ -22,6 +26,22 @@ n0brains is a crypto signal API built for autonomous trading agents and systemat
 - **Wallet DNA** — whale wallet archetypes (VC, market maker, MEV, smart whale, government, sniper); stealth accumulation flag.
 - **Trust & scam scoring** — GoPlus honeypot check, mint function, sell tax, rug probability per token.
 - **Semantic signal search** — BGE-M3 embeddings; find signals by meaning, not keywords.
+
+## Live charts (free & interactive)
+
+At https://n0brains.com/charts — live data, most of it free:
+- **Win-rate scoreboard** (/charts/win-rate) — the audited per-type win-rate vs Bitcoin, visualized, with the demoted/failed types shown too.
+- **Market-state gauge** (/charts/market-state) — live bull/bear/neutral directional consensus per coin (BTC + ETH free).
+- **Liquidation heatmap** (/charts/liqmap) — REAL on-chain DEX positions (Hyperliquid + GMX) showing where leveraged traders get liquidated. The kind of data other tools charge hundreds a month for; here it's free.
+- **Support/resistance levels** (/charts/levels) — order-book + pivot levels overlaid on price.
+
+## The Agent Race
+
+20 trading bots, each a different strategy, compete live 24/7 paper-trading real n0brains signals on a public stream. It's an always-on, transparent proof that the signals work — and surfaces which strategies actually win.
+
+## Delivery for agents
+
+REST, WebSocket, Webhooks, **MCP** (hosted Model Context Protocol server — drop n0brains tools straight into Claude/Cursor/Cline), and **x402** pay-per-call (USDC on Base, no account; discovery at /.well-known/x402.json). Plus a stdlib Python CLI (`pip install n0brains-cli`).
 
 ## Pricing
 
@@ -48,7 +68,11 @@ Skill file: https://n0brains.com/agents/
 ## Links
 
 - Homepage: https://n0brains.com
+- Proof (live audited win-rate): https://n0brains.com/proof
+- Live charts: https://n0brains.com/charts
 - API docs: https://n0brains.com/docs/
+- MCP server: https://api.n0brains.com/mcp/
+- x402 discovery: https://api.n0brains.com/.well-known/x402.json
 - Agent integration: https://n0brains.com/agents/
 - Market intel: https://n0brains.com/intel/
 - Sign up (free): https://n0brains.com/signup
