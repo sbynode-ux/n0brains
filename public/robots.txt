@@ -3,4 +3,26 @@ Allow: /
 Disallow: /login
 Disallow: /signup
 
+# We build for agents — search crawlers and AI bots are explicitly welcome.
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://n0brains.com/sitemap-index.xml

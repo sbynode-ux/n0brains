@@ -17,11 +17,14 @@ jobs:
             "urlList": [
               "https://n0brains.com/",
               "https://n0brains.com/docs/",
-              "https://n0brains.com/agents/",
+              "https://n0brains.com/pricing/",
+              "https://n0brains.com/proof/",
+              "https://n0brains.com/charts/liqmap/",
+              "https://n0brains.com/about/",
+              "https://n0brains.com/contact/",
               "https://n0brains.com/blog/",
               "https://n0brains.com/intel/",
               "https://n0brains.com/podcast/",
-              "https://n0brains.com/about",
               "https://n0brains.com/signals/"
             ]
           }'
