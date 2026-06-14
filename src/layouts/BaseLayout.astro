@@ -146,9 +146,17 @@ const softwareAppLd = homepage ? {
     <a href="#main" class="skip-link">Skip to content</a>
     <div id="scroll-progress" aria-hidden="true"></div>
 
-    <a class="founding-banner" href="/pricing?utm_source=site&utm_medium=banner&utm_campaign=founding20">
-      🏁 <strong>Founding&nbsp;20</strong> — code <span class="fb-code">RACE</span> at checkout = 1&nbsp;month Pro free, in exchange for honest feedback. 20 seats, then it's gone&nbsp;→
-    </a>
+    <!-- Rotating announcement bar: alternates the Founding-20 promo and the
+         Coinbase-Bazaar / agentic.market listing. One bar (no stacking); the two
+         slides cross-fade on a CSS timer. -->
+    <div class="founding-banner banner-rotator" role="region" aria-label="Announcements">
+      <a class="br-slide br-slide-1" href="/pricing?utm_source=site&utm_medium=banner&utm_campaign=founding20">
+        🏁 <strong>Founding&nbsp;20</strong> — code <span class="fb-code">RACE</span> at checkout = 1&nbsp;month Pro free, in exchange for honest feedback. 20 seats, then it's gone&nbsp;→
+      </a>
+      <a class="br-slide br-slide-2" href="/docs/x402?utm_source=site&utm_medium=banner&utm_campaign=x402_bazaar">
+        🤖 n0brains is live on the <strong>Coinbase x402 Bazaar</strong> &amp; <strong>agentic.market</strong> — your AI agent can pay-per-call in USDC, no signup&nbsp;→
+      </a>
+    </div>
 
     <header id="site-header">
       <div class="inner">

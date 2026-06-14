@@ -162,6 +162,49 @@ select:focus-visible {
   font-weight: 700;
 }
 
+/* ─── Rotating announcement bar (one bar, two cross-fading slides) ───
+   Avoids stacking a second bar under the Founding-20 promo: a single bar
+   cross-fades between the promo and the Coinbase-Bazaar/agentic.market notice. */
+.banner-rotator {
+  position: relative;
+  padding: 0;                              /* slides own the padding */
+  min-height: calc(0.82rem * 1.4 + 18px);  /* reserve height so layout never jumps */
+  overflow: hidden;
+}
+.banner-rotator .br-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  color: #000;
+  text-decoration: none;
+  opacity: 0;
+  animation: br-cycle 14s infinite;
+}
+.banner-rotator .br-slide:hover { filter: brightness(1.15); }
+.banner-rotator .br-slide-2 { animation-delay: 7s; }   /* second slide starts mid-cycle */
+
+/* visible ~6s, ~1s fade, hidden the rest of the 14s loop */
+@keyframes br-cycle {
+  0%   { opacity: 0; }
+  3%   { opacity: 1; }
+  46%  { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Reduced motion: no animation, show promo by default, reveal the listing
+   notice on keyboard focus so it stays reachable without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .banner-rotator .br-slide { animation: none; }
+  .banner-rotator .br-slide-1 { opacity: 1; position: relative; }
+  .banner-rotator .br-slide-2 { opacity: 0; }
+  .banner-rotator:focus-within .br-slide-1 { opacity: 0; }
+  .banner-rotator:focus-within .br-slide-2 { opacity: 1; position: relative; }
+}
+
 /* ─── Scroll progress (top hairline, scaleX-driven — compositor only) ─── */
 #scroll-progress {
   position: fixed;
