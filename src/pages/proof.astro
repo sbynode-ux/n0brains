@@ -84,6 +84,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="gate-crit"><span class="gc-check">✓</span> n ≥ 30 measured signals</div>
           <div class="gate-crit"><span class="gc-check">✓</span> beats BTC — excess CI low &gt; 0</div>
           <div class="gate-crit"><span class="gc-check">✓</span> profitable on its own</div>
+          <div class="gate-crit"><span class="gc-check">✓</span> expected move &gt; round-trip cost</div>
         </div>
       </div>
       <div class="gate-flow" aria-hidden="true">
@@ -129,7 +130,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         bound above zero). Beating BTC alone isn't enough — a type that only
         looks good by being short in a downtrend, while still losing money,
         does not qualify. The live <code>trade_signal</code> gate applies this
-        same test per (type, direction) and is regime-aware.
+        same test per (type, direction), is regime-aware, and additionally
+        downgrades any call whose expected move is too small to clear round-trip
+        trading cost (fees + slippage) — a move you can't profit from after
+        costs isn't a trade.
       </p>
     </div>
 
