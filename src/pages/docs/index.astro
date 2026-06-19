@@ -436,6 +436,11 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/mindshare</code></td><td>API Key</td><td>Attention-share leaderboard — each asset's share + velocity (rising/falling)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/mindshare/{'{coin}'}</code></td><td>API Key</td><td>One coin's mindshare share, rank, velocity</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-opens</code></td><td>API Key</td><td>Session opening prices</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/price/{'{coin}'}</code></td><td>None</td><td>Current spot/mid price for one coin (Hyperliquid)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/prices?coins=BTC,ETH,SOL</code></td><td>None</td><td>Batch current prices in one call</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/market-state/{'{coin}'}</code></td><td>Pro</td><td>Per-coin proven-signal consensus — direction, confidence, regime, top drivers</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/state</code></td><td>Pro</td><td>Unified market state — regime + composite, macro pack, proven types, per-coin rollup in one call</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/state/{'{coin}'}</code></td><td>Pro</td><td>One-call per-coin view — price, market-state, regime, levels, liqmap target, top signals</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
@@ -556,7 +561,7 @@ const macroPulseResponse = JSON.stringify({
 
     <div class="card">
       <h2 id="macro-pulse">GET /macro</h2>
-      <p><strong>Macro Pulse</strong> — our daily directional bias for BTC and ETH. Generated at 07:00 UTC daily (with a deeper 30-day review every Sunday 22:00 UTC). Synthesises the upcoming USD high-impact macro calendar (FOMC, CPI, NFP, PPI, Retail Sales) with the last 7 days of intel signals into a single regime call plus per-asset bias, conviction, key levels, and invalidation.</p>
+      <p><strong>Macro Pulse</strong> — our daily directional bias for BTC and ETH. Generated at 07:00 UTC daily (with a deeper 30-day review every Sunday 22:00 UTC). A deterministic macro composite — net liquidity (Fed balance sheet − TGA − RRP), the dollar index, real yields, the 2s10s curve, M2 and VIX, all from FRED — anchors the regime call. That composite is synthesised with the upcoming USD high-impact macro calendar (FOMC, CPI, NFP, PPI, Retail Sales) and the last 7 days of intel signals into a single regime call plus per-asset bias, conviction, key levels, and invalidation. The <code>/macro</code> response carries the raw composite + drivers alongside the narrative read.</p>
       <p>Free tier: latest report only, generated_at + regime + bias/conviction. Pro tier: full payload including reasoning, key levels, invalidation, and calendar_risks. Add <code>?history=N</code> (Pro, max 30) to include the last N snapshots alongside the current report.</p>
       <pre><code set:html={macroPulseResponse} /></pre>
       <h3>Field Reference</h3>
@@ -620,13 +625,15 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>Macro</strong> - Fear and Greed Index, DeFi TVL</li>
         <li><strong>Binance</strong> - Funding rates, liquidation cascades (WebSocket)</li>
         <li><strong>Market Opens</strong> - BTC/ETH/SOL prices at Tokyo, Shanghai, Hong Kong, London, NY session opens</li>
-        <li><strong>Launchpad</strong> - Pump.fun WebSocket, Raydium new pairs, Binance/Bybit new listings</li>
+        <li><strong>Exchange Listings</strong> - Real CEX listing catalysts: Binance &amp; Bybit launchpad/launchpool, plus new spot-market detection (symbol-list diff) on Binance, Upbit (Korea / kimchi premium), and OKX. Pump.fun / Raydium memecoin launches were dropped — they were ~98% of the old listing feed with no tradeable edge.</li>
+        <li><strong>ETF Flows</strong> - US spot BTC + ETH + SOL ETF daily net flows via SoSoValue (free public API). Emitted as <strong>context</strong> (macro_flow, non-directional): a backtest found ETF net inflow does not predict forward returns — it is a coincident/lagging demand print (SOL inflows were contrarian).</li>
+        <li><strong>Stablecoin Flows</strong> - USDT/USDC Treasury deploy/redeem + net inflow staged to exchange wallets. A leading liquidity read (stablecoin inflow to exchanges leads short-horizon BTC/ETH returns in our data).</li>
         <li><strong>Smart Money</strong> - Alchemy ETH WebSocket (alchemy_pendingTransactions) on 408 curated wallets + Etherscan V2 confirmed-tx fallback. 700+ verified labeled addresses (CEX hot/cold, market maker, institutional, smart trader) auto-refreshed weekly from Etherscan label cloud + Alchemy top-volume sweep. MEV bots filtered.</li>
         <li><strong>Stealth Accumulation</strong> - Background scanner pulls Etherscan V2 <code>tokentx</code> per tracked wallet every 30 min. Flags wallet receiving same ERC20 in ≥3 fragmented buys totaling ≥$500K within 24 h — catches quiet accumulation before whale-alert feeds.</li>
         <li><strong>On-Chain Whale Tracking</strong> - Large ETH transfers to/from exchanges via Alchemy WebSocket (threshold 1000 ETH); large BTC transfers via mempool.space WebSocket on tracked cold wallets (threshold 100 BTC). Hyperliquid leaderboard consensus from top traders. SOL CEX flow via Alchemy Solana <code>accountSubscribe</code> on 12 hot/cold wallets (threshold 10000 SOL).</li>
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
-        <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias from USD high-impact calendar (FOMC, CPI, NFP, PPI) synthesised with 7d intel signals. Sunday weekly 30d deep-dive.</li>
+        <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias. Deterministic FRED macro composite (net liquidity, DXY, real yields, curve, VIX, M2) anchors the regime, synthesised with the USD high-impact calendar (FOMC, CPI, NFP, PPI) and 7d intel signals. Sunday weekly 30d deep-dive.</li>
         <li><strong>X (Twitter) API</strong> - Curated 11-account feed via official X API v2. Onchain primary (@lookonchain, @spotonchain, @arkham, @whale_alert), official exchange announcements (@binance, @coinbase, @CoinbaseAssets, @upbit_global), and newswire-speed macro (@DeItaone, @FirstSquawk, @DBdaily). 20s polling, retweets and replies filtered.</li>
       </ol>
 
@@ -655,7 +662,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>telegram:WatcherGuru</td><td>0.9</td><td>Fast breaking news</td></tr>
           <tr><td>rss:trumpstruth</td><td>0.9</td><td>Market-moving but noisy</td></tr>
           <tr><td>rss:coindesk</td><td>0.8</td><td>Established outlet</td></tr>
-          <tr><td>launchpad</td><td>0.8</td><td>New token launches</td></tr>
+          <tr><td>cex_listing</td><td>0.8</td><td>Real exchange listings (Binance/Bybit/Upbit/OKX)</td></tr>
           <tr><td>rss:cointelegraph</td><td>0.7</td><td>General crypto news</td></tr>
           <tr><td>rss:decrypt</td><td>0.7</td><td>General crypto news</td></tr>
           <tr><td>market_open</td><td>0.6</td><td>Session opening prices</td></tr>

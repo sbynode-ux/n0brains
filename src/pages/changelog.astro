@@ -5,6 +5,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // deciding whether to trust the product. Don't list vapor.
 const entries = [
   {
+    date: "2026-06-19",
+    items: [
+      "Listing signal now tracks real exchange listings — Binance & Bybit launchpads plus new spot-market detection on Binance, Upbit, and OKX. Dropped the Pump.fun / Raydium memecoin-launch firehose, which was ~98% of the old listing feed with no tradeable edge (the listing edge was real CEX listings all along).",
+      "New public price endpoints: GET /price/{coin} and GET /prices?coins=BTC,ETH,SOL — current spot/mid from Hyperliquid, no auth.",
+      "New /state and /state/{coin} (Pro): one call returns the unified market state — macro regime + composite, proven signal types, price, levels, and per-coin consensus — instead of stitching several endpoints.",
+      "Macro Pulse now anchored by a deterministic macro composite: net liquidity (Fed balance sheet − TGA − RRP), dollar index, real yields, the 2s10s curve, M2 and VIX (FRED data), combined into a weighted z-score regime that the daily brief explains. We backtested it over a full BTC cycle before shipping — and wired it honestly: it informs context only, not a directional confidence nudge, until the weights are re-fit (the raw read was contrarian, not trend-following).",
+      "ETF flows: added a free SoSoValue source covering BTC + ETH + SOL, and reclassified ETF net flow as context (non-directional). A backtest found ETF inflow does not predict forward returns — it is a coincident/lagging demand print (SOL inflows were contrarian), so we publish it as context rather than a buy/sell signal.",
+    ],
+  },
+  {
     date: "2026-06-17",
     items: [
       "Stablecoin-flow signal now also tracks net USDT/USDC inflow to exchange wallets — capital staged on exchanges ahead of deployment, not just new issuance. A leading liquidity read (research: stablecoin inflow to exchanges leads short-horizon BTC/ETH returns).",
