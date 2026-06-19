@@ -1,3 +1,4 @@
+Already up to date.
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
@@ -16,6 +17,7 @@ const entries = [
       "New technical-indicator suite: GET /indicators/{coin} returns RSI, MACD, SMA/EMA (20/50/200 + 200-week), Stochastic, and Fibonacci levels computed from Hyperliquid OHLC, plus a plain-language trend/momentum read — also folded into /state/{coin}. The classic TA layer alongside our on-chain + macro data.",
       "/state/{coin} now leads with a confident directional headline even when the proven-gate consensus is thin: it uses the forward-return-proven edge call when present, otherwise a clearly-labelled contextual blend of the macro composite, signal atmosphere, and technicals — so the answer is never an empty 'neutral'.",
       "New narrative brief: GET /state/{coin}/brief returns a readable, LLM-written market analysis (current read, key + structural levels, macro/on-chain, technicals, outlook) — the prose layer over /state, grounded only in our own data.",
+      "Added 4-year-cycle context to /state: deterministic halving phase (days since the 2024-04 halving, cycle phase, % through) plus an MVRV valuation band (capitulation/value/neutral/froth/euphoria) as the measured cycle locator. A projected cycle-low window (anchored to the cycle ATH + the historical ~364-383d post-ATH cadence) is included strictly as labelled context — n=3 cycles, explicitly not a forecast.",
     ],
   },
   {
