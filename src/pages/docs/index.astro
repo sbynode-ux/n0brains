@@ -1,3 +1,4 @@
+Already up to date.
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
@@ -424,6 +425,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/manipulation/{'{coin}'}</code></td><td>Pro</td><td>Manipulation score for asset</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/trust/{'{coin}'}</code></td><td>Pro</td><td>Trust &amp; scam score for token</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/indicators/{'{coin}'}</code></td><td>API Key</td><td>Technical indicators — RSI, MACD, SMA/EMA (20/50/200 + 200-week), Stochastic, Fibonacci, trend/momentum read</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-map/{'{coin}'}</code></td><td>API Key</td><td>CEX estimated liquidation-cluster zones (modeled from OI + leverage tiers)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liqmap/{'{coin}'}</code></td><td>API Key</td><td>DEX <strong>real</strong> on-chain liquidation map — actual positions (Hyperliquid + GMX) with exact liq prices</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-heatmap/{'{coin}'}</code></td><td>API Key</td><td>CEX liquidation heatmap — price×time intensity grid. <code>?days=</code> (1–180), <code>?rows=</code>, <code>?cols=</code></td></tr>
@@ -440,7 +442,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/prices?coins=BTC,ETH,SOL</code></td><td>None</td><td>Batch current prices in one call</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/market-state/{'{coin}'}</code></td><td>Pro</td><td>Per-coin proven-signal consensus — direction, confidence, regime, top drivers</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/state</code></td><td>Pro</td><td>Unified market state — regime + composite, macro pack, proven types, per-coin rollup in one call</td></tr>
-          <tr><td><span class="method method-get">GET</span></td><td><code>/state/{'{coin}'}</code></td><td>Pro</td><td>One-call per-coin view — price, market-state, regime, levels, liqmap target, top signals</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/state/{'{coin}'}</code></td><td>Pro</td><td>One-call per-coin view — price, market-state, regime + composite, levels, technical indicators, liqmap target</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
