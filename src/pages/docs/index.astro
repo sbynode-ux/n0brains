@@ -477,7 +477,7 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
           <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
@@ -505,7 +505,7 @@ const macroPulseResponse = JSON.stringify({
         <tbody>
           <tr><td><code>id</code></td><td>int</td><td>Unique signal ID</td></tr>
           <tr><td><code>asset</code></td><td>string|null</td><td>Ticker symbol or null if market-wide</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
@@ -627,7 +627,10 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>Market Opens</strong> - BTC/ETH/SOL prices at Tokyo, Shanghai, Hong Kong, London, NY session opens</li>
         <li><strong>Exchange Listings</strong> - Real CEX listing catalysts: Binance &amp; Bybit launchpad/launchpool, plus new spot-market detection (symbol-list diff) on Binance, Upbit (Korea / kimchi premium), and OKX. Pump.fun / Raydium memecoin launches were dropped — they were ~98% of the old listing feed with no tradeable edge.</li>
         <li><strong>ETF Flows</strong> - US spot BTC + ETH + SOL ETF daily net flows via SoSoValue (free public API). Emitted as <strong>context</strong> (macro_flow, non-directional): a backtest found ETF net inflow does not predict forward returns — it is a coincident/lagging demand print (SOL inflows were contrarian).</li>
-        <li><strong>Stablecoin Flows</strong> - USDT/USDC Treasury deploy/redeem + net inflow staged to exchange wallets. A leading liquidity read (stablecoin inflow to exchanges leads short-horizon BTC/ETH returns in our data).</li>
+        <li><strong>Stablecoin Flows</strong> - USDT/USDC Treasury deploy/redeem + net inflow staged to exchange wallets, plus total stablecoin supply trend (DeFiLlama). A leading liquidity read (stablecoin inflow to exchanges leads short-horizon BTC/ETH returns in our data); aggregate supply is dry-powder context.</li>
+        <li><strong>On-Chain Valuation</strong> - Coin Metrics (free): MVRV, exchange in/outflows + reserves, active addresses (BTC + ETH). Net exchange OUTFLOW / falling reserves = self-custody accumulation; MVRV maps cycle profit/froth. Feeds the Macro Pulse composite's on-chain leg; emitted as context.</li>
+        <li><strong>Token Unlocks</strong> - DeFiLlama emissions calendar (free). Material near-term unlocks (insider/investor cliffs) on tradeable tokens = scheduled supply that sellers front-run → <code>unlock</code> signal, bearish. Self-proves via the forward-return gate.</li>
+        <li><strong>TradFi & CME</strong> - Yahoo Finance (free): CME BTC/ETH futures gap (weekend gaps tend to fill — a recurring level read) plus SPX/gold cross-asset correlation context.</li>
         <li><strong>Smart Money</strong> - Alchemy ETH WebSocket (alchemy_pendingTransactions) on 408 curated wallets + Etherscan V2 confirmed-tx fallback. 700+ verified labeled addresses (CEX hot/cold, market maker, institutional, smart trader) auto-refreshed weekly from Etherscan label cloud + Alchemy top-volume sweep. MEV bots filtered.</li>
         <li><strong>Stealth Accumulation</strong> - Background scanner pulls Etherscan V2 <code>tokentx</code> per tracked wallet every 30 min. Flags wallet receiving same ERC20 in ≥3 fragmented buys totaling ≥$500K within 24 h — catches quiet accumulation before whale-alert feeds.</li>
         <li><strong>On-Chain Whale Tracking</strong> - Large ETH transfers to/from exchanges via Alchemy WebSocket (threshold 1000 ETH); large BTC transfers via mempool.space WebSocket on tracked cold wallets (threshold 100 BTC). Hyperliquid leaderboard consensus from top traders. SOL CEX flow via Alchemy Solana <code>accountSubscribe</code> on 12 hot/cold wallets (threshold 10000 SOL).</li>
