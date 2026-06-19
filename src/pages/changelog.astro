@@ -14,6 +14,8 @@ const entries = [
       "ETF flows: added a free SoSoValue source covering BTC + ETH + SOL, and reclassified ETF net flow as context (non-directional). A backtest found ETF inflow does not predict forward returns — it is a coincident/lagging demand print (SOL inflows were contrarian), so we publish it as context rather than a buy/sell signal.",
       "New free data sources: on-chain valuation (Coin Metrics — MVRV, exchange in/outflows + reserves, active addresses; the on-chain leg of the Macro Pulse composite), token-unlock calendar (DeFiLlama emissions — a new bearish supply-shock signal type), aggregate stablecoin supply trend (DeFiLlama), fresher daily TGA (US Treasury) into the net-liquidity read, and CME BTC/ETH futures gap (Yahoo). Valuation/flow/supply reads enter as context; only token unlocks are directional, and they self-prove via the forward-return gate.",
       "New technical-indicator suite: GET /indicators/{coin} returns RSI, MACD, SMA/EMA (20/50/200 + 200-week), Stochastic, and Fibonacci levels computed from Hyperliquid OHLC, plus a plain-language trend/momentum read — also folded into /state/{coin}. The classic TA layer alongside our on-chain + macro data.",
+      "/state/{coin} now leads with a confident directional headline even when the proven-gate consensus is thin: it uses the forward-return-proven edge call when present, otherwise a clearly-labelled contextual blend of the macro composite, signal atmosphere, and technicals — so the answer is never an empty 'neutral'.",
+      "New narrative brief: GET /state/{coin}/brief returns a readable, LLM-written market analysis (current read, key + structural levels, macro/on-chain, technicals, outlook) — the prose layer over /state, grounded only in our own data.",
     ],
   },
   {

@@ -1,4 +1,5 @@
 Already up to date.
+Already up to date.
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 
@@ -426,6 +427,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/trust/{'{coin}'}</code></td><td>Pro</td><td>Trust &amp; scam score for token</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/levels/{'{coin}'}</code></td><td>API Key</td><td>S/R levels from Hyperliquid</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/indicators/{'{coin}'}</code></td><td>API Key</td><td>Technical indicators — RSI, MACD, SMA/EMA (20/50/200 + 200-week), Stochastic, Fibonacci, trend/momentum read</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/state/{'{coin}'}/brief</code></td><td>Pro</td><td>LLM-written prose analysis — current read, key + structural levels, macro/on-chain, technicals, outlook. The narrative layer over /state, grounded only in our data</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-map/{'{coin}'}</code></td><td>API Key</td><td>CEX estimated liquidation-cluster zones (modeled from OI + leverage tiers)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liqmap/{'{coin}'}</code></td><td>API Key</td><td>DEX <strong>real</strong> on-chain liquidation map — actual positions (Hyperliquid + GMX) with exact liq prices</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liquidation-heatmap/{'{coin}'}</code></td><td>API Key</td><td>CEX liquidation heatmap — price×time intensity grid. <code>?days=</code> (1–180), <code>?rows=</code>, <code>?cols=</code></td></tr>
