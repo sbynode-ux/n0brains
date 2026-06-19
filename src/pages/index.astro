@@ -24,6 +24,11 @@ const sources = [
   { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves — plus congressional stock-trade disclosures. No paid APIs." },
   { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain discovery and token activity. Discovery context, non-directional." },
   { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of research-vetted directional analysts and on-chain trackers — Arthur Hayes, Ki Young Ju, Pentoshi, EmberCN, Lookonchain, WuBlockchain, and more — plus official exchange listing and hack feeds." },
+  { chip: "MVRV", title: "On-Chain Valuation",    desc: "MVRV, exchange in/outflows + reserves, and active addresses from Coin Metrics (BTC + ETH). Net outflow / falling exchange reserves = self-custody accumulation; MVRV maps cycle profit vs froth. Feeds the macro composite's on-chain leg." },
+  { chip: "UNL", title: "Token Unlocks",          desc: "Scheduled token-unlock calendar (DeFiLlama). A large near-term insider/investor cliff on a tradeable token is supply that sellers front-run — flagged as a bearish supply-shock signal that self-proves via the forward-return gate." },
+  { chip: "TA",  title: "Technical Indicators",   desc: "Classic TA computed on Hyperliquid OHLC — RSI, MACD, moving averages (20/50/200 + 200-week), Stochastic, and Fibonacci levels, with a plain-language trend/momentum read. The indicator layer alongside our on-chain + macro data." },
+  { chip: "CYC", title: "Cycle Position",         desc: "Bitcoin's 4-year-cycle context — months since the halving, cycle phase, and an MVRV valuation band (capitulation → euphoria) as the measured cycle locator. A historical-cadence cycle-low window is shown strictly as labelled context, never a forecast." },
+  { chip: "TGA", title: "TradFi & Liquidity",     desc: "Net liquidity (Fed balance sheet − Treasury cash − reverse repo, with fresh daily TGA), the dollar index, real yields, the curve, and CME BTC/ETH futures gaps — the macro backdrop that increasingly drives crypto." },
 ];
 
 const proFeatures = [
