@@ -516,7 +516,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — per-signal-type binned empirical win rate from closed-trade outcomes (not a raw LLM score). Updated weekly.</td></tr>
           <tr><td><code>conviction</code></td><td>string</td><td><code>strong</code>, <code>notable</code>, <code>watch</code>, <code>none</code> — our analytical rating of a signal's strength (not a trade instruction). <strong>strong</strong> is data-driven: it applies only to signal types whose forward-return record clears our statistical bar in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution, and only when the expected move clears round-trip trading cost (a move too small to beat fees + slippage is downgraded to <code>notable</code>). Use this field.</td></tr>
           <tr><td><code>action_hint</code></td><td>string</td><td><em>Deprecated</em> — the prior name for <code>conviction</code> (<code>trade_signal</code>↔strong, <code>alert</code>↔notable, <code>monitor</code>↔watch, <code>ignore</code>↔none). Still emitted this release for backward compatibility; will be removed. Migrate to <code>conviction</code>.</td></tr>
-          <tr><td><code>corroborated</code></td><td>bool</td><td>True if multiple sources confirm</td></tr>
+          <tr><td><code>corroborated</code></td><td>bool</td><td>True when multiple sources confirm the asset AND recent reads don't net-contradict the direction (direction-aware — a bullish call isn't confirmed by bearish chatter on the same coin)</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>IC-weighted composite: source_weight x urgency x calibrated_confidence x signal-type information coefficient</td></tr>
           <tr><td><code>timestamp</code></td><td>int</td><td>Unix epoch (seconds)</td></tr>
           <tr><td><code>expires_at</code></td><td>int</td><td>When this signal expires</td></tr>
@@ -531,6 +531,9 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>invalidation_level</code></td><td>float</td><td>trade_signal only — price that would falsify the signal's thesis</td></tr>
           <tr><td><code>target_level</code></td><td>float</td><td>trade_signal only — nearest analytical target in the signal's direction</td></tr>
           <tr><td><code>levels_basis</code></td><td>string</td><td>trade_signal only — sr_touches (order-book S/R) or model (derived)</td></tr>
+          <tr><td><code>resistance_low</code> / <code>resistance_high</code></td><td>float</td><td>The resistance level's <strong>zone band</strong> (S/R is an area, not a line) — the price range of the touch cluster. Target the zone edge, not the midpoint.</td></tr>
+          <tr><td><code>support_low</code> / <code>support_high</code></td><td>float</td><td>The support level's zone band — same idea on the support side.</td></tr>
+          <tr><td><code>resistance_flipped</code> / <code>support_flipped</code></td><td>bool</td><td><strong>Polarity flip:</strong> true when this level was originally the opposite role and price has since broken through it (old support now acting as resistance, or vice versa). A flipped level is real but carries a slightly lower strength weight.</td></tr>
           <tr><td><code>regime_at_signal</code></td><td>string</td><td>Market regime when signal was generated: risk-on, risk-off, range, squeeze</td></tr>
           <tr><td><code>manipulation_score</code></td><td>float</td><td>0.0–1.0 coordination/manipulation probability at signal creation time</td></tr>
           <tr><td><code>wallet_type</code></td><td>string|null</td><td>Whale signal only — vc_institutional, smart_whale, market_maker, mev_arb, sniper, etc.</td></tr>
@@ -553,7 +556,7 @@ const macroPulseResponse = JSON.stringify({
 
     <div class="card">
       <h2 id="levels">GET /levels/{'{coin}'}</h2>
-      <p>Returns nearest support/resistance levels from the Hyperliquid order book.</p>
+      <p>Returns nearest support/resistance from the Hyperliquid order book — as zones (each level carries its price band), with polarity-flip tracking (a broken support is surfaced as resistance, and vice versa).</p>
       <pre><code set:html={levelsResponse} /></pre>
     </div>
 

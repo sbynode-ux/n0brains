@@ -6,6 +6,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // deciding whether to trust the product. Don't list vapor.
 const entries = [
   {
+    date: "2026-06-22",
+    items: [
+      "Support/resistance is now treated as a zone, not a line: each level carries its price band (low/high from the cluster of touches), and stop-loss / take-profit reference the zone edge instead of a single number price routinely wicks through.",
+      "Level polarity flip: a support that price has broken down through is now recognised as resistance (and a broken resistance as support), tagged and used on the correct side — old support, new resistance. Previously these flipped levels were dropped.",
+      "Corroboration is now direction-aware. The corroborated flag required only that multiple sources mention the asset; it now requires that other recent reads don't net-contradict the call's direction (a bullish signal isn't 'confirmed' by bearish chatter on the same coin).",
+      "Cost-aware trade-signal gate: a call is only flagged trade_signal when its expected move clears round-trip trading cost — a move too small to beat fees + slippage is downgraded to a watch.",
+      "Stablecoin-flow signal now also tracks net stablecoin inflow to exchange wallets (dry powder staged to deploy), alongside mints/treasury deployments.",
+      "DEX liquidation-cluster signals reclassified as non-directional: a cluster is a risk level for stop/target placement, not an entry direction (liquidity predicts volatility, not which way).",
+      "Proven-gate fix: signal types that cover only BTC + ETH by design (macro pulse, macro) are no longer false-flagged by the single-asset concentration guard, which is meant to catch a many-asset type riding one coin — not a two-asset type being two assets.",
+      "Asset hygiene: signal assets are normalised to real tickers (Bitcoin→BTC), and non-coins (stablecoins, fiat, metals, malformed strings) are rejected so they don't pollute the measured track record.",
+    ],
+  },
+  {
     date: "2026-06-19",
     items: [
       "Listing signal now tracks real exchange listings — Binance & Bybit launchpads plus new spot-market detection on Binance, Upbit, and OKX. Dropped the Pump.fun / Raydium memecoin-launch firehose, which was ~98% of the old listing feed with no tradeable edge (the listing edge was real CEX listings all along).",

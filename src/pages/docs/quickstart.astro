@@ -28,7 +28,8 @@ const tradeAware =
 Before answering any "should I buy/sell/hold X" question, ALWAYS:
   1. GET /signals?asset=<COIN>  — read direction, conviction, score, summary.
      conviction: strong > notable > watch > none. Only "strong" is tradeable grade.
-  2. GET /levels/<COIN>          — nearest support/resistance for entry/stop framing.
+  2. GET /levels/<COIN>          — nearest support/resistance (as zones, with
+     polarity-flip tracking) for entry/stop framing.
   3. GET /macro                  — current BTC/ETH regime + bias for context.
 
 Then give a structured read: bias, the signals behind it, key levels, and what
