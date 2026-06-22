@@ -16,6 +16,9 @@ const entries = [
       "DEX liquidation-cluster signals reclassified as non-directional: a cluster is a risk level for stop/target placement, not an entry direction (liquidity predicts volatility, not which way).",
       "Proven-gate fix: signal types that cover only BTC + ETH by design (macro pulse, macro) are no longer false-flagged by the single-asset concentration guard, which is meant to catch a many-asset type riding one coin — not a two-asset type being two assets.",
       "Asset hygiene: signal assets are normalised to real tickers (Bitcoin→BTC), and non-coins (stablecoins, fiat, metals, malformed strings) are rejected so they don't pollute the measured track record.",
+      "Risk-off bullish-news gate: bullish sentiment / listing signals fired during a risk-off regime win only ~41% (measured at fire time, no hindsight) — so in a risk-off regime they're downgraded to a non-tradeable watch rather than sold as a long into a downtrend. Bearish news, which works across regimes, is unaffected.",
+      "Hold-horizon matched to where the edge lives: the hack signal's edge peaks at ~1–4h and decays to nothing by 24h, but its trade plan was holding ~3 days — riding winners into the dead zone. Hold shortened to ~4h. Edge is short-horizon; the exit should be too.",
+      "Dormant feeds no longer shown as a live record on /proof: a signal type whose newest signal is over a week old (e.g. macro pulse, now context-only) is flagged inactive and forced non-tradeable, so a frozen old win-rate isn't presented as a current track record.",
     ],
   },
   {
