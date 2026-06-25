@@ -129,5 +129,25 @@ function frame(){
 }
 frame();
 
-// graceful: if the browser blocks programmatic seek before interaction, nudge on first scroll
-addEventListener('scroll',()=>{ if(ready&&video.paused){ try{video.currentTime=video.currentTime;}catch(e){} } },{passive:true,once:true});
+// ── Mobile decoder prime ──────────────────────────────────────────────────
+// iOS/Android won't decode or seek a <video> that has never played, so on the
+// first user gesture we play() then immediately pause() to wake the decoder.
+// After that, scroll-scrubbing currentTime works. Runs once.
+let primed=false;
+function primeVideo(){
+  if(primed) return; primed=true;
+  const kick=()=>{ try{
+    const p=video.play();
+    if(p&&p.then) p.then(()=>{ try{video.pause();}catch(e){} }).catch(()=>{});
+    else { try{video.pause();}catch(e){} }
+  }catch(e){} };
+  kick();
+  // re-assert the scrub target once decoding is awake
+  setTimeout(()=>{ applySeek(); },80);
+}
+['touchstart','pointerdown','scroll','click','keydown'].forEach(ev=>
+  addEventListener(ev, primeVideo, {passive:true, once:true}));
+// also try as soon as the video is ready (covers desktop + some mobile autoplay-muted)
+video.addEventListener('canplay',()=>{ if(!primed){ try{
+  const p=video.play(); if(p&&p.then) p.then(()=>{try{video.pause();}catch(e){}}).catch(()=>{});
+}catch(e){} } },{once:true});
