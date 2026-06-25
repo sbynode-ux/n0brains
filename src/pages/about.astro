@@ -8,7 +8,7 @@ const steps = [
   },
   {
     n: "02", title: "Classify", tag: "llm classify pool",
-    desc: "An LLM pool tags every event into one of 13 signal types — with direction, confidence, and asset scope. A local model anchors the pool, with extra lanes absorbing burst volume so classification keeps pace with the feed.",
+    desc: "An LLM pool tags every event into one of 15 signal types — with direction, confidence, and asset scope. A local model anchors the pool, with extra lanes absorbing burst volume so classification keeps pace with the feed.",
   },
   {
     n: "03", title: "Corroborate", tag: "cross-referenced",
@@ -94,7 +94,7 @@ const steps = [
         <div class="ab-terminal">
           <div class="ab-term-head"><span class="ab-term-dot"></span>built for autonomous agents first. humans second.</div>
           <div class="ab-term-body">
-            <p>The API is the product. There is no dashboard. There is no app.</p>
+            <p>The API is the product — your agent never needs a dashboard or an app. (There's a web dashboard for humans to manage keys and billing, but nothing your agent has to touch.)</p>
             <p>If you run an OpenClaw agent, a custom bot, or any system that needs crypto intelligence piped in programmatically — this is for you. Point your agent at the endpoint, give it your API key, and let it trade. Or skip the HTTP client entirely:</p>
             {/* Kept byte-identical to /docs/cli — verify there before changing. */}
             <pre class="ab-cli"><span class="p">$</span> pip install n0brains-cli

@@ -1,10 +1,10 @@
 # n0brains — Full Reference
 
-> AI-powered crypto intelligence platform. Machine-classified signals from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro, congress trades — fused, scored, and delivered via one REST/WebSocket/Webhook API. Built for autonomous trading agents.
+> AI-powered crypto intelligence platform. Machine-classified signals from 30+ sources — whales, funding, liquidations, on-chain flows, options/ETF/stablecoin flows, news, macro, congress trades — fused, scored, and delivered via one REST/WebSocket/Webhook/MCP/x402 API. Built for autonomous trading agents.
 
 ## What it is
 
-n0brains ingests from 10+ real-time sources, classifies every market event via LLM pipeline, cross-corroborates across sources, and scores it. Each signal includes direction (bullish/bearish/neutral), urgency, confidence, action hint, entry/stop/take-profit suggestions, and a composite quality band (A+/A/B/C/D). You get structured intelligence, not a firehose.
+n0brains ingests from 30+ real-time sources, classifies every market event via LLM pipeline, cross-corroborates across sources, and scores it. Each signal includes direction (bullish/bearish/neutral), urgency, confidence, a conviction rating (strong/notable/watch/none), entry/stop/take-profit suggestions, and a composite quality band (A+/A/B/C/D). You get structured intelligence, not a firehose.
 
 ---
 
@@ -48,6 +48,8 @@ Sign up: https://n0brains.com/signup
 ---
 
 ## Data Sources
+
+30+ watchers run continuously across the categories below (a representative selection — whales, funding, liquidations, on-chain flows, options/ETF/stablecoin flows, congress + 13F filings, security/hack feeds, social, news, macro):
 
 | Code | Source | Description |
 |------|--------|-------------|
@@ -94,27 +96,58 @@ Sign up: https://n0brains.com/signup
 | GET | /manipulation/{coin} | Pro | Manipulation score for asset |
 | GET | /trust/{coin} | Pro | Trust & scam score for token |
 | GET | /levels/{coin} | API Key | S/R levels from Hyperliquid order book |
-| GET | /market-opens | API Key | Session opening prices (Tokyo/London/NY) |
+| GET | /indicators/{coin} | API Key | Technical indicators — RSI, MACD, SMA/EMA, Stochastic, Fibonacci, trend/momentum |
+| GET | /liquidation-map/{coin} | API Key | CEX estimated liquidation-cluster zones (modeled from OI + leverage) |
+| GET | /liqmap/{coin} | API Key | DEX real on-chain liquidation map — actual positions (Hyperliquid + GMX), exact liq prices |
+| GET | /liquidation-heatmap/{coin} | API Key | CEX liquidation heatmap — price×time grid (default 166 days) |
+| GET | /liq-heatmap/{coin} | API Key | DEX real-position liquidation heatmap — price×time grid (BTC/ETH) |
+| GET | /correlation | API Key | Cross-asset return-correlation matrix (7d) |
+| GET | /correlation/{coin} | API Key | One coin's correlation + beta to BTC/ETH + peers |
+| GET | /rotation | API Key | Altseason/rotation read — into_alts / into_btc / neutral |
+| GET | /options/{coin} | API Key | Options analytics (BTC/ETH): ATM IV, skew, term structure, max-pain |
+| GET | /sentiment/{coin} | API Key | Aggregate sentiment — net lean, volume, velocity |
+| GET | /mindshare | API Key | Attention-share leaderboard — each asset's share + velocity |
+| GET | /mindshare/{coin} | API Key | One coin's mindshare share, rank, velocity |
+| GET | /market-opens | API Key | Crypto session opening prices (BTC/ETH/SOL) — Tokyo/London/NY |
+| GET | /price/{coin} | None | Current spot/mid price for one coin (Hyperliquid) |
+| GET | /prices?coins=… | None | Batch current prices in one call |
+| GET | /market-state/{coin} | Pro | Per-coin proven-signal consensus — direction, confidence, regime, drivers |
+| GET | /directional/{coin} | Pro | Alias of /market-state/{coin} |
+| GET | /state | Pro | Unified market state — regime + composite, macro pack, proven types, per-coin rollup |
+| GET | /state/{coin} | Pro | One-call per-coin view — price, market-state, levels, indicators, liqmap target |
+| GET | /state/{coin}/brief | Pro | LLM-written prose analysis over /state, grounded only in our data |
 | GET | /macro | API Key | Macro Pulse — latest BTC + ETH directional bias |
 | GET | /macro?history=N | Pro | Last N macro reports (max 30) |
 | GET | /performance | None | Public win rate / PnL stats |
+| GET | /proof | None | Forward-return scoreboard — per-type win rate, excess vs BTC, CI, proven flag |
+| GET | /proof/equity | None | Edge-accumulation equity curve over proven-type signals |
+| GET | /public/feed | None | Public delayed signal feed (free-tier 15-min-lagged stream) |
+| GET | /status/uptime | None | Service uptime / status snapshot |
+| GET | /charts/proof | None | Win-rate scoreboard data (powers /charts/win-rate) |
+| GET | /charts/market-state/{coin} | None | Market-state gauge series |
+| GET | /charts/levels/{coin} | None | S/R levels chart series |
+| GET | /charts/spread/{coin} | None | Order-book liquidity-stress series |
+| GET | /charts/cex-liqmap/{coin}, /dex-liqmap/{coin} | None | Liquidation-map chart series |
 | POST | /auth/register | None | Create account, returns API key immediately |
 | POST | /auth/login | None | Login, returns JWT + API keys |
 | GET | /auth/me | API Key | User profile |
 | POST | /auth/api-keys | API Key | Generate new API key |
 | DELETE | /auth/api-keys/{id} | API Key | Revoke API key |
 | POST | /billing/checkout | API Key | Stripe checkout session |
+| GET | /billing/credit-packs | API Key | Available one-time credit packs (pay-per-call top-ups) |
+| POST | /billing/buy-credits | API Key | Buy a credit pack |
 | POST | /billing/portal | API Key | Stripe customer portal |
 | POST | /webhooks | Pro | Register webhook URL |
 | DELETE | /webhooks/{id} | Pro | Remove webhook |
 | WS | /stream | Pro | Real-time signal stream |
+| GET | /x402/* | x402 (USDC/Base) | Walletless pay-per-call surface — signals, levels, macro, rotation, correlation, liquidation-map. Discovery at /.well-known/x402.json |
 
 ### GET /signals — Query Parameters
 
 | Param | Type | Values |
 |-------|------|--------|
 | asset | string | Ticker, e.g. BTC, ETH, SOL |
-| signal_type | string | regulatory, whale, sentiment, price, hack, listing, macro, macro_pulse, liquidation, funding, other |
+| signal_type | string | regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other. (unlock and research are returned but NOT filterable here — filtering on them returns 400.) |
 | direction | string | bullish, bearish, neutral |
 | urgency | string | high, medium, low |
 | limit | int | 1–200 (default 50) |
@@ -127,12 +160,13 @@ Sign up: https://n0brains.com/signup
 |-------|------|-------------|
 | id | int | Unique signal ID |
 | asset | string\|null | Ticker or null if market-wide |
-| signal_type | string | See signal_type values above |
+| signal_type | string | One of the signal_type values above, plus `unlock` and `research` (returned but not filterable via /signals) |
 | direction | string | bullish / bearish / neutral |
 | urgency | string | high / medium / low |
 | summary | string | ≤100 char description |
 | confidence | float | 0.0–1.0, LLM-assessed |
-| action_hint | string | trade_signal / alert / monitor / ignore |
+| conviction | string | strong / notable / watch / none — our analytical rating of signal strength (not a trade instruction). `strong` applies only to forward-return-proven types (see /proof). Use this field. |
+| action_hint | string | DEPRECATED alias of conviction (trade_signal / alert / monitor / ignore → strong / notable / watch / none). Kept one release cycle; prefer `conviction`. |
 | corroborated | bool | True if multiple sources confirm |
 | score | float | source_weight × urgency_weight × confidence_decayed |
 | entry_price | float\|null | Suggested entry |
@@ -143,7 +177,7 @@ Sign up: https://n0brains.com/signup
 | expected_move_pct | float\|null | Estimated move % based on S/R delta + ATR |
 | regime_at_signal | string | risk-on / risk-off / range / squeeze |
 | manipulation_score | float | 0.0–1.0 coordination probability at signal time |
-| wallet_type | string\|null | Whale only: vc_institutional / smart_whale / market_maker / mev_arb / sniper |
+| wallet_type | string\|null | Whale only: vc_institutional / smart_whale / market_maker / mev_arb / sniper / government |
 | smart_money_score | float\|null | Whale only: wallet credibility 0.0–1.0 |
 | trust_score | float\|null | Token signals: composite contract trust 0.0–1.0 |
 | rug_probability | float\|null | Token signals: scam probability 0.0–1.0 |
@@ -196,7 +230,9 @@ urgency_weights: low=1.0, medium=2.0, high=3.0
 
 | Code | Meaning |
 |------|---------|
+| 400 | Invalid parameter (e.g. unknown signal_type filter) |
 | 401 | Invalid API key |
+| 402 | Payment required (x402 endpoints — pay per call in USDC on Base) |
 | 403 | Pro-tier endpoint (WebSocket, webhooks, Pro fields) |
 | 404 | Signal not found |
 | 429 | Rate limit exceeded |

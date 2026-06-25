@@ -448,6 +448,10 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/performance</code></td><td>None</td><td>Public win rate / PnL stats</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/proof</code></td><td>None</td><td>Forward-return scoreboard — per-type win rate, excess vs BTC, CI, proven flag (powers <a href="/proof">/proof</a>)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/proof/equity</code></td><td>None</td><td>Edge-accumulation equity curve over proven-type signals</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/public/feed</code></td><td>None</td><td>Public delayed signal feed (the free-tier 15-min-lagged stream)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/status/uptime</code></td><td>None</td><td>Service uptime / status snapshot</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/register</code></td><td>None</td><td>Create account</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/auth/login</code></td><td>None</td><td>Login</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/auth/me</code></td><td>API Key</td><td>User profile</td></tr>
@@ -481,7 +485,7 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
           <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other. (<code>unlock</code> and <code>research</code> can be <em>returned</em> but are not filterable here — filtering on them 400s.)</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
@@ -509,7 +513,7 @@ const macroPulseResponse = JSON.stringify({
         <tbody>
           <tr><td><code>id</code></td><td>int</td><td>Unique signal ID</td></tr>
           <tr><td><code>asset</code></td><td>string|null</td><td>Ticker symbol or null if market-wide</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, research, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>

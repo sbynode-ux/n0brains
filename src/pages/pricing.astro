@@ -55,7 +55,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <span class="chip pro-chip" data-pro>WS</span>
           <span class="chip pro-chip" data-pro>WEBHOOK</span>
           <span class="chip pro-chip" data-pro>MCP</span>
-          <span class="chip pro-chip" data-pro>x402</span>
+          <span class="chip chip-on">x402</span>
         </div>
         <div class="pp-spec-row"><span>signal detail</span><span id="sp-detail" class="white">full source + channel</span></div>
         <div class="pp-spec-row"><span>intelligence layers</span><span id="sp-layers" class="white">all 10 layers</span></div>
@@ -70,7 +70,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <!-- x402 strip -->
     <div class="pp-strip">
       <span class="pp-pill">x402</span>
-      <span>Pay-per-call beyond your tier — one-time packs from $5. No subscription change needed.</span>
+      <span>Walletless pay-per-call — no account, no API key, no subscription. Your agent pays per request in USDC on Base; endpoints auto-discover at <code>/.well-known/x402.json</code>. Available to everyone, free tier included.</span>
+    </div>
+    <!-- credit-pack strip -->
+    <div class="pp-strip">
+      <span class="pp-pill">credits</span>
+      <span>Prefer to stay on your key? Top up with one-time credit packs for pay-per-call beyond your tier — no plan change. Pack pricing is set in your account.</span>
     </div>
 
     <!-- CLI strip -->
