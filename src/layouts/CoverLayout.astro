@@ -1,0 +1,65 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  canonicalURL?: string;
+}
+const { title, description, canonicalURL } = Astro.props;
+const url = canonicalURL ?? Astro.url;
+const siteUrl = "https://n0brains.com";
+const orgLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "n0brains",
+  url: siteUrl,
+  logo: `${siteUrl}/favicon.svg`,
+  sameAs: [
+    "https://x.com/n0brainsai",
+    "https://t.me/n0brainssignals",
+    "https://www.instagram.com/n0brainsai",
+    "https://bsky.app/profile/n0brains.com",
+    "https://github.com/sbynode-ux/n0brains",
+  ],
+  description: "AI-powered crypto intelligence — corroborated, scored signals for autonomous trading agents over REST, WebSocket, Webhooks, MCP, x402 and CLI.",
+};
+const siteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "n0brains",
+  url: siteUrl,
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={url} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#03050a" />
+    <!-- Open Graph -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:site_name" content="n0brains" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={`${siteUrl}/og-default.png`} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${siteUrl}/og-default.png`} />
+    <!-- Fonts (same families as the site) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(siteLd)} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
