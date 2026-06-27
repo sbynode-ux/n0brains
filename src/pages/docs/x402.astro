@@ -6,8 +6,10 @@ const routes = [
   ["GET /x402/rotation", "$0.002", "Altseason/rotation read"],
   ["GET /x402/correlation/{coin}", "$0.005", "Correlation + beta to BTC/ETH"],
   ["GET /x402/liquidation-map/{coin}", "$0.005", "Estimated liquidation zones"],
-  ["GET /x402/levels/{coin}", "$0.001", "Support/resistance"],
+  ["GET /x402/levels/{coin}", "$0.002", "Support/resistance"],
   ["GET /x402/macro", "$0.002", "Daily BTC/ETH macro bias"],
+  ["GET /x402/plan/{coin}", "$0.01", "Assembled trade plan — direction, entry, target, stop, R:R, options + warnings"],
+  ["GET /x402/rank", "$0.015", "Cross-asset ranking — which coin is the best trade now"],
 ];
 const flow = `# 1. Agent requests a resource (no key, no account)
 GET https://api.n0brains.com/x402/rotation
