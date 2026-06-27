@@ -485,7 +485,7 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
           <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other. (<code>unlock</code> and <code>research</code> can be <em>returned</em> but are not filterable here — filtering on them 400s.)</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, deleverage, other. (<code>unlock</code> and <code>research</code> can be <em>returned</em> but are not filterable here — filtering on them 400s.)</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
@@ -513,7 +513,7 @@ const macroPulseResponse = JSON.stringify({
         <tbody>
           <tr><td><code>id</code></td><td>int</td><td>Unique signal ID</td></tr>
           <tr><td><code>asset</code></td><td>string|null</td><td>Ticker symbol or null if market-wide</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, research, macro, macro_flow, macro_pulse, liquidation, funding, other</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, unlock, research, macro, macro_flow, macro_pulse, liquidation, funding, deleverage, other</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>

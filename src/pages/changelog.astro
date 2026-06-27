@@ -6,6 +6,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // deciding whether to trust the product. Don't list vapor.
 const entries = [
   {
+    date: "2026-06-27",
+    items: [
+      "New signal type: deleverage (capitulation-bounce). When price and open interest fall together over a 12h window, positions are being force-unwound rather than sold on a view — and the forced selling exhausts into a bounce. We compute the price-delta × OI-delta from open-interest history (data widely collected but rarely combined) and flag the capitulation. Validated on our own forward returns before shipping: the signal holds across both halves of the sample, isn't carried by one asset, and clears trading cost. It's our first mechanical, non-directional edge — a different family from the event-driven signals, so it's uncorrelated with the rest of the book. Live track record will publish on /proof as it accrues; until then it's surfaced but not promoted to a trade call.",
+      "Forward-return measurement hardening: a handful of corrupted rows (tokenized-equity tickers priced against the wrong asset) were poisoning the per-type win-rate aggregates; purged, with a guard added on both the backfill and the live measurement path so a wrong-asset price can't recur. The win-probability model's AUC recovered from coin-flip (0.50) to 0.64 once retrained on the cleaned data.",
+      "Honest cost model: trade-cost is now derived from real executed fills (≈0.47% round trip) instead of an optimistic flat assumption, so the cost-aware gate and the published net edges reflect what trading actually costs.",
+    ],
+  },
+  {
     date: "2026-06-22",
     items: [
       "Support/resistance is now treated as a zone, not a line: each level carries its price band (low/high from the cluster of touches), and stop-loss / take-profit reference the zone edge instead of a single number price routinely wicks through.",
