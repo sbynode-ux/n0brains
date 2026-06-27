@@ -3,30 +3,29 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout
-  title="cryptocurrency liquidation heatmap"
-  description="n0brains live cryptocurrency liquidation heatmap — price × time density of where leveraged crypto positions cluster to liquidate. Real on-chain DEX positions (Hyperliquid + GMX) plus a multi-month CEX estimate from open-interest history, with price candles overlaid. Free, live. Not financial advice."
+  title="stock market liquidation heatmap"
+  description="n0brains live stock market liquidation map — where leveraged positions on tokenized stocks, indices, metals and commodities (NVDA, TSLA, S&P 500, gold, oil…) cluster to liquidate. Real on-chain positions from Hyperliquid HIP-3 perp DEXs. Free, live. Not financial advice."
 >
   <section class="about-section lm-wide">
     <a href="/charts" class="lm-back">← charts</a>
-    <p class="lm-kicker"><span class="lm-livedot"></span>On-chain + estimate · live · <a href="/charts/stock-liqmap" class="lm-accent" style="text-decoration:underline">stock market →</a></p>
-    <h1 class="lm-h1">CRYPTOCURRENCY<br /><span class="lm-accent">LIQUIDATION</span></h1>
+    <p class="lm-kicker"><span class="lm-livedot"></span>On-chain HIP-3 · live · <a href="/charts/liqmap" class="lm-accent" style="text-decoration:underline">cryptocurrency →</a></p>
+    <h1 class="lm-h1">STOCK MARKET<br /><span class="lm-accent">LIQUIDATION</span></h1>
     <p class="legal-updated">
-      Where leveraged positions cluster to liquidate, over time — bright bands are
-      liquidity magnets that the price tends to gravitate toward. We read these as
-      risk levels (where to place stops and targets), not as a direction to trade —
-      liquidity predicts volatility, not which way price goes.
-      <strong>CEX</strong> is a multi-month estimate modeled from aggregate
-      open-interest history (the bands trail the price as leverage stacks).
-      <strong>DEX</strong> reads <em>real</em> on-chain positions (Hyperliquid +
-      GMX), captured live and building forward. Price candles overlaid. Free and
-      live — vs Coinglass $299. Analytical data, <strong>not financial advice</strong>.
+      Where leveraged positions on <strong>tokenized stocks, indices, metals and
+      commodities</strong> cluster to liquidate — bright bands are liquidity magnets
+      the price tends to gravitate toward. We read these as risk levels (where to
+      place stops and targets), not as a direction to trade — liquidity predicts
+      volatility, not which way price goes. This map reads <em>real</em> on-chain
+      positions from <strong>Hyperliquid HIP-3</strong> builder perp DEXs (NVDA,
+      TSLA, S&amp;P 500, gold, oil and more), captured live and building forward —
+      the same on-chain liquidationPx the protocol settles against, not a model.
+      Analytical data, <strong>not financial advice</strong>.
     </p>
 
     <div class="lm-controls">
-      <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="coin"></div>
-      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source">
-        <button data-venue="cex" class="active" role="tab">CEX · estimate</button>
-        <button data-venue="dex" role="tab">DEX · real (live)</button>
+      <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="symbol"></div>
+      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source" hidden>
+        <button data-venue="dex" class="active" role="tab">HIP-3 · real (live)</button>
       </div>
       <div id="lm-range" class="lm-tabs" role="tablist" aria-label="time range">
         <button data-days="1" role="tab">24h</button>
@@ -157,17 +156,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   (function () {
     "use strict";
     const API = "https://api.n0brains.com";
-    const COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
-    const DEX_COINS = new Set(["BTC","ETH"]);
-    const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
+    // Tokenized stocks / indices / metals / commodities on Hyperliquid HIP-3.
+    // All are DEX-only (no CEX/Coinglass estimate exists for these), served by
+    // /liqmap/{symbol} off the HIP-3 liquidation map.
+    const COINS = ["SP500","NASDAQ","NVDA","TSLA","AAPL","MSTR","COIN","GOLD","SILVER","OIL"];
+    const DEX_COINS = new Set(COINS);   // every symbol is on-chain only
+    const CG_ID = {};                    // no Coinglass coverage for tokenized stocks
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
-    // per-venue defaults: time range + liquidity threshold. DEX has a strong
-    // above/below asymmetry (one side can be 4x the other), so a high threshold
-    // amputates the smaller side — DEX uses a lower floor to show BOTH sides.
+    // HIP-3 (DEX) only. DEX has a strong above/below asymmetry, so it uses a
+    // lower liquidity-threshold floor to show BOTH sides of the book.
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
     const VENUE_DEFAULT_THR  = { dex: 0.8, cex: 0.85 };
-    let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.cex;
+    let coin = "SP500", venue = "dex", days = VENUE_DEFAULT_DAYS.dex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.dex;
     let FOCUS_PCT = 0.03;     // DEX y-axis zoom: view = current price ± this fraction
     let lastGeom = null;
 
