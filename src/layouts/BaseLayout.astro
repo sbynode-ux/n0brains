@@ -174,7 +174,7 @@ const softwareAppLd = homepage ? {
             <div class="rail-links">
               <a href="/docs/" class={navPath.startsWith("/docs") ? "active" : ""}>docs</a>
               <a href="/proof" class={navPath.startsWith("/proof") ? "active" : ""}>proof</a>
-              <a href="/charts/liqmap" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
+              <a href="/charts" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
               <a href="/pricing" class={navPath.startsWith("/pricing") ? "active" : ""}>pricing</a>
             </div>
           </div>
@@ -204,13 +204,13 @@ const softwareAppLd = homepage ? {
         {[
           ["/docs/", "docs", "01"],
           ["/proof", "proof", "02"],
-          ["/charts/liqmap", "charts", "03"],
+          ["/charts", "charts", "03"],
           ["/pricing", "pricing", "04"],
           ["/intel", "intel", "05"],
           ["/blog", "blog", "06"],
           ["/podcast", "podcast", "07"],
         ].map(([href, label, idx]) => {
-          const active = navPath.startsWith(href === "/charts/liqmap" ? "/charts" : (href === "/docs/" ? "/docs" : href));
+          const active = navPath.startsWith(href === "/docs/" ? "/docs" : href);
           return (
             <a href={href} class={`sheet-link ${active ? "active" : ""}`}>
               <span class="sheet-name">{label}{active && <span class="sheet-here"> · here</span>}</span>
