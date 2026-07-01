@@ -6,7 +6,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 // deciding whether to trust the product. Don't list vapor.
 const entries = [
   {
-    date: "2026-06-27",
+    date: "2026-07-01",
+    items: [
+      "New: the corroboration graph. Every signal is now cross-checked against INDEPENDENT evidence classes — whale flow, funding/leverage, events, institutional flow, macro, sentiment — before its conviction is set. Agreement only counts when it comes from a genuinely independent source (two funding venues agreeing is one vote, not two), so conviction reflects real corroboration, not echo. Backtest-proven: on a source-availability-aware walk-forward replay of 5,809 historical signals with weights held fixed (not fit to the data), the corroborated cohort ran +3.3% excess return, t=16.6, and out-performed in 5 of 5 out-of-sample time folds.",
+      "New: corroboration can now PROMOTE a signal to a trade call. A signal whose own type isn't independently proven can still fire as tradeable when independent classes strongly corroborate it — a new edge path on top of the per-type proven gate. Backtest-proven at +6.0% excess / 71% hit on the promoted cohort, after the same cost and loss-prevention gates every trade call clears. Its live track record publishes separately on /proof as it accrues.",
+      "New endpoints: /regime, /liquidity, /flows, /market-map — the cross-asset picture. Where liquidity is (Fed net liquidity, multi-chain stablecoin dry-powder, perp OI, cross-venue leverage concentration), where funds are going (ETF / COT / 13F posture, crypto-vs-tradfi rotation), and a market-wide risk-on / risk-off / squeeze read with a directional bias. Plus /discovery: emergent corroboration patterns mined from realized outcomes — edges nobody hand-coded, surfaced as they prove out.",
+      "A finding worth stating plainly: the discovery layer independently re-surfaced the whale-inversion edge — when whale flow DISAGREES with a signal, the signal tends to win (the crowd is contrarian). We'd learned this before; the system found it again from the data on its own, and it corrected two relationship signs in the process, tripling the measured edge.",
+    ],
+  },
+  {
+        date: "2026-06-27",
     items: [
       "New endpoints: /plan/{coin} and /rank. /plan assembles a full trade plan from our reads in one call — direction, entry, the strongest target (not just the nearest), stop, risk/reward, sizing hint, options context, and warnings (max-pain timing against the trade, entry sitting next to a liquidation cluster). /rank does the cross-asset version: it scores and orders coins so you can see which is the better trade right now, instead of comparing them by hand. Both are also MCP tools (get_trade_plan, rank_trades). Analytical, not advice.",
       "More processing moved into the engine, not left to the caller: take-profit now targets the strongest level in range rather than the nearest (price slices thin levels and parks at thick ones); the CME futures gap is surfaced as a queryable level (a known magnet) instead of only living in the macro narrative; options positioning — put/call OI, 25-delta skew, max-pain — is attached to market-state so callers can rank by it and time exits around expiry; and we now flag when an entry sits next to a dense liquidation cluster (cascade-through risk), not just when the stop does.",
