@@ -1,17 +1,17 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const title = "MCP Server (Pro) — n0brains";
+const title = "MCP Server — n0brains";
 const claudeDesktopConfig = JSON.stringify({
   mcpServers: {
     n0brains: {
       url: "https://api.n0brains.com/mcp",
-      headers: { "Authorization": "Bearer YOUR_PRO_API_KEY" }
+      headers: { "X-API-Key": "YOUR_API_KEY" }
     }
   }
 }, null, 2);
 ---
 
-<BaseLayout title={title} description="n0brains MCP server endpoint for Claude Desktop, Cursor, Cline, Continue. Pro tier required. 19 read-only tools.">
+<BaseLayout title={title} description="n0brains MCP server for Claude Desktop, Cursor, Cline, Continue. Free tier: 13 tools including check_trade. Pro: all 33 tools real-time. Listed on the official MCP Registry as com.n0brains/mcp.">
   <main class="prose mx-auto py-12 px-4">
     <h1>MCP Server</h1>
     <p class="lead">
@@ -21,10 +21,22 @@ const claudeDesktopConfig = JSON.stringify({
     </p>
 
     <div class="callout callout-pro">
-      <strong>Pro tier required.</strong> Tool discovery (<code>tools/list</code>)
-      is open; tool invocation (<code>tools/call</code>) requires an active Pro
-      subscription. <a href="/#pricing">Upgrade →</a>
+      <strong>Free tier works here.</strong> Any valid API key can call 13 tools —
+      including <code>check_trade</code> (3/day), delayed signals, levels, regime,
+      and the public proof scoreboard. Pro unlocks all 33 tools in real time.
+      <a href="/signup">Get a free key →</a> · Listed on the official
+      <a href="https://registry.modelcontextprotocol.io/v0/servers?search=n0brains">MCP Registry</a>
+      as <code>com.n0brains/mcp</code>.
     </div>
+
+    <h2>Ask n0brains First — <code>check_trade</code></h2>
+    <p>The flagship tool. Your agent submits a trade idea (asset, side, and
+    optionally entry / stop / target / leverage / horizon) and gets back a graded
+    conditions assessment (<strong>A–F</strong>): positioning crowding, scheduled
+    event risk inside the horizon, liquidation distance vs realized volatility,
+    stop sanity, conflicts with statistically proven edges — plus falsifiers your
+    agent can monitor. Every grade is logged and resolved at its horizon; the
+    calibration record is public at <a href="/proof">/proof</a>.</p>
 
     <h2>Endpoint</h2>
     <pre><code>POST https://api.n0brains.com/mcp
@@ -32,9 +44,9 @@ Authorization: Bearer &lt;your_api_key&gt;
 Content-Type: application/json</code></pre>
 
     <p>Get your API key when you <a href="/signup">sign up</a> — it is shown once,
-    so copy it then. Pro tier is gated by your Stripe subscription status;
-    downgrade to Free locks <code>tools/call</code> with JSON-RPC error
-    <code>-32001</code> and an upgrade link in <code>error.data.upgrade_url</code>.</p>
+    so copy it then. Free keys call the 13 free tools; a Pro-only tool called
+    with a free key returns JSON-RPC error <code>-32001</code> whose
+    <code>error.data.free_tools</code> lists everything that works on your tier.</p>
 
     <h2>Claude Desktop</h2>
     <p>Edit <code>~/.config/Claude/claude_desktop_config.json</code> (Linux),
@@ -45,7 +57,7 @@ Content-Type: application/json</code></pre>
 
     <h2>Cursor</h2>
     <p>Settings → MCP → Add server. URL <code>https://api.n0brains.com/mcp</code>,
-    Header <code>Authorization: Bearer YOUR_PRO_API_KEY</code>.</p>
+    Header <code>X-API-Key: YOUR_API_KEY</code>.</p>
 
     <h2>Cline / Continue</h2>
     <p>Both honor the same <code>mcpServers</code> shape as Claude Desktop.
@@ -100,7 +112,8 @@ Content-Type: application/json</code></pre>
       <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
       <tbody>
         <tr><td><code>-32000</code></td><td>Unauthorized — missing or invalid API key.</td></tr>
-        <tr><td><code>-32001</code></td><td>Pro tier required — see <code>error.data.upgrade_url</code>.</td></tr>
+        <tr><td><code>-32001</code></td><td>Pro-only tool called on free tier — <code>error.data.free_tools</code> lists your available tools.</td></tr>
+        <tr><td><code>-32003</code></td><td>Daily free <code>check_trade</code> quota reached (3/day, resets 00:00 UTC).</td></tr>
         <tr><td>HTTP 429</td><td>Rate limit exceeded — honor <code>Retry-After</code>.</td></tr>
       </tbody>
     </table>
