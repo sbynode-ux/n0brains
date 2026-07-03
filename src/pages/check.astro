@@ -16,6 +16,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         leverage survives a normal day — and give it a grade from A to F.
         Every grade we give goes on the public record at <a href="/proof">/proof</a>.
       </p>
+      <p class="ck-trust" id="ck-trust" hidden></p>
       <div class="ck-examples">
         <span class="ck-opt">try one:</span>
         <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"BTC","side":"long","lev":10}'>BTC long 10×</button>
@@ -123,6 +124,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-sec-title">NOT CHECKED — YOU DIDN'T TELL US</div>
           <ul class="ck-list ck-unchecked" id="ck-unchecked"></ul>
         </div>
+        <button type="button" class="ck-chip-btn" id="ck-copy">copy result</button>
         <p class="ck-fine">
           Conditions assessment measured from live market data — analytical, not
           financial advice. Grades are logged and resolved at horizon;
@@ -134,10 +136,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <!-- history -->
     <div class="ck-hist" id="ck-hist" hidden>
       <div class="ck-sec-title">YOUR CHECKS · ON THE RECORD</div>
+      <p class="ck-record" id="ck-record" hidden></p>
       <div class="ck-hist-scroll">
         <table class="ck-table">
           <thead><tr>
-            <th>when</th><th>trade</th><th>grade</th><th>horizon</th><th>result</th>
+            <th>when</th><th>trade</th><th>grade</th><th>horizon</th><th>result</th><th></th>
           </tr></thead>
           <tbody id="ck-hist-body"></tbody>
         </table>
@@ -406,6 +409,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     const GRADE_COLOR = { "A": "#2ecc71", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
     function render(d) {
+      lastResult = d;
       $("ck-result").hidden = false;
       $("ck-grade").textContent = d.grade;
       $("ck-grade").style.color = GRADE_COLOR[d.grade] || "inherit";
@@ -435,6 +439,32 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     }
     function esc(s) { const t = document.createElement("span"); t.textContent = s ?? ""; return t.innerHTML; }
 
+    // trust chip: live count of publicly resolved grades
+    fetch(`${API}/proof`).then(r => r.json()).then(d => {
+      const cg = d.check_grades;
+      if (cg && cg.n_resolved > 0) {
+        $("ck-trust").innerHTML = `${cg.n_resolved} grades already resolved on the ` +
+          `<a href="/proof">public record</a> — we grade our own grades.`;
+        $("ck-trust").hidden = false;
+      }
+    }).catch(() => {});
+
+    // copy result as shareable text
+    let lastResult = null;
+    $("ck-copy").addEventListener("click", () => {
+      if (!lastResult) return;
+      const d = lastResult;
+      const flags = (d.flags || []).map(f => `⚠ ${f.note}`).join("\n");
+      const sup = (d.supports || []).map(x => `✓ ${x.note}`).join("\n");
+      const txt = `n0brains graded my ${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"}: ${d.grade}\n` +
+        [flags, sup].filter(Boolean).join("\n") +
+        `\n— every grade goes on the record: https://n0brains.com/check`;
+      navigator.clipboard.writeText(txt).then(() => {
+        $("ck-copy").textContent = "✓ copied";
+        setTimeout(() => { $("ck-copy").textContent = "copy result"; }, 1500);
+      });
+    });
+
     // ── history ──
     async function loadHistory() {
       try {
@@ -445,7 +475,28 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         setQuota(d.free_checks_remaining_today ?? null);
         if (!d.checks || d.checks.length === 0) return;
         $("ck-hist").hidden = false;
+        const res = d.checks.filter(c => c.ret_pct != null);
+        if (res.length >= 2) {
+          const wins = res.filter(c => c.ret_pct > 0).length;
+          const avg = res.reduce((a, c) => a + c.ret_pct, 0) / res.length;
+          $("ck-record").textContent =
+            `your record: ${wins}/${res.length} profitable · avg ${avg >= 0 ? "+" : ""}${avg.toFixed(2)}% per check`;
+          $("ck-record").hidden = false;
+        }
         $("ck-hist-body").innerHTML = d.checks.map(rowHtml).join("");
+        document.querySelectorAll(".ck-recheck").forEach(b =>
+          b.addEventListener("click", () => {
+            const c = JSON.parse(b.dataset.c);
+            $("ck-asset").value = c.asset; setSide(c.side === "bullish" ? "long" : "short");
+            $("ck-entry").value = ""; // fresh entry at current spot
+            $("ck-stop").value = c.stop_price ?? ""; $("ck-target").value = c.target_price ?? "";
+            $("ck-lev").value = c.leverage ?? "";
+            const want = String(Math.round((c.horizon_secs || 86400) / 3600));
+            for (const o of $("ck-horizon").options) if (o.value === want) $("ck-horizon").value = want;
+            fetchSpot();
+            $("ck-app").scrollIntoView({ behavior: "smooth", block: "start" });
+            $("ck-form").requestSubmit();
+          }));
       } catch {}
     }
     function rowHtml(c) {
@@ -465,12 +516,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         result = `<span class="${cls}">${c.ret_pct > 0 ? "+" : ""}${c.ret_pct}%${stop}</span>`;
       }
       const gc = GRADE_COLOR[c.grade] || "inherit";
+      const cJson = esc(JSON.stringify({asset: c.asset, side: c.side, stop_price: c.stop_price,
+        target_price: c.target_price, leverage: c.leverage, horizon_secs: c.horizon_secs}));
       return `<tr>
         <td>${when}</td>
         <td>${esc(c.asset)} ${sideTxt}${lev}</td>
         <td><b style="color:${gc}">${esc(c.grade)}</b></td>
         <td>${hz}</td>
         <td>${result}</td>
+        <td><button type="button" class="ck-mini ck-recheck" data-c="${cJson}">re-check now</button></td>
       </tr>`;
     }
   </script>
@@ -552,6 +606,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-scale span { opacity: .4; }
     .ck-scale span.on { opacity: 1; font-weight: 700; }
     .ck-upsell { font-size: .85rem; border: 1px solid var(--border); padding: .6rem .8rem; margin: 0 0 1rem; }
+    .ck-trust { font-size: .8rem; opacity: .75; margin-top: .8rem; }
+    .ck-record { font-size: .85rem; margin: .3rem 0 .7rem; opacity: .9; }
+    #ck-copy { margin-top: .8rem; }
     .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
 
     .ck-hist { margin-top: 2rem; }
