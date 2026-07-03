@@ -157,6 +157,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </div>
     <p class="meta" id="equity-meta"></p>
 
+    <h2 class="proof-h2">We grade our own grades</h2>
+    <p class="proof-sub">
+      Every <a href="/check">pre-trade check</a> verdict we hand out is logged the
+      moment we give it and scored at its horizon against real prices. If our
+      grades mean anything, A-graded setups outperform F-graded ones. Small
+      sample for now — we show it anyway, from day one.
+    </p>
+    <div class="table-wrap" id="check-grades-table"><span class="meta">loading…</span></div>
+    <p class="meta" id="check-grades-meta"></p>
+
     <p class="legal-updated" style="margin-top: 32px;">
       A type is shown as <strong>forward-return proven</strong> only when its
       live post-signal price record clears 30+ measured signals AND both beats
@@ -441,6 +451,45 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   load();
   setInterval(load, 60_000);
+
+  // ── Pre-trade check grade calibration ("We grade our own grades") ──
+  const CG_COLOR = { "A": "#4ade80", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
+  async function loadCheckGrades() {
+    const wrap = document.getElementById("check-grades-table");
+    const meta = document.getElementById("check-grades-meta");
+    if (!wrap) return;
+    try {
+      const r = await fetch(ENDPOINT);
+      const d = await r.json();
+      const cg = d.check_grades;
+      if (!cg || !cg.grades || !cg.grades.length) {
+        wrap.innerHTML = "<span class='meta'>no checks logged yet</span>";
+        return;
+      }
+      const rows = cg.grades.map((g) => {
+        const c = CG_COLOR[g.grade] || "inherit";
+        const ret = g.avg_ret_pct == null ? "—"
+          : `<span style="color:${g.avg_ret_pct >= 0 ? "#4ade80" : "#e03a3a"}">${g.avg_ret_pct > 0 ? "+" : ""}${g.avg_ret_pct}%</span>`;
+        const wr = g.win_rate == null ? "—" : `${(g.win_rate * 100).toFixed(0)}%`;
+        const pending = g.n_total - g.n_resolved;
+        return `<tr>
+          <td><b style="color:${c}">${g.grade}</b></td>
+          <td>${g.n_total}</td>
+          <td>${g.n_resolved}${pending ? ` <span class="meta">(+${pending} pending)</span>` : ""}</td>
+          <td>${wr}</td>
+          <td>${ret}</td>
+        </tr>`;
+      }).join("");
+      wrap.innerHTML = `<table>
+        <thead><tr><th>grade</th><th>given</th><th>resolved</th><th>win rate</th><th>avg return</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+      meta.textContent = cg.note || "";
+    } catch (e) {
+      wrap.innerHTML = "<span class='meta'>check-grade calibration unavailable</span>";
+    }
+  }
+  loadCheckGrades();
+  setInterval(loadCheckGrades, 120_000);
 
   // ── Equity curve (illustrative edge accumulation) ──────────────────
   const EQUITY_ENDPOINT = "https://api.n0brains.com/proof/equity";
