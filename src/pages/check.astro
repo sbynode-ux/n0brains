@@ -4,7 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="check"
-  description="Ask n0brains First — graded pre-trade conditions check. Submit your trade idea (asset, side, leverage, stop) and get a grade A–F with flags: crowding, event risk, liquidation distance vs volatility, proven-edge conflicts. Every grade is logged and audited on /proof."
+  description="Ask n0brains First — graded pre-trade conditions check. Submit your trade idea (asset, side, leverage, stop) and get a grade A–F with the reasons: crowding, event risk, liquidation distance vs volatility, proven-edge conflicts. Every grade is logged and audited on /proof."
 >
   <section class="check-page">
     <div class="ck-hero">
@@ -18,8 +18,26 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </p>
     </div>
 
-    <div class="ck-grid">
+    <!-- signed-out gate -->
+    <div class="ck-card ck-gate" id="ck-gate" hidden>
+      <p class="ck-gate-line">Sign in to run checks. Free accounts get
+        <b>3 checks a day</b> — no card needed.</p>
+      <div class="ck-gate-btns">
+        <a class="ck-btn" href="/login?next=/check">LOG IN</a>
+        <a class="ck-btn ck-btn-cta" href="/signup">CREATE FREE ACCOUNT</a>
+      </div>
+      <details class="ck-adv">
+        <summary>advanced: use an API key instead</summary>
+        <div class="ck-adv-row">
+          <input id="ck-key" placeholder="intel_sk_…" autocomplete="off" />
+          <button type="button" class="ck-btn" id="ck-key-use">USE KEY</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="ck-grid" id="ck-app" hidden>
       <form id="ck-form" class="ck-card">
+        <div class="ck-signed" id="ck-signed"></div>
         <div class="ck-row">
           <label>ASSET<input id="ck-asset" placeholder="BTC" maxlength="12" required /></label>
           <label>SIDE
@@ -46,14 +64,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
               <option value="168">7d</option>
             </select>
           </label>
-          <label id="ck-key-label">API KEY <span class="ck-opt">free key = 3 checks/day</span>
-            <input id="ck-key" placeholder="intel_sk_…" autocomplete="off" />
-          </label>
+          <label class="ck-quota-label">TODAY<span class="ck-opt" id="ck-quota">&nbsp;</span></label>
         </div>
         <button type="submit" id="ck-go" class="ck-submit">RUN CHECK</button>
-        <p class="ck-nokey" id="ck-nokey" hidden>
-          No key yet? <a href="/signup">Get a free key</a> — 3 checks/day, no card.
-        </p>
         <p class="ck-err" id="ck-err" hidden></p>
       </form>
 
@@ -63,7 +76,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-grade-meta">
             <div id="ck-headline">conditions</div>
             <div class="ck-score" id="ck-score"></div>
-            <div class="ck-left" id="ck-left"></div>
           </div>
         </div>
         <div class="ck-section" id="ck-flags-wrap" hidden>
@@ -86,6 +98,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
     </div>
 
+    <!-- history -->
+    <div class="ck-hist" id="ck-hist" hidden>
+      <div class="ck-sec-title">YOUR CHECKS · ON THE RECORD</div>
+      <div class="ck-hist-scroll">
+        <table class="ck-table">
+          <thead><tr>
+            <th>when</th><th>trade</th><th>grade</th><th>horizon</th><th>result</th>
+          </tr></thead>
+          <tbody id="ck-hist-body"></tbody>
+        </table>
+      </div>
+      <p class="ck-fine">Results are the side-adjusted move from your entry to the
+        end of the horizon (or your stop, if it was hit first). Pending checks
+        resolve automatically — come back after the horizon.</p>
+    </div>
+
     <div class="ck-how">
       <div class="ck-sec-title">HOW IT WORKS</div>
       <ol class="ck-list">
@@ -99,22 +127,46 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const API = "https://api.n0brains.com";
     let side = "long";
+
+    // ── auth state: session JWT (preferred) or saved API key (advanced) ──
+    const token = localStorage.getItem("auth_token");
+    const savedKey = localStorage.getItem("api_key");
+    function authHeader() {
+      if (token) return { Authorization: `Bearer ${token}` };
+      if (savedKey) return { "X-API-Key": savedKey };
+      return null;
+    }
+    function showApp(on) { $("ck-app").hidden = !on; $("ck-gate").hidden = on; }
+    function signOutToGate(msg) {
+      localStorage.removeItem("auth_token");
+      showApp(false);
+      if (msg) { const p = document.createElement("p"); p.className = "ck-err"; p.textContent = msg; $("ck-gate").prepend(p); }
+    }
+
+    if (authHeader()) {
+      showApp(true);
+      $("ck-signed").textContent = token ? "signed in — session" : "using API key";
+      loadHistory();
+    } else {
+      showApp(false);
+    }
+    $("ck-key-use").addEventListener("click", () => {
+      const k = $("ck-key").value.trim();
+      if (!k) return;
+      localStorage.setItem("api_key", k);
+      location.reload();
+    });
+
     $("ck-long").addEventListener("click", () => { side = "long"; $("ck-long").classList.add("on"); $("ck-short").classList.remove("on"); });
     $("ck-short").addEventListener("click", () => { side = "short"; $("ck-short").classList.add("on"); $("ck-long").classList.remove("on"); });
-
-    // key: prefill from localStorage (set by dashboard/login), persist on use
-    const saved = localStorage.getItem("api_key");
-    if (saved) $("ck-key").value = saved; else $("ck-nokey").hidden = false;
 
     const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
 
     $("ck-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       $("ck-err").hidden = true;
-      const key = $("ck-key").value.trim();
-      if (!key) { $("ck-err").textContent = "API key required — free keys include 3 checks/day."; $("ck-err").hidden = false; $("ck-nokey").hidden = false; return; }
-      localStorage.setItem("api_key", key);
       const body = {
         asset: $("ck-asset").value.trim().toUpperCase(), side,
         entry: num("ck-entry"), stop: num("ck-stop"), target: num("ck-target"),
@@ -122,14 +174,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       };
       $("ck-go").disabled = true; $("ck-go").textContent = "CHECKING…";
       try {
-        const r = await fetch("https://api.n0brains.com/check", {
+        const r = await fetch(`${API}/check`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "X-API-Key": key },
+          headers: { "Content-Type": "application/json", ...authHeader() },
           body: JSON.stringify(body),
         });
+        if (r.status === 401) return signOutToGate("Session expired — please log in again.");
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
         render(d);
+        loadHistory();
       } catch (err) {
         $("ck-err").textContent = String(err.message || err);
         $("ck-err").hidden = false;
@@ -139,26 +193,67 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       }
     });
 
-    const GRADE_COLOR = { "A": "var(--pos, #2ecc71)", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
+    const GRADE_COLOR = { "A": "#2ecc71", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
     function render(d) {
       $("ck-result").hidden = false;
       $("ck-grade").textContent = d.grade;
       $("ck-grade").style.color = GRADE_COLOR[d.grade] || "inherit";
       $("ck-headline").textContent = `${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"} · ${d.horizon_hours}h horizon · regime: ${d.regime || "—"}`;
       $("ck-score").textContent = `score ${d.score} · realized daily vol ${d.realized_daily_vol_pct ?? "—"}%`;
-      $("ck-left").textContent = d.free_checks_remaining_today != null
-        ? `${d.free_checks_remaining_today} free checks left today` : "";
+      setQuota(d.free_checks_remaining_today);
       fill("ck-flags", "ck-flags-wrap", (d.flags || []).map(f =>
         `<b class="ck-sev ck-sev-${f.severity}">${f.severity}</b> ${esc(f.note)}`));
       fill("ck-supports", "ck-supports-wrap", (d.supports || []).map(s => esc(s.note)));
       fill("ck-fals", "ck-fals-wrap", (d.falsifiers || []).map(esc));
       $("ck-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
+    function setQuota(left) {
+      $("ck-quota").textContent = left == null ? "unlimited (pro)" : `${left} free checks left`;
+    }
     function fill(listId, wrapId, items) {
       $(wrapId).hidden = items.length === 0;
       $(listId).innerHTML = items.map(i => `<li>${i}</li>`).join("");
     }
     function esc(s) { const t = document.createElement("span"); t.textContent = s ?? ""; return t.innerHTML; }
+
+    // ── history ──
+    async function loadHistory() {
+      try {
+        const r = await fetch(`${API}/checks/history`, { headers: { ...authHeader() } });
+        if (r.status === 401) return signOutToGate("Session expired — please log in again.");
+        if (!r.ok) return;
+        const d = await r.json();
+        setQuota(d.free_checks_remaining_today ?? null);
+        if (!d.checks || d.checks.length === 0) return;
+        $("ck-hist").hidden = false;
+        $("ck-hist-body").innerHTML = d.checks.map(rowHtml).join("");
+      } catch {}
+    }
+    function rowHtml(c) {
+      const dt = new Date(c.created_at * 1000);
+      const when = dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      const sideTxt = c.side === "bullish" ? "LONG" : "SHORT";
+      const lev = c.leverage ? ` ${c.leverage}x` : "";
+      const hz = c.horizon_secs >= 86400 ? `${Math.round(c.horizon_secs / 86400)}d` : `${Math.round(c.horizon_secs / 3600)}h`;
+      let result;
+      if (c.resolved_at == null) {
+        result = `<span class="ck-pending">pending</span>`;
+      } else if (c.ret_pct == null) {
+        result = `<span class="ck-pending">n/a</span>`;
+      } else {
+        const cls = c.ret_pct > 0 ? "ck-win" : c.ret_pct < 0 ? "ck-loss" : "";
+        const stop = c.stop_hit ? " · stopped" : "";
+        result = `<span class="${cls}">${c.ret_pct > 0 ? "+" : ""}${c.ret_pct}%${stop}</span>`;
+      }
+      const gc = GRADE_COLOR[c.grade] || "inherit";
+      return `<tr>
+        <td>${when}</td>
+        <td>${esc(c.asset)} ${sideTxt}${lev}</td>
+        <td><b style="color:${gc}">${esc(c.grade)}</b></td>
+        <td>${hz}</td>
+        <td>${result}</td>
+      </tr>`;
+    }
   </script>
 
   <style>
@@ -178,6 +273,19 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-opt { opacity: .5; text-transform: none; letter-spacing: 0; }
     .ck-card input, .ck-card select { background: transparent; border: 1px solid var(--border); padding: .55rem .7rem; color: inherit; font: inherit; }
     .ck-card input:focus, .ck-card select:focus { outline: 1px solid currentColor; }
+    .ck-signed { font-size: .68rem; letter-spacing: .12em; opacity: .5; margin-bottom: .8rem; text-transform: uppercase; }
+    .ck-quota-label { justify-content: flex-end; }
+
+    .ck-gate { max-width: 560px; margin-bottom: 1.4rem; }
+    .ck-gate-line { margin: 0 0 1rem; line-height: 1.5; }
+    .ck-gate-btns { display: flex; gap: .7rem; flex-wrap: wrap; }
+    .ck-btn { display: inline-block; padding: .65rem 1.1rem; border: 1px solid var(--border); color: inherit; text-decoration: none; font-size: .8rem; letter-spacing: .14em; background: transparent; font-family: inherit; cursor: pointer; }
+    .ck-btn:hover { border-color: currentColor; }
+    .ck-btn-cta { border-color: currentColor; }
+    .ck-adv { margin-top: 1rem; font-size: .78rem; opacity: .75; }
+    .ck-adv summary { cursor: pointer; }
+    .ck-adv-row { display: flex; gap: .6rem; margin-top: .6rem; }
+    .ck-adv-row input { flex: 1; background: transparent; border: 1px solid var(--border); padding: .5rem .7rem; color: inherit; font: inherit; }
 
     .ck-side { display: flex; gap: .4rem; }
     .ck-side-btn { flex: 1; padding: .55rem 0; background: transparent; border: 1px solid var(--border); color: inherit; font: inherit; letter-spacing: .1em; cursor: pointer; opacity: .55; }
@@ -186,13 +294,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-submit { width: 100%; padding: .8rem; margin-top: .3rem; background: transparent; border: 1px solid currentColor; color: inherit; font: inherit; letter-spacing: .18em; cursor: pointer; }
     .ck-submit:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
     .ck-submit:disabled { opacity: .5; cursor: wait; }
-    .ck-nokey, .ck-err { font-size: .82rem; margin-top: .7rem; }
-    .ck-err { color: #e05a3a; }
+    .ck-err { font-size: .82rem; margin-top: .7rem; color: #e05a3a; }
 
     .ck-grade-row { display: flex; gap: 1.1rem; align-items: center; margin-bottom: 1rem; }
     .ck-grade { font-size: 3.4rem; font-weight: 700; line-height: 1; min-width: 3.2rem; text-align: center; }
     .ck-grade-meta { font-size: .85rem; line-height: 1.5; }
-    .ck-score, .ck-left { opacity: .65; font-size: .78rem; }
+    .ck-score { opacity: .65; font-size: .78rem; }
 
     .ck-section { margin: 1rem 0; }
     .ck-sec-title { font-size: .7rem; letter-spacing: .16em; opacity: .7; margin-bottom: .45rem; }
@@ -205,6 +312,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-sev-low { color: #c9b843; }
     .ck-fals li { opacity: .8; }
     .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
+
+    .ck-hist { margin-top: 2rem; }
+    .ck-hist-scroll { overflow-x: auto; border: 1px solid var(--border); }
+    .ck-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .ck-table th, .ck-table td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ck-table th { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; opacity: .6; }
+    .ck-pending { opacity: .5; }
+    .ck-win { color: #2ecc71; }
+    .ck-loss { color: #e03a3a; }
+
     .ck-how { margin-top: 2rem; max-width: 620px; }
     .ck-signoff { margin-top: 2.2rem; font-size: .78rem; opacity: .5; }
   </style>

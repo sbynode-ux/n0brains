@@ -240,11 +240,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         throw new Error(data.detail || 'Login failed');
       }
 
-      // Store the session token and go straight to the account dashboard.
+      // Store the session token, then honor ?next=/path (same-site paths
+      // only) so pages like /check can send users back after login.
       localStorage.setItem('tier', data.tier || 'free');
       if (data.token) {
         localStorage.setItem('auth_token', data.token);
-        window.location.href = '/dashboard';
+        const next = new URLSearchParams(window.location.search).get('next');
+        const safe = next && next.startsWith('/') && !next.startsWith('//');
+        window.location.href = safe ? next : '/dashboard';
         return;
       }
       // No token (server without JWT_SECRET) — surface a clear error.
