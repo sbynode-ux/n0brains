@@ -40,6 +40,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         <button data-zoom="0.12" role="tab">±12%</button>
         <button data-zoom="1" role="tab">full</button>
       </div>
+      <div id="lm-overlays" class="lm-tabs" role="group" aria-label="overlays">
+        <button data-ov="real" class="active" role="tab" title="Real NYSE/NASDAQ session price (Yahoo, delayed) — gaps are closed-market hours">real price</button>
+        <button data-ov="walls" class="active" role="tab" title="Listed-options open-interest walls (CBOE, delayed) — strike magnets + max pain">options walls</button>
+      </div>
       <label class="lm-thresh" title="Hide weaker levels — drag up to show only the strongest liquidity bands">
         liquidity threshold <span id="lm-thresh-val">0.70</span>
         <input id="lm-thresh-input" type="range" min="0" max="0.9" step="0.01" value="0.70" aria-label="liquidity threshold" />
@@ -172,6 +176,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       COPPER:"xyz:COPPER", OIL:"xyz:CL",
     };
     let candleCache = {};   // coin:interval:hour -> [{t,o,h,l,c}]
+    let realCache = {};     // coin:days:hour -> stock-candles payload
+    let wallsCache = {};    // coin:halfhour -> options-walls payload
+    const OV = { real: true, walls: true };   // overlay toggles
     const REFRESH_MS = 120000;
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
     const VENUE_DEFAULT_THR  = { dex: 0.7, cex: 0.85 };
@@ -260,6 +267,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           if (lastData) render(lastData);
         }));
     }
+    function bindOverlays() {
+      document.querySelectorAll("#lm-overlays button").forEach((b) =>
+        b.addEventListener("click", () => {
+          OV[b.dataset.ov] = !OV[b.dataset.ov];
+          b.classList.toggle("active", OV[b.dataset.ov]);
+          if (lastData) render(lastData);
+        }));
+    }
     function syncTabs() {
       document.querySelectorAll("#lm-coins button").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
@@ -345,7 +360,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const cands = d.candles || [];
       const curPrice = (cands.length ? cands[cands.length - 1].c
         : (rowPrices.length ? rowPrices[Math.floor(rowPrices.length / 2)] : (d.price_min + d.price_max) / 2));
-      const fullSpan = (d.price_max - d.price_min) || 1;
+      const gridSpan = (d.price_max - d.price_min) || 1;   // grid bin geometry
+      // View range = liq range WIDENED to include spot + nearby option walls,
+      // so overlays never fall off a chart whose buckets sit far from price.
+      let rangeMin = d.price_min, rangeMax = d.price_max;
+      const widen = (p) => { if (p > 0) { rangeMin = Math.min(rangeMin, p); rangeMax = Math.max(rangeMax, p); } };
+      widen(curPrice);
+      if (OV.walls && d.walls && curPrice) {
+        for (const w of [...(d.walls.call_walls || []).slice(0, 3), ...(d.walls.put_walls || []).slice(0, 3)])
+          if (Math.abs(w.strike - curPrice) <= curPrice * 0.2) widen(w.strike);
+        if (d.walls.max_pain && Math.abs(d.walls.max_pain - curPrice) <= curPrice * 0.2)
+          widen(d.walls.max_pain);
+      }
+      const fullSpan = (rangeMax - rangeMin) || 1;
       // auto zoom: smallest preset band around current price that still holds
       // most (55%) of the total liquidity mass — so sparse far-out whale
       // clusters don't force the whole chart into a huge empty range, and a
@@ -368,12 +395,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // FULL range untouched. zoom=full also means full range.
       const focusOn = (venue === "dex" && effPct < 1);
       const halfBand = focusOn ? Math.min(curPrice * effPct, fullSpan / 2 + 1) : fullSpan / 2;
-      const center = focusOn ? curPrice : (d.price_min + d.price_max) / 2;
+      const center = focusOn ? curPrice : (rangeMin + rangeMax) / 2;
       let vMin = center - halfBand, vMax = center + halfBand;
-      // clamp the window into the available data range
-      if (vMin < d.price_min) { vMax += (d.price_min - vMin); vMin = d.price_min; }
-      if (vMax > d.price_max) { vMin -= (vMax - d.price_max); vMax = d.price_max; }
-      vMin = Math.max(d.price_min, vMin); vMax = Math.min(d.price_max, vMax);
+      // clamp the window into the available (widened) range
+      if (vMin < rangeMin) { vMax += (rangeMin - vMin); vMin = rangeMin; }
+      if (vMax > rangeMax) { vMin -= (vMax - rangeMax); vMax = rangeMax; }
+      vMin = Math.max(rangeMin, vMin); vMax = Math.min(rangeMax, vMax);
       const vSpan = (vMax - vMin) || 1;
       lastGeom.vMin = vMin; lastGeom.vMax = vMax; lastGeom.vSpan = vSpan;
       const xOfTime = (ts) => {
@@ -389,7 +416,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // heatmap cells — draw each row at its true price position in the focus
       // window (rows are evenly binned across the FULL range, so we place them by
       // price, not by row index, and skip rows outside the band).
-      const rowH = plotH * ( (fullSpan / rows) / vSpan );  // a full-range bin's height in the zoomed view
+      const rowH = plotH * ( (gridSpan / rows) / vSpan );  // a grid bin's height in the zoomed view
       ctx.save();
       ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
       for (let ri = 0; ri < rows; ri++) {
@@ -431,6 +458,55 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           const yo = yOfPrice(k.o), yc = yOfPrice(k.c);
           ctx.fillRect(x - cw/2, Math.min(yo,yc), cw, Math.max(1, Math.abs(yc-yo)));
         }
+        ctx.restore();
+      }
+
+      // REAL-exchange price line (cyan) — segments break across closed-market
+      // gaps so the 24/7 tokenized candles vs session-hours reality read clearly
+      if (OV.real && d.real && Array.isArray(d.real.candles) && d.real.candles.length) {
+        const ivS = { "5m": 300, "30m": 1800, "1h": 3600, "1d": 86400 }[d.real.interval] || 3600;
+        const gapS = ivS * 3;
+        const t0 = (d.times[0] || 0), t1 = (d.times[d.times.length - 1] || 0);
+        const pts = d.real.candles.filter((k) => k.t >= t0 && k.t <= t1);
+        if (pts.length > 1) {
+          ctx.save();
+          ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
+          ctx.strokeStyle = "rgba(90,210,255,0.95)"; ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          let prevT = null;
+          for (const k of pts) {
+            const x = xOfTime(k.t), y = yOfPrice(k.c);
+            if (prevT === null || k.t - prevT > gapS) { ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y); }
+            else ctx.lineTo(x, y);
+            prevT = k.t;
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // options OI walls (CBOE delayed): top call walls green, put walls red,
+      // aggregate max pain yellow — the equity analogue of liq magnets
+      if (OV.walls && d.walls && (d.walls.call_walls || []).length + (d.walls.put_walls || []).length) {
+        ctx.save();
+        ctx.font = "10px system-ui"; ctx.textAlign = "left";
+        const wall = (price, color, tag) => {
+          if (price < vMin || price > vMax) return;
+          const y = yOfPrice(price);
+          ctx.setLineDash([3, 4]);
+          ctx.strokeStyle = color; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = color;
+          ctx.fillText(tag, padL + 6, y - 3);
+        };
+        const fmtOi = (n) => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(0)+"K" : String(n);
+        for (const w of (d.walls.call_walls || []).slice(0, 3))
+          wall(w.strike, "rgba(120,235,140,0.75)", `CALL WALL ${fmtPx(w.strike)} · ${fmtOi(w.call_oi)} OI`);
+        for (const w of (d.walls.put_walls || []).slice(0, 3))
+          wall(w.strike, "rgba(255,120,110,0.75)", `PUT WALL ${fmtPx(w.strike)} · ${fmtOi(w.put_oi)} OI`);
+        if (d.walls.max_pain)
+          wall(d.walls.max_pain, "rgba(250,220,80,0.85)", `MAX PAIN ${fmtPx(d.walls.max_pain)}`);
         ctx.restore();
       }
 
@@ -487,8 +563,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const src = venue === "cex"
         ? `${spanTxt} estimate · OI-history model`
         : `${spanTxt} window · ${cols} snapshots · real on-chain positions (Hyperliquid HIP-3)`;
+      const ovBits = [];
+      if (OV.real && d.real && (d.real.candles || []).length)
+        ovBits.push(`<span style="color:rgba(90,210,255,0.95)">— real exchange price</span> (delayed)`);
+      if (OV.walls && d.walls && ((d.walls.call_walls || []).length + (d.walls.put_walls || []).length))
+        ovBits.push(`<span style="color:rgba(120,235,140,0.9)">-- call</span>/<span style="color:rgba(255,120,110,0.9)">put walls</span> + <span style="color:rgba(250,220,80,0.95)">max pain</span> (CBOE OI, delayed)`);
       $("lm-meta").innerHTML =
-        `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}`;
+        `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}` +
+        (ovBits.length ? `<br/>${ovBits.join(" · ")}` : "");
       $("lm-disclaimer").textContent = d.disclaimer || "";
       banner("proof-ok", venue === "cex" ? "live · estimate" : "live · real");
     }
@@ -528,6 +610,37 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       } catch (e) { return []; }
     }
 
+    // REAL-exchange session candles (Yahoo delayed, proxied — Yahoo blocks
+    // browser CORS). Overlaid against the 24/7 tokenized price: the gaps are
+    // closed-market hours, the divergence in those gaps is the story.
+    async function fetchReal(coin, days) {
+      const key = coin + ":" + days + ":" + Math.floor(Date.now() / 3.6e6);
+      if (realCache[key]) return realCache[key];
+      try {
+        const r = await fetch(`${API}/charts/stock-candles/${encodeURIComponent(coin)}?days=${days}`,
+          { cache: "no-store", signal: AbortSignal.timeout(20000) });
+        if (!r.ok) return null;
+        const d = await r.json();
+        realCache[key] = d;
+        return d;
+      } catch (e) { return null; }
+    }
+
+    // Listed-options OI walls (CBOE delayed, proxied). Not every symbol has
+    // listed options (metals/commodities 404) — null just skips the overlay.
+    async function fetchWalls(coin) {
+      const key = coin + ":" + Math.floor(Date.now() / 1.8e6);
+      if (wallsCache[key]) return wallsCache[key];
+      try {
+        const r = await fetch(`${API}/charts/options-walls/${encodeURIComponent(coin)}`,
+          { cache: "no-store", signal: AbortSignal.timeout(25000) });
+        if (!r.ok) return null;
+        const d = await r.json();
+        wallsCache[key] = d;
+        return d;
+      } catch (e) { return null; }
+    }
+
     async function load() {
       const my = ++reqId;
       let v = venue;
@@ -548,9 +661,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         if (!r.ok) { banner("proof-error", "error " + r.status + (lastData ? " — showing previous data" : "")); return; }
         let data = await r.json();
         if (my !== reqId) return;
-        // price candles fetched CLIENT-SIDE (browser → HL; no server rate-share)
-        data.candles = await fetchCandles(coin, data);
+        // overlays fetched in parallel; each degrades to null independently
+        const [hl, real, walls] = await Promise.all([
+          fetchCandles(coin, data), fetchReal(coin, days), fetchWalls(coin),
+        ]);
         if (my !== reqId) return;
+        data.candles = hl;
+        data.real = real;
+        data.walls = walls;
         render(data);
       } catch (e) {
         if (my !== reqId) return;
@@ -663,7 +781,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoinTabs(); bindVenue(); bindRange(); bindZoom(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
+      buildCoinTabs(); bindVenue(); bindRange(); bindZoom(); bindOverlays(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
