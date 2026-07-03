@@ -30,13 +30,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       </div>
       <div id="lm-range" class="lm-tabs" role="tablist" aria-label="time range">
         <button data-days="1" role="tab">24h</button>
-        <button data-days="7" role="tab">7d</button>
+        <button data-days="7" class="active" role="tab">7d</button>
         <button data-days="30" role="tab">30d</button>
         <button data-days="90" role="tab">90d</button>
-        <button data-days="166" class="active" role="tab">max</button>
+        <button data-days="180" role="tab">max</button>
       </div>
       <div id="lm-zoom" class="lm-tabs" role="tablist" aria-label="price zoom">
-        <button data-zoom="0.03" class="active" role="tab">±3%</button>
+        <button data-zoom="auto" class="active" role="tab">auto</button>
+        <button data-zoom="0.03" role="tab">±3%</button>
         <button data-zoom="0.06" role="tab">±6%</button>
         <button data-zoom="0.12" role="tab">±12%</button>
         <button data-zoom="1" role="tab">full</button>
@@ -168,7 +169,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
     const VENUE_DEFAULT_THR  = { dex: 0.8, cex: 0.85 };
     let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.cex;
-    let FOCUS_PCT = 0.03;     // DEX y-axis zoom: view = current price ± this fraction
+    let FOCUS_PCT = "auto";   // y-axis zoom: "auto" fits the band holding most liquidity
     let lastGeom = null;
 
     const $ = (id) => document.getElementById(id);
@@ -245,7 +246,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // price-axis zoom: view-only, no refetch — just re-render lastData.
       document.querySelectorAll("#lm-zoom button").forEach((b) =>
         b.addEventListener("click", () => {
-          FOCUS_PCT = +b.dataset.zoom;
+          FOCUS_PCT = b.dataset.zoom === "auto" ? "auto" : +b.dataset.zoom;
           syncTabs();
           if (lastData) render(lastData);
         }));
@@ -258,7 +259,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       document.querySelectorAll("#lm-range button").forEach((b) =>
         b.classList.toggle("active", +b.dataset.days === days));
       document.querySelectorAll("#lm-zoom button").forEach((b) =>
-        b.classList.toggle("active", +b.dataset.zoom === FOCUS_PCT));
+        b.classList.toggle("active",
+          FOCUS_PCT === "auto" ? b.dataset.zoom === "auto" : +b.dataset.zoom === FOCUS_PCT));
       // zoom is DEX-only (CEX uses full range); hide it for CEX
       const zoomEl = $("lm-zoom");
       if (zoomEl) zoomEl.style.display = (venue === "dex") ? "" : "none";
@@ -288,19 +290,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         return;
       }
 
-      // log-normalize intensities between min and max nonzero (spread the colormap)
-      let maxV = 0, minV = Infinity;
-      for (const r of grid) for (const v of r) { if (v > maxV) maxV = v; if (v > 0 && v < minV) minV = v; }
-      if (!isFinite(minV)) minV = maxV || 1;
-      const lMin = Math.log(minV), lMax = Math.log(maxV), den = (lMax - lMin) || 1;
-      // threshold (the Coinglass "liquidity threshold" slider): hide cells below the
-      // floor, rescale the rest across the full colormap so the strongest bands pop.
-      const thr = threshold;
+      // PERCENTILE threshold + log color ramp. The old scheme mapped the slider
+      // onto the log-intensity RANGE — one whale cluster several times bigger
+      // than everything else pushed every other band under the floor and the
+      // chart looked empty. Rank-based cutoff is robust to that outlier: the
+      // slider hides the weakest X% of nonzero cells, color spreads over the
+      // log range that remains.
+      const nzVals = [];
+      const rowMass = new Array(rows).fill(0);
+      for (let ri = 0; ri < rows; ri++) for (const v of grid[ri]) {
+        if (v > 0) { nzVals.push(v); rowMass[ri] += v; }
+      }
+      nzVals.sort((a, b) => a - b);
+      const maxV = nzVals.length ? nzVals[nzVals.length - 1] : 1;
+      const cut = nzVals.length ? nzVals[Math.min(nzVals.length - 1, Math.floor(threshold * nzVals.length))] : 0;
+      const lCut = Math.log(cut || 1e-9), lMax = Math.log(maxV), den = (lMax - lCut) || 1;
       const norm = (v) => {
-        if (v <= 0) return -1;                      // -1 = don't draw
-        const n = (Math.log(v) - lMin) / den;       // 0..1
-        if (n < thr) return -1;                     // below threshold → hidden
-        return thr >= 1 ? 1 : (n - thr) / (1 - thr); // rescale remaining to 0..1
+        if (v <= 0 || v < cut) return -1;           // -1 = don't draw
+        return Math.max(0, Math.min(1, (Math.log(v) - lCut) / den));
       };
 
       // geometry: fit container width, no scroll
@@ -330,11 +337,27 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const curPrice = (cands.length ? cands[cands.length - 1].c
         : (rowPrices.length ? rowPrices[Math.floor(rowPrices.length / 2)] : (d.price_min + d.price_max) / 2));
       const fullSpan = (d.price_max - d.price_min) || 1;
+      // auto zoom: smallest preset band around current price that still holds
+      // most (55%) of the total liquidity mass — sparse far-out whale clusters
+      // stop dictating the whole chart's range.
+      let effPct = FOCUS_PCT;
+      if (effPct === "auto") {
+        const total = nzVals.reduce((a, b) => a + b, 0) || 1;
+        effPct = 1;
+        for (const pct of [0.03, 0.06, 0.12, 0.25]) {
+          let inMass = 0;
+          for (let ri = 0; ri < rows; ri++) {
+            const rp = rowPrices[ri];
+            if (rp != null && Math.abs(rp - curPrice) <= curPrice * pct) inMass += rowMass[ri];
+          }
+          if (inMass >= 0.55 * total) { effPct = pct; break; }
+        }
+      }
       // Focus the y-axis ONLY for DEX (its liq range is very wide → price buried
       // in a sliver). CEX is already server-windowed sensibly, so it uses the
       // FULL range untouched. zoom=full also means full range.
-      const focusOn = (venue === "dex" && FOCUS_PCT < 1);
-      const halfBand = focusOn ? Math.min(curPrice * FOCUS_PCT, fullSpan / 2 + 1) : fullSpan / 2;
+      const focusOn = (venue === "dex" && effPct < 1);
+      const halfBand = focusOn ? Math.min(curPrice * effPct, fullSpan / 2 + 1) : fullSpan / 2;
       const center = focusOn ? curPrice : (d.price_min + d.price_max) / 2;
       let vMin = center - halfBand, vMax = center + halfBand;
       // clamp the window into the available data range
@@ -401,6 +424,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         ctx.restore();
       }
 
+      // last-price marker: dashed line + right-edge price chip
+      if (curPrice >= vMin && curPrice <= vMax) {
+        const py = yOfPrice(curPrice);
+        ctx.save();
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(padL, py); ctx.lineTo(padL + plotW, py); ctx.stroke();
+        ctx.setLineDash([]);
+        const label = fmtPx(curPrice);
+        ctx.font = "bold 11px system-ui";
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = "rgba(255,255,255,0.92)";
+        ctx.fillRect(padL + plotW - tw - 12, py - 9, tw + 10, 18);
+        ctx.fillStyle = "#0d0b1a"; ctx.textAlign = "left";
+        ctx.fillText(label, padL + plotW - tw - 7, py + 4);
+        ctx.restore();
+      }
+
       // price axis (Y) — ticks stepped evenly across the FOCUS window (vMin..vMax)
       ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "right";
       const yticks = 7;
@@ -431,10 +472,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         if (times[ci] != null) ctx.fillText(fmtT(times[ci]), padL + ci*cellW + cellW/2, H-8);
       }
 
-      const span = times.length>1 ? Math.round((times[times.length-1]-times[0])/86400) : 0;
+      const spanS = times.length>1 ? (times[times.length-1]-times[0]) : 0;
+      const spanTxt = spanS >= 2*86400 ? `${Math.round(spanS/86400)}d` : `${Math.max(1, Math.round(spanS/3600))}h`;
       const src = venue === "cex"
-        ? `${span}d estimate · OI-history model`
-        : `${cols} live snapshots · real DEX positions (HL+GMX)`;
+        ? `${spanTxt} estimate · OI-history model`
+        : `${spanTxt} window · ${cols} snapshots · real DEX positions (HL+GMX)`;
       $("lm-meta").innerHTML =
         `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}`;
       $("lm-disclaimer").textContent = d.disclaimer || "";
@@ -464,7 +506,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       try {
         const url = `https://data-api.binance.vision/api/v3/klines?symbol=${coin}USDT`
           + `&interval=${interval}&startTime=${t0 * 1000}&endTime=${t1 * 1000}&limit=1000`;
-        const r = await fetch(url, { cache: "no-store" });
+        const r = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15000) });
         if (r.ok) {
           const raw = await r.json();
           if (Array.isArray(raw) && raw.length) {
@@ -489,23 +531,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       } catch (e) { return []; }
     }
 
-    // Trim a DEX heatmap to the last `days` of columns (grid is [row][col],
-    // times[col]). Keeps the price-row axis intact; just narrows the time window.
-    function sliceDexRange(data, days) {
-      const times = data.times || [];
-      if (times.length < 2) return data;
-      const cutoff = times[times.length - 1] - days * 86400;
-      let start = times.findIndex((t) => t >= cutoff);
-      if (start <= 0) return data;                 // whole window already inside range
-      const keep = times.length - start;
-      return {
-        ...data,
-        times: times.slice(start),
-        grid: (data.grid || []).map((row) => row.slice(start)),
-        cols: keep,
-      };
-    }
-
     async function load() {
       const my = ++reqId;
       let v = venue;
@@ -515,25 +540,26 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         return;
       }
       banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + " heatmap…");
+      // range window is applied SERVER-SIDE for both venues (?days=); the server
+      // downsamples long windows to <= cols columns so "max" stays one payload.
       const path = v === "cex" ? "/charts/cex-heatmap/" : "/charts/liqmap-heatmap/dex/";
-      const qs = v === "cex" ? ("?days=" + days) : "";
+      const qs = v === "cex" ? ("?days=" + days) : ("?days=" + days + "&cols=400");
       try {
-        const r = await fetch(API + path + encodeURIComponent(coin) + qs, { cache: "no-store" });
+        const r = await fetch(API + path + encodeURIComponent(coin) + qs,
+          { cache: "no-store", signal: AbortSignal.timeout(45000) });
         if (my !== reqId) return;
-        if (!r.ok) { banner("proof-error", "error " + r.status); return; }
+        if (!r.ok) { banner("proof-error", "error " + r.status + (lastData ? " — showing previous data" : "")); return; }
         let data = await r.json();
         if (my !== reqId) return;
-        // DEX is served as the full captured window; the range buttons (24h/7d/…)
-        // are applied CLIENT-SIDE by slicing the grid columns. (CEX honors ?days=
-        // server-side already.) "max" (166) → no slice.
-        if (v === "dex" && days < 166) data = sliceDexRange(data, days);
         // price candles fetched CLIENT-SIDE (browser → Binance; no server rate-share)
         data.candles = await fetchCandles(coin, data);
         if (my !== reqId) return;
         render(data);
       } catch (e) {
         if (my !== reqId) return;
-        banner("proof-error", "fetch failed — retrying…");
+        // keep the previous chart on screen — a timed-out refresh must not
+        // strand the user on a blank canvas or an eternal "loading…"
+        banner("proof-error", "fetch failed" + (lastData ? " — showing previous data, retrying…" : " — retrying…"));
       }
     }
 
