@@ -121,6 +121,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-sec-title">WHAT WOULD CHANGE THIS GRADE</div>
           <ul class="ck-list ck-fals" id="ck-fals"></ul>
         </div>
+        <div class="ck-section" id="ck-terrain-wrap" hidden>
+          <div class="ck-sec-title">THE TERRAIN</div>
+          <p class="ck-terrain" id="ck-terrain"></p>
+          <ul class="ck-list" id="ck-terrain-notes"></ul>
+        </div>
         <div class="ck-section" id="ck-unchecked-wrap" hidden>
           <div class="ck-sec-title">NOT CHECKED — YOU DIDN'T TELL US</div>
           <ul class="ck-list ck-unchecked" id="ck-unchecked"></ul>
@@ -453,6 +458,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       fill("ck-supports", "ck-supports-wrap", (d.supports || []).map(s => esc(s.note)));
       fill("ck-fals", "ck-fals-wrap", (d.falsifiers || []).map(esc));
       fill("ck-unchecked", "ck-unchecked-wrap", (d.unchecked || []).map(esc));
+      const t = d.terrain || {};
+      const tp = [];
+      const fmtPx = (p) => p >= 100 ? p.toLocaleString() : String(p);
+      if (t.nearest_resistance) tp.push(`R ${fmtPx(t.nearest_resistance.price)} (+${t.nearest_resistance.dist_pct}%)`);
+      if (t.nearest_support) tp.push(`S ${fmtPx(t.nearest_support.price)} (−${t.nearest_support.dist_pct}%)`);
+      if (t.nearest_liq_above) tp.push(`liq ↑ ${fmtPx(t.nearest_liq_above.price)}`);
+      if (t.nearest_liq_below) tp.push(`liq ↓ ${fmtPx(t.nearest_liq_below.price)}`);
+      if (t.funding_z != null) tp.push(`funding z ${t.funding_z > 0 ? "+" : ""}${t.funding_z}`);
+      $("ck-terrain-wrap").hidden = tp.length === 0;
+      $("ck-terrain").textContent = tp.join(" · ");
+      $("ck-terrain-notes").innerHTML = (t.notes || []).map(n => `<li>◈ ${esc(n)}</li>`).join("");
       $("ck-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function setQuota(left) {
@@ -613,6 +629,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-sev-low { color: #c9b843; }
     .ck-fals li { opacity: .8; }
     .ck-unchecked li { opacity: .5; }
+    .ck-terrain { font-size: .82rem; opacity: .85; margin: 0 0 .4rem; }
     .ck-turnstile { margin: .6rem 0; min-height: 0; }
     .ck-drop { border: 1px dashed var(--border); padding: .8rem; margin-bottom: .9rem;
       font-size: .78rem; opacity: .75; cursor: pointer; text-align: center; }
