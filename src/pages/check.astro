@@ -90,6 +90,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-sec-title">WHAT WOULD CHANGE THIS GRADE</div>
           <ul class="ck-list ck-fals" id="ck-fals"></ul>
         </div>
+        <div class="ck-section" id="ck-unchecked-wrap" hidden>
+          <div class="ck-sec-title">NOT CHECKED — YOU DIDN'T TELL US</div>
+          <ul class="ck-list ck-unchecked" id="ck-unchecked"></ul>
+        </div>
         <p class="ck-fine">
           Conditions assessment measured from live market data — analytical, not
           financial advice. Grades are logged and resolved at horizon;
@@ -205,6 +209,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         `<b class="ck-sev ck-sev-${f.severity}">${f.severity}</b> ${esc(f.note)}`));
       fill("ck-supports", "ck-supports-wrap", (d.supports || []).map(s => esc(s.note)));
       fill("ck-fals", "ck-fals-wrap", (d.falsifiers || []).map(esc));
+      fill("ck-unchecked", "ck-unchecked-wrap", (d.unchecked || []).map(esc));
       $("ck-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function setQuota(left) {
@@ -311,6 +316,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-sev-medium { color: #e0983a; }
     .ck-sev-low { color: #c9b843; }
     .ck-fals li { opacity: .8; }
+    .ck-unchecked li { opacity: .5; }
     .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
 
     .ck-hist { margin-top: 2rem; }
