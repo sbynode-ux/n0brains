@@ -213,7 +213,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     let palette = "viridis";
 
     function heatColor(t) {
-      t = Math.max(0, Math.min(1, t));
+      // gamma lift: a single whale cluster can sit orders of magnitude above the
+      // median band — without this the median bands render near-black
+      t = Math.pow(Math.max(0, Math.min(1, t)), 0.55);
       const stops = PALETTES[palette] || PALETTES.viridis;
       for (let i = 1; i < stops.length; i++) {
         if (t <= stops[i][0]) {
