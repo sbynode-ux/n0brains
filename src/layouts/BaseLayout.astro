@@ -172,6 +172,7 @@ const softwareAppLd = homepage ? {
           <div class="rail-cluster">
             <span class="rail-label">product</span>
             <div class="rail-links">
+              <a href="/check" class={navPath.startsWith("/check") ? "active" : ""}>check</a>
               <a href="/docs/" class={navPath.startsWith("/docs") ? "active" : ""}>docs</a>
               <a href="/proof" class={navPath.startsWith("/proof") ? "active" : ""}>proof</a>
               <a href="/charts" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
@@ -202,13 +203,14 @@ const softwareAppLd = homepage ? {
     <div id="nav-sheet" class="nav-sheet" hidden>
       <nav aria-label="Mobile">
         {[
-          ["/docs/", "docs", "01"],
-          ["/proof", "proof", "02"],
-          ["/charts", "charts", "03"],
-          ["/pricing", "pricing", "04"],
-          ["/intel", "intel", "05"],
-          ["/blog", "blog", "06"],
-          ["/podcast", "podcast", "07"],
+          ["/check", "check", "01"],
+          ["/docs/", "docs", "02"],
+          ["/proof", "proof", "03"],
+          ["/charts", "charts", "04"],
+          ["/pricing", "pricing", "05"],
+          ["/intel", "intel", "06"],
+          ["/blog", "blog", "07"],
+          ["/podcast", "podcast", "08"],
         ].map(([href, label, idx]) => {
           const active = navPath.startsWith(href === "/docs/" ? "/docs" : href);
           return (
