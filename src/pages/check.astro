@@ -121,6 +121,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-sec-title">WHAT WOULD CHANGE THIS GRADE</div>
           <ul class="ck-list ck-fals" id="ck-fals"></ul>
         </div>
+        <img id="ck-chart-img" class="ck-chart-img" hidden alt="check chart" />
         <div class="ck-section" id="ck-terrain-wrap" hidden>
           <div class="ck-sec-title">THE TERRAIN</div>
           <p class="ck-terrain" id="ck-terrain"></p>
@@ -411,6 +412,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           if (!ts) throw new Error("Please complete the verification widget first.");
           body.turnstile_token = ts;
           url = `${API}/check/anon`;
+        } else {
+          body.chart = true;  // branded chart render (signed-in)
         }
         const r = await fetch(url, {
           method: "POST",
@@ -445,6 +448,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       $("ck-grade").style.color = GRADE_COLOR[d.grade] || "inherit";
       $("ck-headline").textContent = `${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"} · ${d.horizon_hours}h horizon · regime: ${d.regime || "—"}`;
       $("ck-verdict").textContent = d.verdict || "";
+      if (d.chart_png_b64) {
+        $("ck-chart-img").src = "data:image/png;base64," + d.chart_png_b64;
+        $("ck-chart-img").hidden = false;
+      } else {
+        $("ck-chart-img").hidden = true;
+      }
       $("ck-score").textContent = `score ${d.score} · realized daily vol ${d.realized_daily_vol_pct ?? "—"}%`;
       document.querySelectorAll("#ck-scale span").forEach(el => {
         el.classList.toggle("on", el.dataset.g === d.grade);
@@ -630,6 +639,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-fals li { opacity: .8; }
     .ck-unchecked li { opacity: .5; }
     .ck-terrain { font-size: .82rem; opacity: .85; margin: 0 0 .4rem; }
+    .ck-chart-img { width: 100%; margin: .6rem 0; border: 1px solid var(--border); }
     .ck-turnstile { margin: .6rem 0; min-height: 0; }
     .ck-drop { border: 1px dashed var(--border); padding: .8rem; margin-bottom: .9rem;
       font-size: .78rem; opacity: .75; cursor: pointer; text-align: center; }
