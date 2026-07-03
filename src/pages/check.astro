@@ -16,6 +16,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         leverage survives a normal day — and give it a grade from A to F.
         Every grade we give goes on the public record at <a href="/proof">/proof</a>.
       </p>
+      <div class="ck-examples">
+        <span class="ck-opt">try one:</span>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"BTC","side":"long","lev":10}'>BTC long 10×</button>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"ETH","side":"short","stopPct":2}'>ETH short + stop</button>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"SOL","side":"long","lev":20,"stopPct":1}'>SOL long 20× tight stop</button>
+      </div>
     </div>
 
     <!-- signed-out gate: try 1 anonymous check, or sign in for more -->
@@ -58,13 +64,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             </div>
           </label>
         </div>
+        <div class="ck-spotline" id="ck-spotline" hidden>spot <b id="ck-spot">—</b></div>
         <div class="ck-row">
           <label>ENTRY <span class="ck-opt">optional — live price if empty</span><input id="ck-entry" type="number" step="any" placeholder="spot" /></label>
-          <label>STOP <span class="ck-opt">optional</span><input id="ck-stop" type="number" step="any" placeholder="—" /></label>
+          <label>STOP <span class="ck-opt">optional</span><input id="ck-stop" type="number" step="any" placeholder="—" />
+            <span class="ck-shortcuts"><button type="button" class="ck-mini" data-stop="1">−1%</button><button type="button" class="ck-mini" data-stop="2">−2%</button><button type="button" class="ck-mini" data-stop="5">−5%</button></span>
+          </label>
         </div>
         <div class="ck-row">
           <label>TARGET <span class="ck-opt">optional</span><input id="ck-target" type="number" step="any" placeholder="—" /></label>
-          <label>LEVERAGE <span class="ck-opt">optional</span><input id="ck-lev" type="number" step="any" min="1" max="100" placeholder="1" /></label>
+          <label>LEVERAGE <span class="ck-opt">optional</span><input id="ck-lev" type="number" step="any" min="1" max="100" placeholder="1" />
+            <span class="ck-shortcuts"><button type="button" class="ck-mini" data-lev="3">3×</button><button type="button" class="ck-mini" data-lev="5">5×</button><button type="button" class="ck-mini" data-lev="10">10×</button><button type="button" class="ck-mini" data-lev="20">20×</button></span>
+          </label>
         </div>
         <div class="ck-row">
           <label>HORIZON
@@ -88,8 +99,14 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-grade-meta">
             <div id="ck-headline">conditions</div>
             <div class="ck-score" id="ck-score"></div>
+            <div class="ck-scale" id="ck-scale">
+              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
+            </div>
           </div>
         </div>
+        <p class="ck-upsell" id="ck-upsell" hidden>
+          That's your free check for today — <a href="/signup">a free account gets 3/day + your history</a>.
+        </p>
         <div class="ck-section" id="ck-flags-wrap" hidden>
           <div class="ck-sec-title">WORKING AGAINST YOU</div>
           <ul class="ck-list" id="ck-flags"></ul>
@@ -240,7 +257,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         const want = String(d.suggested_horizon_hours);
         for (const o of sel.options) if (o.value === want) sel.value = want;
       }
-      $("ck-parse").hidden = true;
+      // explicit confirmation: buttons go away, chip states what happened,
+      // the filled field flashes so the eye lands on it (user QA 2026-07-03:
+      // chip previously appeared to ignore the click)
+      $("ck-parse-yes").hidden = true; $("ck-parse-no").hidden = true;
+      $("ck-parse-text").textContent = `✓ applied — ${d.asset}${d.timeframe ? " · " + d.timeframe : ""} filled in below`;
+      $("ck-asset").classList.add("ck-flash");
+      if (typeof fetchSpot === "function") fetchSpot();
+      setTimeout(() => { $("ck-parse").hidden = true; $("ck-asset").classList.remove("ck-flash");
+                         $("ck-parse-yes").hidden = false; $("ck-parse-no").hidden = false; }, 2500);
     });
     $("ck-parse-no").addEventListener("click", () => { $("ck-parse").hidden = true; });
 
@@ -260,8 +285,80 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       });
     }
 
-    $("ck-long").addEventListener("click", () => { side = "long"; $("ck-long").classList.add("on"); $("ck-short").classList.remove("on"); });
-    $("ck-short").addEventListener("click", () => { side = "short"; $("ck-short").classList.add("on"); $("ck-long").classList.remove("on"); });
+    function setSide(sd) {
+      side = sd;
+      $("ck-long").classList.toggle("on", sd === "long");
+      $("ck-short").classList.toggle("on", sd === "short");
+    }
+    $("ck-long").addEventListener("click", () => setSide("long"));
+    $("ck-short").addEventListener("click", () => setSide("short"));
+
+    // live spot chip: fetch when the asset field settles
+    let spotPx = null, spotTimer = null;
+    $("ck-asset").addEventListener("input", () => {
+      clearTimeout(spotTimer);
+      spotTimer = setTimeout(fetchSpot, 500);
+    });
+    async function fetchSpot() {
+      const a = $("ck-asset").value.trim().toUpperCase();
+      spotPx = null; $("ck-spotline").hidden = true;
+      if (!a) return;
+      try {
+        const r = await fetch(`${API}/price/${a}`, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return;
+        const d = await r.json();
+        const px = Number(d.price || d.mid || d.current_price);
+        if (px > 0) {
+          spotPx = px;
+          $("ck-spot").textContent = px >= 100 ? px.toLocaleString() : String(px);
+          $("ck-spotline").hidden = false;
+        }
+      } catch {}
+    }
+
+    // one-tap shortcuts: stop at −N% (side-aware) and leverage chips
+    document.querySelectorAll(".ck-mini[data-stop]").forEach(b =>
+      b.addEventListener("click", () => {
+        const base = Number($("ck-entry").value) || spotPx;
+        if (!base) { $("ck-err").textContent = "pick an asset first (need a price for % stops)"; $("ck-err").hidden = false; return; }
+        const pct = Number(b.dataset.stop) / 100;
+        const px = side === "long" ? base * (1 - pct) : base * (1 + pct);
+        $("ck-stop").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
+      }));
+    document.querySelectorAll(".ck-mini[data-lev]").forEach(b =>
+      b.addEventListener("click", () => { $("ck-lev").value = b.dataset.lev; }));
+
+    // example chips: prefill + run
+    document.querySelectorAll(".ck-ex").forEach(b =>
+      b.addEventListener("click", async () => {
+        const ex = JSON.parse(b.dataset.ex);
+        $("ck-asset").value = ex.asset; setSide(ex.side);
+        $("ck-lev").value = ex.lev || ""; $("ck-stop").value = ""; $("ck-target").value = "";
+        await fetchSpot();
+        if (ex.stopPct && spotPx) {
+          const px = ex.side === "long" ? spotPx * (1 - ex.stopPct / 100) : spotPx * (1 + ex.stopPct / 100);
+          $("ck-stop").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
+        }
+        $("ck-app").scrollIntoView({ behavior: "smooth", block: "start" });
+        if (mode !== "anon") $("ck-form").requestSubmit();  // anon: Turnstile first
+      }));
+
+    // staged progress text while the engine works
+    const STAGES = ["reading positioning…", "scanning scheduled events…",
+                    "measuring volatility…", "checking proven edges…", "grading…"];
+    let stageTimer = null;
+    function startStages() {
+      let i = 0;
+      $("ck-go").textContent = STAGES[0];
+      stageTimer = setInterval(() => {
+        i = Math.min(i + 1, STAGES.length - 1);
+        $("ck-go").textContent = STAGES[i];
+      }, 1600);
+    }
+    function stopStages() {
+      clearInterval(stageTimer);
+      $("ck-go").textContent = "RUN CHECK";
+    }
 
     const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
 
@@ -273,7 +370,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         entry: num("ck-entry"), stop: num("ck-stop"), target: num("ck-target"),
         leverage: num("ck-lev"), horizon_hours: Number($("ck-horizon").value),
       };
-      $("ck-go").disabled = true; $("ck-go").textContent = "CHECKING…";
+      $("ck-go").disabled = true; startStages();
       try {
         let url = `${API}/check`;
         if (mode === "anon") {
@@ -303,7 +400,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         $("ck-err").hidden = false;
         $("ck-result").hidden = true;
       } finally {
-        $("ck-go").disabled = false; $("ck-go").textContent = "RUN CHECK";
+        $("ck-go").disabled = false; stopStages();
       }
     });
 
@@ -314,6 +411,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       $("ck-grade").style.color = GRADE_COLOR[d.grade] || "inherit";
       $("ck-headline").textContent = `${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"} · ${d.horizon_hours}h horizon · regime: ${d.regime || "—"}`;
       $("ck-score").textContent = `score ${d.score} · realized daily vol ${d.realized_daily_vol_pct ?? "—"}%`;
+      document.querySelectorAll("#ck-scale span").forEach(el => {
+        el.classList.toggle("on", el.dataset.g === d.grade);
+        if (el.dataset.g === d.grade) el.style.color = GRADE_COLOR[d.grade] || "inherit";
+        else el.style.color = "";
+      });
+      $("ck-upsell").hidden = !(mode === "anon");
       setQuota(d.free_checks_remaining_today);
       fill("ck-flags", "ck-flags-wrap", (d.flags || []).map(f =>
         `<b class="ck-sev ck-sev-${f.severity}">${f.severity}</b> ${esc(f.note)}`));
@@ -374,6 +477,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
   <style>
     .check-page { max-width: 1100px; margin: 0 auto; }
+    .check-page [hidden] { display: none !important; } /* author display rules must not defeat hidden */
     .ck-hero { position: relative; padding: 2rem 0 2.2rem; }
     .ck-kicker { display: flex; align-items: center; gap: .6rem; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; opacity: .75; }
     .ck-dash { display: inline-block; width: 26px; height: 1px; background: currentColor; }
@@ -437,6 +541,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-chip-btn { background: transparent; border: 1px solid var(--border); color: inherit;
       font: inherit; font-size: .75rem; padding: .25rem .6rem; cursor: pointer; }
     .ck-chip-btn:hover { border-color: currentColor; }
+    .ck-flash { outline: 2px solid #2ecc71 !important; transition: outline .3s; }
+    .ck-examples { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+    .ck-spotline { font-size: .75rem; opacity: .7; margin: -0.4rem 0 .6rem; }
+    .ck-shortcuts { display: flex; gap: .3rem; margin-top: .3rem; }
+    .ck-mini { background: transparent; border: 1px solid var(--border); color: inherit;
+      font: inherit; font-size: .68rem; padding: .15rem .45rem; cursor: pointer; opacity: .75; }
+    .ck-mini:hover { border-color: currentColor; opacity: 1; }
+    .ck-scale { display: flex; gap: .5rem; font-size: .68rem; opacity: .8; margin-top: .35rem; letter-spacing: .08em; }
+    .ck-scale span { opacity: .4; }
+    .ck-scale span.on { opacity: 1; font-weight: 700; }
+    .ck-upsell { font-size: .85rem; border: 1px solid var(--border); padding: .6rem .8rem; margin: 0 0 1rem; }
     .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
 
     .ck-hist { margin-top: 2rem; }
