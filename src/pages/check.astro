@@ -18,10 +18,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </p>
     </div>
 
-    <!-- signed-out gate -->
+    <!-- signed-out gate: try 1 anonymous check, or sign in for more -->
     <div class="ck-card ck-gate" id="ck-gate" hidden>
-      <p class="ck-gate-line">Sign in to run checks. Free accounts get
-        <b>3 checks a day</b> — no card needed.</p>
+      <p class="ck-gate-line">Try <b>1 free check</b> below — no account.
+        Free accounts get <b>3 checks a day</b> + your history; Pro is unlimited.</p>
       <div class="ck-gate-btns">
         <a class="ck-btn" href="/login?next=/check">LOG IN</a>
         <a class="ck-btn ck-btn-cta" href="/signup">CREATE FREE ACCOUNT</a>
@@ -66,6 +66,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           </label>
           <label class="ck-quota-label">TODAY<span class="ck-opt" id="ck-quota">&nbsp;</span></label>
         </div>
+        <div id="ck-turnstile" class="ck-turnstile"></div>
         <button type="submit" id="ck-go" class="ck-submit">RUN CHECK</button>
         <p class="ck-err" id="ck-err" hidden></p>
       </form>
@@ -134,27 +135,37 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const API = "https://api.n0brains.com";
     let side = "long";
 
-    // ── auth state: session JWT (preferred) or saved API key (advanced) ──
+    // ── auth state: session JWT > saved API key > anonymous (1/day, Turnstile)
+    const TURNSTILE_SITEKEY = "0x4AAAAAADu0UwgPFCz27sIq";
     const token = localStorage.getItem("auth_token");
     const savedKey = localStorage.getItem("api_key");
+    const mode = token ? "session" : savedKey ? "key" : "anon";
     function authHeader() {
       if (token) return { Authorization: `Bearer ${token}` };
       if (savedKey) return { "X-API-Key": savedKey };
-      return null;
+      return {};
     }
-    function showApp(on) { $("ck-app").hidden = !on; $("ck-gate").hidden = on; }
     function signOutToGate(msg) {
       localStorage.removeItem("auth_token");
-      showApp(false);
-      if (msg) { const p = document.createElement("p"); p.className = "ck-err"; p.textContent = msg; $("ck-gate").prepend(p); }
+      if (msg) alert(msg);
+      location.reload();
     }
 
-    if (authHeader()) {
-      showApp(true);
-      $("ck-signed").textContent = token ? "signed in — session" : "using API key";
-      loadHistory();
+    // anon: gate (login CTAs) AND the form both show; form runs 1 Turnstile-
+    // gated check against /check/anon. signed-in: form only, full quota.
+    $("ck-app").hidden = false;
+    $("ck-gate").hidden = mode !== "anon";
+    if (mode === "anon") {
+      $("ck-signed").textContent = "anonymous — 1 free check today";
+      $("ck-quota").textContent = "1 free (no account)";
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=ckTsInit";
+      s.async = true; s.defer = true;
+      window.ckTsInit = () => window.turnstile.render("#ck-turnstile", { sitekey: TURNSTILE_SITEKEY });
+      document.head.appendChild(s);
     } else {
-      showApp(false);
+      $("ck-signed").textContent = mode === "session" ? "signed in — session" : "using API key";
+      loadHistory();
     }
     $("ck-key-use").addEventListener("click", () => {
       const k = $("ck-key").value.trim();
@@ -178,16 +189,28 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       };
       $("ck-go").disabled = true; $("ck-go").textContent = "CHECKING…";
       try {
-        const r = await fetch(`${API}/check`, {
+        let url = `${API}/check`;
+        if (mode === "anon") {
+          const ts = window.turnstile && window.turnstile.getResponse();
+          if (!ts) throw new Error("Please complete the verification widget first.");
+          body.turnstile_token = ts;
+          url = `${API}/check/anon`;
+        }
+        const r = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader() },
           body: JSON.stringify(body),
         });
-        if (r.status === 401) return signOutToGate("Session expired — please log in again.");
+        if (r.status === 401 && mode !== "anon") return signOutToGate("Session expired — please log in again.");
         const d = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
         render(d);
-        loadHistory();
+        if (mode === "anon") {
+          $("ck-quota").textContent = "0 free left — accounts get 3/day";
+          if (window.turnstile) window.turnstile.reset();
+        } else {
+          loadHistory();
+        }
       } catch (err) {
         $("ck-err").textContent = String(err.message || err);
         $("ck-err").hidden = false;
@@ -213,6 +236,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       $("ck-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function setQuota(left) {
+      if (mode === "anon") return; // anon quota text managed by submit handler
       $("ck-quota").textContent = left == null ? "unlimited (pro)" : `${left} free checks left`;
     }
     function fill(listId, wrapId, items) {
@@ -317,6 +341,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-sev-low { color: #c9b843; }
     .ck-fals li { opacity: .8; }
     .ck-unchecked li { opacity: .5; }
+    .ck-turnstile { margin: .6rem 0; min-height: 0; }
     .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
 
     .ck-hist { margin-top: 2rem; }
