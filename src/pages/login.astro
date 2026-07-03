@@ -232,6 +232,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(15000),  // don't strand the button on a blip
       });
 
       const data = await resp.json();
