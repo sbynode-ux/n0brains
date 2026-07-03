@@ -39,7 +39,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <form id="ck-form" class="ck-card">
         <div class="ck-signed" id="ck-signed"></div>
         <div class="ck-row">
-          <label>ASSET<input id="ck-asset" placeholder="BTC" maxlength="12" required /></label>
+          <label>ASSET<input id="ck-asset" placeholder="BTC" maxlength="12" required
+            list="ck-assets" autocomplete="off" /></label>
+          <datalist id="ck-assets"></datalist>
           <label>SIDE
             <div class="ck-side">
               <button type="button" id="ck-long" class="ck-side-btn on">LONG</button>
@@ -173,6 +175,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       localStorage.setItem("api_key", k);
       location.reload();
     });
+
+    // supported-asset autocomplete (public endpoint, cached server-side)
+    fetch(`${API}/check/assets`).then(r => r.json()).then(d => {
+      $("ck-assets").innerHTML = (d.assets || [])
+        .map(a => `<option value="${a}">`).join("");
+    }).catch(() => {});
 
     $("ck-long").addEventListener("click", () => { side = "long"; $("ck-long").classList.add("on"); $("ck-short").classList.remove("on"); });
     $("ck-short").addEventListener("click", () => { side = "short"; $("ck-short").classList.add("on"); $("ck-long").classList.remove("on"); });
