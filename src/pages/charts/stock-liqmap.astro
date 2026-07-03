@@ -178,6 +178,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     let candleCache = {};   // coin:interval:hour -> [{t,o,h,l,c}]
     let realCache = {};     // coin:days:hour -> stock-candles payload
     let wallsCache = {};    // coin:halfhour -> options-walls payload
+    // symbols whose tokenized contract trades at its own unit scale (not the
+    // real index level) — flagged in the legend so ~$718 doesn't read as a bug
+    const UNIT_NOTE = {
+      NASDAQ: "quoted in mkts:USTECH contract units — not the ^IXIC index level",
+    };
     const OV = { real: true, walls: true };   // overlay toggles
     const REFRESH_MS = 120000;
     const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
@@ -501,10 +506,25 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           ctx.fillText(tag, padL + 6, y - 3);
         };
         const fmtOi = (n) => n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(0)+"K" : String(n);
+        // big call + put OI often stack on the SAME strike — merge to one line
+        // so the labels don't overprint into garbage
+        const byStrike = new Map();
         for (const w of (d.walls.call_walls || []).slice(0, 3))
-          wall(w.strike, "rgba(120,235,140,0.75)", `CALL WALL ${fmtPx(w.strike)} · ${fmtOi(w.call_oi)} OI`);
-        for (const w of (d.walls.put_walls || []).slice(0, 3))
-          wall(w.strike, "rgba(255,120,110,0.75)", `PUT WALL ${fmtPx(w.strike)} · ${fmtOi(w.put_oi)} OI`);
+          byStrike.set(w.strike, { c: w.call_oi, p: 0 });
+        for (const w of (d.walls.put_walls || []).slice(0, 3)) {
+          const e = byStrike.get(w.strike);
+          if (e) e.p = w.put_oi; else byStrike.set(w.strike, { c: 0, p: w.put_oi });
+        }
+        for (const [strike, e] of byStrike) {
+          const both = e.c > 0 && e.p > 0;
+          const color = both ? "rgba(240,200,140,0.8)"
+            : e.c > 0 ? "rgba(120,235,140,0.75)" : "rgba(255,120,110,0.75)";
+          const tag = both
+            ? `WALL ${fmtPx(strike)} · C ${fmtOi(e.c)} / P ${fmtOi(e.p)} OI`
+            : e.c > 0 ? `CALL WALL ${fmtPx(strike)} · ${fmtOi(e.c)} OI`
+                      : `PUT WALL ${fmtPx(strike)} · ${fmtOi(e.p)} OI`;
+          wall(strike, color, tag);
+        }
         if (d.walls.max_pain)
           wall(d.walls.max_pain, "rgba(250,220,80,0.85)", `MAX PAIN ${fmtPx(d.walls.max_pain)}`);
         ctx.restore();
@@ -568,6 +588,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         ovBits.push(`<span style="color:rgba(90,210,255,0.95)">— real exchange price</span> (delayed)`);
       if (OV.walls && d.walls && ((d.walls.call_walls || []).length + (d.walls.put_walls || []).length))
         ovBits.push(`<span style="color:rgba(120,235,140,0.9)">-- call</span>/<span style="color:rgba(255,120,110,0.9)">put walls</span> + <span style="color:rgba(250,220,80,0.95)">max pain</span> (CBOE OI, delayed)`);
+      // venue-unit symbols: the tokenized contract trades at its own scale, so
+      // real-index overlays (^IXIC price, NDX strikes) sit far outside the
+      // chart and are auto-skipped — say so instead of looking broken
+      if (UNIT_NOTE[coin]) ovBits.push(`<span style="color:#9aa0ad">${UNIT_NOTE[coin]}</span>`);
       $("lm-meta").innerHTML =
         `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}` +
         (ovBits.length ? `<br/>${ovBits.join(" · ")}` : "");
