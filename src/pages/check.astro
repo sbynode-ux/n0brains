@@ -99,6 +99,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <div class="ck-grade" id="ck-grade">—</div>
           <div class="ck-grade-meta">
             <div id="ck-headline">conditions</div>
+            <div class="ck-verdict" id="ck-verdict"></div>
             <div class="ck-score" id="ck-score"></div>
             <div class="ck-scale" id="ck-scale">
               <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
@@ -438,6 +439,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       $("ck-grade").textContent = d.grade;
       $("ck-grade").style.color = GRADE_COLOR[d.grade] || "inherit";
       $("ck-headline").textContent = `${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"} · ${d.horizon_hours}h horizon · regime: ${d.regime || "—"}`;
+      $("ck-verdict").textContent = d.verdict || "";
       $("ck-score").textContent = `score ${d.score} · realized daily vol ${d.realized_daily_vol_pct ?? "—"}%`;
       document.querySelectorAll("#ck-scale span").forEach(el => {
         el.classList.toggle("on", el.dataset.g === d.grade);
@@ -598,6 +600,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     .ck-grade { font-size: 3.4rem; font-weight: 700; line-height: 1; min-width: 3.2rem; text-align: center; }
     .ck-grade-meta { font-size: .85rem; line-height: 1.5; }
     .ck-score { opacity: .65; font-size: .78rem; }
+    .ck-verdict { font-size: .85rem; margin: .15rem 0; }
 
     .ck-section { margin: 1rem 0; }
     .ck-sec-title { font-size: .7rem; letter-spacing: .16em; opacity: .7; margin-bottom: .45rem; }
