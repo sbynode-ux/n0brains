@@ -15,17 +15,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       commodities</strong> cluster to liquidate — bright bands are liquidity magnets
       the price tends to gravitate toward. We read these as risk levels (where to
       place stops and targets), not as a direction to trade — liquidity predicts
-      volatility, not which way price goes. This map reads <em>real</em> on-chain
-      positions from <strong>Hyperliquid HIP-3</strong> builder perp DEXs (NVDA,
-      TSLA, S&amp;P 500, gold, oil and more), captured live and building forward —
-      the same on-chain liquidationPx the protocol settles against, not a model.
-      Analytical data, <strong>not financial advice</strong>.
+      volatility, not which way price goes. Two views:
+      <strong>estimate</strong> models liquidation density from live
+      <strong>Hyperliquid HIP-3</strong> open interest across standard leverage
+      tiers (the Coinglass-style projection); <strong>real</strong> shows only the
+      actual on-chain positions the protocol settles against — 100% real, but a thin
+      book looks sparse. Analytical data, <strong>not financial advice</strong>.
     </p>
 
     <div class="lm-controls">
       <div id="lm-coins" class="lm-tabs" role="tablist" aria-label="symbol"></div>
-      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source" hidden>
-        <button data-venue="dex" class="active" role="tab">HIP-3 · real (live)</button>
+      <div id="lm-venue" class="lm-tabs" role="tablist" aria-label="data source">
+        <button data-venue="est" class="active" role="tab" title="Modeled liquidation density from live open interest across leverage tiers — the Coinglass-style estimate">estimate · modeled</button>
+        <button data-venue="dex" role="tab" title="Real on-chain HIP-3 positions only — sparse but 100% real, no model">HIP-3 · real (live)</button>
       </div>
       <div id="lm-range" class="lm-tabs" role="tablist" aria-label="time range">
         <button data-days="1" class="active" role="tab">24h</button>
@@ -185,9 +187,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     };
     const OV = { real: true, walls: true };   // overlay toggles
     const REFRESH_MS = 120000;
-    const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
-    const VENUE_DEFAULT_THR  = { dex: 0.7, cex: 0.85 };
-    let coin = "SP500", venue = "dex", days = VENUE_DEFAULT_DAYS.dex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.dex;
+    const VENUE_DEFAULT_DAYS = { dex: 1, est: 7 };
+    const VENUE_DEFAULT_THR  = { dex: 0.7, est: 0.55 };
+    let coin = "SP500", venue = "est", days = VENUE_DEFAULT_DAYS.est, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.est;
     let FOCUS_PCT = "auto";   // y-axis zoom: "auto" fits the band holding most liquidity
     let lastGeom = null;
 
@@ -292,7 +294,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           FOCUS_PCT === "auto" ? b.dataset.zoom === "auto" : +b.dataset.zoom === FOCUS_PCT));
       // zoom is DEX-only (CEX uses full range); hide it for CEX
       const zoomEl = $("lm-zoom");
-      if (zoomEl) zoomEl.style.display = (venue === "dex") ? "" : "none";
+      if (zoomEl) zoomEl.style.display = "";   // both venues are price-focused
       // range applies to BOTH now — CEX server-side (?days=), DEX client-side slice.
     }
     function banner(state, text) {
@@ -313,8 +315,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         canvas.width = W0; canvas.height = 200; canvas.style.width = "100%"; canvas.style.height = "auto";
         ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W0,200);
         ctx.fillStyle = "#6b7280"; ctx.font = "14px system-ui";
-        ctx.fillText(venue === "dex" ? "Real DEX heatmap is building — fills over days."
-                                     : "Heatmap building…", 24, 100);
+        ctx.fillText(venue === "dex" ? "Real on-chain heatmap is building — fills over days."
+                                     : "Modeled estimate builds as price history accrues.", 24, 100);
         $("lm-meta").textContent = ""; $("lm-disclaimer").textContent = d.disclaimer || "";
         return;
       }
@@ -398,7 +400,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // Focus the y-axis ONLY for DEX (its liq range is very wide → price buried
       // in a sliver). CEX is already server-windowed sensibly, so it uses the
       // FULL range untouched. zoom=full also means full range.
-      const focusOn = (venue === "dex" && effPct < 1);
+      const focusOn = (effPct < 1);   // both venues are current-price-centered
       const halfBand = focusOn ? Math.min(curPrice * effPct, fullSpan / 2 + 1) : fullSpan / 2;
       const center = focusOn ? curPrice : (rangeMin + rangeMax) / 2;
       let vMin = center - halfBand, vMax = center + halfBand;
@@ -580,8 +582,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
       const spanS = times.length>1 ? (times[times.length-1]-times[0]) : 0;
       const spanTxt = spanS >= 2*86400 ? `${Math.round(spanS/86400)}d` : `${Math.max(1, Math.round(spanS/3600))}h`;
-      const src = venue === "cex"
-        ? `${spanTxt} estimate · OI-history model`
+      const src = venue === "est"
+        ? `${spanTxt} · modeled from $${(d.oi_usd/1e6).toFixed(0)}M open interest · leverage-tier estimate`
         : `${spanTxt} window · ${cols} snapshots · real on-chain positions (Hyperliquid HIP-3)`;
       const ovBits = [];
       if (OV.real && d.real && (d.real.candles || []).length)
@@ -596,7 +598,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         `<strong>${coin}</strong> · ${src} · price ${fmtPx(d.price_min)}–${fmtPx(d.price_max)}` +
         (ovBits.length ? `<br/>${ovBits.join(" · ")}` : "");
       $("lm-disclaimer").textContent = d.disclaimer || "";
-      banner("proof-ok", venue === "cex" ? "live · estimate" : "live · real");
+      banner("proof-ok", venue === "est" ? "live · modeled estimate" : "live · real");
     }
 
     // Candle overlay from Hyperliquid's own candleSnapshot — the ONLY source
@@ -668,16 +670,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     async function load() {
       const my = ++reqId;
       let v = venue;
-      if (v === "dex" && !DEX_COINS.has(coin)) {
-        banner("proof-error", coin + " has no DEX book — pick BTC/ETH or use CEX");
-        $("lm-canvas").getContext("2d").clearRect(0,0,3000,3000);
-        return;
-      }
       banner("proof-loading", "loading " + coin + " " + v.toUpperCase() + " heatmap…");
-      // range window is applied SERVER-SIDE for both venues (?days=); the server
-      // downsamples long windows to <= cols columns so "max" stays one payload.
-      const path = v === "cex" ? "/charts/cex-heatmap/" : "/charts/liqmap-heatmap/dex/";
-      const qs = v === "cex" ? ("?days=" + days) : ("?days=" + days + "&cols=400");
+      // range window is applied SERVER-SIDE (?days=); the server downsamples long
+      // windows to <= cols columns so "max" stays one payload. est = modeled
+      // density from OI; dex = real on-chain positions only.
+      const path = v === "est" ? "/charts/hip3-estimate-heatmap/" : "/charts/liqmap-heatmap/dex/";
+      const qs = v === "est" ? ("?days=" + days) : ("?days=" + days + "&cols=400");
       try {
         const r = await fetch(API + path + encodeURIComponent(coin) + qs,
           { cache: "no-store", signal: AbortSignal.timeout(45000) });
