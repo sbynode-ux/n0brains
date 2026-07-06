@@ -505,6 +505,27 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             <table>${THEAD}<tbody>${byVer[v].map(rowHtml).join("")}</tbody></table>`).join("")
           + `</details>`;
       }
+      // ── fenced BACKTEST block (explicitly not a live record) ──
+      const bt = d.check_grades_backtest;
+      if (bt && bt.grades && bt.grades.length) {
+        const btRows = bt.grades.map((g) => {
+          const c = CG_COLOR[g.grade] || "inherit";
+          const ret = g.avg_ret_pct == null ? "—"
+            : `<span style="color:${g.avg_ret_pct >= 0 ? "#4ade80" : "#e03a3a"}">${g.avg_ret_pct > 0 ? "+" : ""}${g.avg_ret_pct}%</span>`;
+          const wr = g.win_rate == null ? "—" : `${(g.win_rate * 100).toFixed(0)}%`;
+          return `<tr><td><b style="color:${c}">${g.grade}</b></td>
+            <td>${g.n}</td><td>${wr}</td><td>${ret}</td></tr>`;
+        }).join("");
+        html += `<div style="margin-top:1.4rem;border:1px dashed var(--border);
+            padding:0.9rem 1rem;border-radius:6px;opacity:0.92">
+          <p class="meta" style="margin:0 0 0.5rem;letter-spacing:0.05em">
+            ⎇ BACKTEST · engine ${bt.engine_version} re-scored on ${bt.n.toLocaleString()}
+            prior resolved crypto checks — <b>NOT a live record</b></p>
+          <table><thead><tr><th>grade</th><th>n (backtest)</th><th>win rate</th>
+            <th>avg return</th></tr></thead><tbody>${btRows}</tbody></table>
+          <p class="meta" style="margin:0.6rem 0 0;font-size:0.72rem">${bt.note}</p>
+        </div>`;
+      }
       wrap.innerHTML = html;
       meta.textContent = cg.note || "";
     } catch (e) {
