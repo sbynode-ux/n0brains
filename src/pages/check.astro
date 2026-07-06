@@ -441,7 +441,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeader() },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(30000),  // never strand the button
+          signal: AbortSignal.timeout(50000),  // never strand the button (checks 8-35s under HL contention until candle cache ships)
         });
         if (r.status === 401 && mode !== "anon") return signOutToGate("Session expired — please log in again.");
         const d = await r.json().catch(() => ({}));
