@@ -466,7 +466,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         wrap.innerHTML = "<span class='meta'>no checks logged yet</span>";
         return;
       }
-      const rows = cg.grades.map((g) => {
+      // rows are split by ENGINE VERSION — each set of weights is its own
+      // claim and calibrates fresh; old versions stay published (that's the
+      // point of the record). Group them with labeled headers so the split
+      // reads as versions, not repetition.
+      const rowHtml = (g) => {
         const c = CG_COLOR[g.grade] || "inherit";
         const ret = g.avg_ret_pct == null ? "—"
           : `<span style="color:${g.avg_ret_pct >= 0 ? "#4ade80" : "#e03a3a"}">${g.avg_ret_pct > 0 ? "+" : ""}${g.avg_ret_pct}%</span>`;
@@ -479,10 +483,29 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           <td>${wr}</td>
           <td>${ret}</td>
         </tr>`;
-      }).join("");
-      wrap.innerHTML = `<table>
-        <thead><tr><th>grade</th><th>given</th><th>resolved</th><th>win rate</th><th>avg return</th></tr></thead>
-        <tbody>${rows}</tbody></table>`;
+      };
+      const byVer = {};
+      for (const g of cg.grades) (byVer[g.engine_version || "v1"] ||= []).push(g);
+      const vers = Object.keys(byVer).sort().reverse();   // newest first
+      const cur = vers[0];
+      const THEAD = `<thead><tr><th>grade</th><th>given</th><th>resolved</th>
+        <th>win rate</th><th>avg return</th></tr></thead>`;
+      let html = `
+        <p class="meta" style="margin:0.4rem 0 0.3rem">engine ${cur} — current ·
+        weights derived from measured outcomes · calibrating fresh since 2026-07-06</p>
+        <table>${THEAD}<tbody>${byVer[cur].map(rowHtml).join("")}</tbody></table>`;
+      const archived = vers.slice(1);
+      if (archived.length) {
+        html += `<details style="margin-top:0.8rem"><summary class="meta"
+          style="cursor:pointer">archived engine versions — earlier weight sets and
+          their full records (v1's top band measured INVERTED at n=60; we replaced
+          the engine and kept the receipt — that is the point of this page)</summary>`
+          + archived.map((v) => `
+            <p class="meta" style="margin:0.8rem 0 0.3rem">engine ${v} — archived</p>
+            <table>${THEAD}<tbody>${byVer[v].map(rowHtml).join("")}</tbody></table>`).join("")
+          + `</details>`;
+      }
+      wrap.innerHTML = html;
       meta.textContent = cg.note || "";
     } catch (e) {
       wrap.innerHTML = "<span class='meta'>check-grade calibration unavailable</span>";
