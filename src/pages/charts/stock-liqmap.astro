@@ -165,8 +165,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // Tokenized stocks / indices / metals / commodities on Hyperliquid HIP-3.
     // All are DEX-only (no CEX/Coinglass estimate exists for these), served by
     // /liqmap/{symbol} off the HIP-3 liquidation map.
-    const COINS = ["SP500","NASDAQ","NVDA","TSLA","AAPL","AMD","MSFT","GOOGL","AMZN","META",
-                   "MSTR","COIN","HOOD","PLTR","GOLD","SILVER","COPPER","OIL"];
+    const COINS = ["SP500","NASDAQ","XYZ100","NVDA","TSLA","AAPL","AMD","MSFT","GOOGL","AMZN","META",
+                   "MSTR","COIN","HOOD","PLTR","NBIS","SKHX","SMSN","BB","GOLD","SILVER","COPPER","OIL","BRENTOIL"];
     const DEX_COINS = new Set(COINS);   // every symbol is on-chain only
     // HL market string per chart symbol — price candles come from HL's own
     // candleSnapshot (Binance/CoinGecko have no tokenized-stock data).
@@ -176,6 +176,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       AMZN:"xyz:AMZN", META:"xyz:META", MSTR:"xyz:MSTR", COIN:"xyz:COIN",
       HOOD:"xyz:HOOD", PLTR:"xyz:PLTR", GOLD:"xyz:GOLD", SILVER:"xyz:SILVER",
       COPPER:"xyz:COPPER", OIL:"xyz:CL",
+      XYZ100:"xyz:XYZ100", NBIS:"xyz:NBIS", SKHX:"xyz:SKHX", SMSN:"xyz:SMSN",
+      BB:"xyz:BB", BRENTOIL:"xyz:BRENTOIL",
     };
     let candleCache = {};   // coin:interval:hour -> [{t,o,h,l,c}]
     let realCache = {};     // coin:days:hour -> stock-candles payload
@@ -184,6 +186,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // real index level) — flagged in the legend so ~$718 doesn't read as a bug
     const UNIT_NOTE = {
       NASDAQ: "quoted in mkts:USTECH contract units — not the ^IXIC index level",
+      SKHX: "quoted in xyz:SKHX contract units — not the KRX 000660 share price",
+      SMSN: "quoted in xyz:SMSN contract units — not the SMSN.IL GDR price",
     };
     const OV = { real: true, walls: true };   // overlay toggles
     const REFRESH_MS = 120000;
