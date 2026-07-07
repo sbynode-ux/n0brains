@@ -1,5 +1,25 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Build-time seed so crawlers / link-previews (no JS) see real numbers, not
+// "loading…". Client JS still refreshes these live every 60s (progressive enhancement).
+let seedBestNum = "", seedBest = "", seedBestSub = "", seedProven = "", seedSignals = "", seedBanner = "";
+try {
+  const res = await fetch("https://api.n0brains.com/proof");
+  const d = await res.json();
+  const types = Array.isArray(d.types) ? d.types : [];
+  const proven = types.filter((t) => t.tradeable);
+  seedProven = String(proven.length);
+  const totalN = types.reduce((a, t) => a + (t.n || 0), 0);
+  seedSignals = totalN ? totalN.toLocaleString("en-US") : "";
+  const best = proven.slice().sort((a, b) => (b.win_rate || 0) - (a.win_rate || 0))[0];
+  if (best) {
+    seedBestNum = String(Math.round(best.win_rate * 100));
+    seedBest = seedBestNum + "%";
+    seedBestSub = best.signal_type + " · +" + (best.excess_pct ?? 0).toFixed(1) + "pts vs BTC";
+    seedBanner = proven.length + " proven signal types · measured on real Hyperliquid prices";
+  }
+} catch (e) { /* leave placeholders; client JS fills on load */ }
 ---
 
 <BaseLayout
@@ -29,8 +49,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <div class="ph-panel" id="ph-panel" aria-live="off">
         <div class="ph-label"><span class="live-dot-sm"></span>proven · live</div>
         <div class="ph-body" id="ph-body">
-          <div class="ph-num" id="ph-num">··<span class="ph-pct">%</span></div>
-          <div class="ph-sub" id="ph-sub">measuring…</div>
+          <div class="ph-num" id="ph-num">{seedBestNum || "··"}<span class="ph-pct">%</span></div>
+          <div class="ph-sub" id="ph-sub">{seedBestSub || "measuring…"}</div>
         </div>
         <div class="ph-foot" id="ph-foot">win rate · 24h forward return</div>
       </div>
@@ -39,15 +59,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     <!-- Live stat band — every number from the same /proof endpoint -->
     <div class="stat-band" id="stat-band">
       <div class="stat">
-        <span class="stat-num" id="st-proven">–</span>
+        <span class="stat-num" id="st-proven">{seedProven || "–"}</span>
         <span class="stat-label">proven signal types</span>
       </div>
       <div class="stat">
-        <span class="stat-num" id="st-signals">–</span>
+        <span class="stat-num" id="st-signals">{seedSignals || "–"}</span>
         <span class="stat-label">signals measured · 30d</span>
       </div>
       <div class="stat">
-        <span class="stat-num" id="st-best">–</span>
+        <span class="stat-num" id="st-best">{seedBest || "–"}</span>
         <span class="stat-label">best proven win-rate</span>
       </div>
       <div class="stat">
@@ -56,9 +76,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
     </div>
 
-    <div id="proof-banner" class="proof-banner proof-loading">
+    <div id="proof-banner" class={"proof-banner" + (seedBanner ? "" : " proof-loading")}>
       <span class="dot"></span>
-      <span class="banner-text">loading results…</span>
+      <span class="banner-text">{seedBanner || "loading results…"}</span>
     </div>
 
     <!-- THE GATE — every type queues up, three criteria, two exits.
