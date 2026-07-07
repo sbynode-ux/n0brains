@@ -12,6 +12,30 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 const KEY = "intel_sk_your_key";
 
 // ── FREE / REST track ─────────────────────────────────────────────────
+const checkFirst =
+`Before I place ANY trade, ask n0brains first. The n0brains API:
+  base URL: https://api.n0brains.com   header: X-API-Key: ${KEY}
+
+POST /check with the trade I'm considering:
+  {"asset":"BTC","side":"long","entry":62000,"stop":60000,
+   "target":66000,"leverage":10,"horizon_hours":24}
+Only "asset" and "side" are required. Works for crypto AND the tokenized
+stock market (NVDA, SP500, XYZ100, GOLD, …).
+
+It returns a graded conditions assessment:
+  grade   — A to F (with a "score" and the engine_version that graded it)
+  flags   — what's working against the trade (crowding, event risk,
+            liquidation-vs-volatility, momentum extension, positioning,
+            and a fatal check for structurally-broken stops)
+  supports, falsifiers, terrain (nearest S/R + liq clusters), and
+  unchecked — what it could NOT assess given the inputs.
+
+Read the grade AND the reasons back to me. A "grade" describes the
+CONDITIONS around the trade — it is analysis, never a directive to trade.
+Every grade is logged and scored at its horizon; the public track record
+is at https://n0brains.com/proof (split by engine version). Free 3 checks
+a day. Never place the trade yourself.`;
+
 const oneLiner =
 `Use the n0brains API at https://api.n0brains.com with header X-API-Key: ${KEY}
 It returns scored crypto intelligence signals. Before answering any market
@@ -135,6 +159,7 @@ or docs — discover every tool from the MCP server itself; it self-describes.
 ═══════════════════════════════════════════════════════════════════`;
 
 const restPrompts = [
+  { id: "checkfirst", title: "Ask n0brains first — pre-trade check", sub: "Before any trade, POST /check and get a graded A–F read of the conditions — crypto and tokenized stocks. The flagship.", code: checkFirst },
   { id: "oneliner", title: "The one-liner",                 sub: "Drop this into any agent's instructions. The whole integration in a few lines.", code: oneLiner },
   { id: "research", title: "Market-aware research assistant", sub: "Makes an agent check signals, levels, and regime before answering any market question.", code: tradeAware },
   { id: "macro",    title: "Daily macro brief",             sub: "A morning routine: regime, BTC/ETH bias, rotation, top catalysts.", code: macroBrief },
