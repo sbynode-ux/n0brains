@@ -418,6 +418,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
     const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
 
+    let warmTries = 0;  // #35: auto-retry budget while a cold asset warms
     $("ck-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       $("ck-err").hidden = true;
@@ -445,7 +446,22 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         });
         if (r.status === 401 && mode !== "anon") return signOutToGate("Session expired — please log in again.");
         const d = await r.json().catch(() => ({}));
+        if (r.status === 202 && d.status === "warming") {
+          // #35: first look at a cold asset — server is warming its data.
+          warmTries += 1;
+          const wait = (d.retry_after_secs || 30);
+          const auto = mode !== "anon" && warmTries <= 2;  // anon: Turnstile tokens are single-use
+          $("ck-err").textContent = auto
+            ? `First look at ${body.asset} — warming market data, auto-retrying in ~${wait}s…`
+            : `First look at ${body.asset} — warming market data. Run the check again in ~${wait}s.`;
+          $("ck-err").hidden = false;
+          $("ck-result").hidden = true;
+          if (mode === "anon" && window.turnstile) window.turnstile.reset();
+          if (auto) setTimeout(() => $("ck-form").requestSubmit(), wait * 1000);
+          return;
+        }
         if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
+        warmTries = 0;
         render(d);
         if (mode === "anon") {
           $("ck-quota").textContent = "0 free left — accounts get 3/day";
