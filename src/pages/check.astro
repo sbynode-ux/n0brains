@@ -208,7 +208,20 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       return {};
     }
     function signOutToGate(msg) {
+      // Clear BOTH credentials — clearing only auth_token left a dead saved
+      // API key in place, so the page reloaded straight back into a 401 →
+      // alert → reload loop the user couldn't interact through (2026-07-09).
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("api_key");
+      // Loop breaker: at most one gate-reload per 30s — if we land here again
+      // that fast, render the login gate in place instead of spinning.
+      const gatedAt = Number(sessionStorage.getItem("ck_gated") || 0);
+      if (Date.now() - gatedAt < 30000) {
+        $("ck-gate").hidden = false;
+        $("ck-signed").textContent = "signed out — please log in again";
+        return;
+      }
+      sessionStorage.setItem("ck_gated", String(Date.now()));
       if (msg) alert(msg);
       location.reload();
     }
@@ -580,7 +593,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     async function loadHistory() {
       try {
         const r = await fetch(`${API}/checks/history`, { headers: { ...authHeader() }, signal: AbortSignal.timeout(20000) });
-        if (r.status === 401) return signOutToGate("Session expired — please log in again.");
+        // background load: gate silently (no alert) — only an explicit user
+        // action (submit) should ever pop a modal
+        if (r.status === 401) return signOutToGate(null);
         if (!r.ok) return;
         const d = await r.json();
         setQuota(d.free_checks_remaining_today ?? null);
