@@ -82,10 +82,10 @@ def main():
     )
 
     # proven rows
-    y = 410
+    y = 388
     n = len(proven)
     d.text((64, y), f"{n} TYPE{'S' if n != 1 else ''} FORWARD-RETURN PROVEN", font=f(MONO_BOLD, 22), fill=GREEN)
-    y += 44
+    y += 38
     for t in proven[:3]:
         name = t["signal_type"]
         win = f"{float(t['win_rate']) * 100:.1f}%"
@@ -95,13 +95,13 @@ def main():
         d.text((320, y + 4), f"win {win}", font=f(MONO, 26), fill=HEAD)
         d.text((520, y + 4), f"excess {excess}", font=f(MONO, 26), fill=GREEN)
         d.text((820, y + 4), f"CI low {ci}", font=f(MONO, 26), fill=GREEN)
-        y += 50
+        y += 45
 
     # footer
-    d.line([(64, 560), (W - 64, 560)], fill=BORDER, width=1)
-    d.text((64, 576), "n0brains.com/proof", font=f(MONO_BOLD, 24), fill=ACCENT)
+    d.line([(64, 576), (W - 64, 576)], fill=BORDER, width=1)
+    d.text((64, 588), "n0brains.com/proof", font=f(MONO_BOLD, 24), fill=ACCENT)
     d.text(
-        (W - 64, 580),
+        (W - 64, 592),
         "agent-native crypto signals",
         font=f(MONO, 20),
         fill=MUTED,
