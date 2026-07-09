@@ -151,8 +151,9 @@ const socials = [
         <div class="pr-terminal">
           <div class="pr-term-head"><span class="pr-term-dot"></span>press · partnerships · integrations</div>
           <div class="pr-term-body">
-            <p>Writing about us, building on us, or want to partner? Reach out via
-              <a href="/contact">n0brains.com/contact</a> — or find us anywhere below.</p>
+            <p>Writing about us, building on us, or want to partner?</p>
+            <a class="pr-email" href="mailto:info@n0brains.com">info@n0brains.com</a>
+            <p class="pr-contact-alt">…or <a href="/contact">n0brains.com/contact</a>, or find us anywhere below.</p>
             <div class="pr-socials">
               {socials.map((s) => (
                 <a class="pr-social" href={s.href} target="_blank" rel="noopener">
@@ -266,6 +267,11 @@ const socials = [
     .pr-term-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
       box-shadow: 0 0 8px var(--accent); }
     .pr-term-body { padding: 1.1rem 1.2rem; }
+    .pr-email { display: inline-block; margin: .6rem 0 .3rem; font-family: var(--font-mono);
+      font-size: 1.25rem; font-weight: 700; color: var(--accent);
+      text-shadow: 0 0 18px var(--accent-glow); }
+    .pr-email:hover { color: #fff; }
+    .pr-contact-alt { font-size: .9rem; color: var(--text-muted); }
     .pr-socials { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: .5rem; margin-top: 1rem; }
     .pr-social { display: flex; flex-direction: column; padding: .6rem .8rem;
