@@ -1,5 +1,15 @@
 [
   {
+    "num": 6,
+    "title": "Ep 6: Structure Over Headlines: Quantum Bitcoin, the Fed, and Reasoning Agents",
+    "summary": "This week: the Bitcoin quantum-resistance debate and Hyperliquid challenging Wall Street, how ISM Services and the FOMC minutes set the risk backdrop, and a wave of AI research on autonomous agents that reason under uncertainty \u2014 the same discipline that separates a sharp trader from the noise.",
+    "mp3_url": "https://n0brains.com/podcast/ep-06-structure-over-headlines-quantum-bitcoin-the-fed-and-reasoni.mp3",
+    "duration_sec": 537,
+    "size_bytes": 8597805,
+    "pubDate": "2026-07-09",
+    "articles": []
+  },
+  {
     "num": 5,
     "title": "Ep 5: Fused Signals Are The New Trading Moat",
     "summary": "Three signals on the shift from narratives to structure: LLM-driven strategy mutation (MadEvolve) where fused signals \u2014 not the algo \u2014 are the moat; Bitcoin miners rerating from commodity plays to AI infrastructure landlords; and $REPPO proving AI tokens can carry measurable on-chain value, not just hype.",
