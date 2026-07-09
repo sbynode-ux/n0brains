@@ -1,0 +1,286 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const facts = [
+  { k: "what it is", v: "A crypto signal API + trade-grading engine that publishes its own record." },
+  { k: "the edge", v: "Honesty. Every call is graded in public — wins and losses. No deleted misses." },
+  { k: "sources", v: "30+ — Telegram, on-chain, exchanges, government filings, social. Machine-classified + corroborated." },
+  { k: "surfaces", v: "/signals (the feed) · /check (grade any trade) · /proof (the public scorecard)." },
+  { k: "for", v: "Leverage crypto traders — and the autonomous agents that trade for them." },
+  { k: "delivery", v: "REST · WebSocket · Webhook · MCP · CLI. Free tier (15-min delay) · Pro $39.99/mo real-time." },
+];
+
+const swatches = [
+  { name: "Void", hex: "#050505" },
+  { name: "Terminal Green", hex: "#00ff41" },
+  { name: "Alert", hex: "#ff0055" },
+  { name: "Heading", hex: "#efefef" },
+];
+
+const assets = [
+  { label: "Logo mark (SVG)", href: "/favicon.svg" },
+  { label: "Social card — default (PNG)", href: "/og-default.png" },
+  { label: "Social card — proof (PNG)", href: "/og-proof.png" },
+  { label: "Podcast cover (JPG)", href: "/podcast-cover-v2.jpg" },
+];
+
+const socials = [
+  { label: "X", handle: "@n0brainsai", href: "https://x.com/n0brainsai" },
+  { label: "Bluesky", handle: "n0brains.com", href: "https://bsky.app/profile/n0brains.com" },
+  { label: "Telegram", handle: "n0brainssignals", href: "https://t.me/n0brainssignals" },
+  { label: "Instagram", handle: "@n0brainsai", href: "https://www.instagram.com/n0brainsai" },
+  { label: "YouTube", handle: "@n0brainsai", href: "https://www.youtube.com/@n0brainsai" },
+  { label: "GitHub", handle: "sbynode-ux/n0brains", href: "https://github.com/sbynode-ux/n0brains" },
+];
+---
+
+<BaseLayout
+  title="press"
+  description="n0brains press & media kit — boilerplate, brand assets, fast facts, and contact. The honest edge in a market of noise: a crypto signal API and trade grader that publishes its own record."
+  ogImage="/og-proof.png"
+>
+  <section class="press-page">
+    <!-- Hero -->
+    <div class="pr-hero">
+      <div class="pr-grid" aria-hidden="true"></div>
+      <p class="pr-kicker"><span class="pr-dash"></span>press · media kit</p>
+      <h1 class="pr-h1">THE RECORD<br /><span class="accent">SPEAKS FOR ITSELF.</span></h1>
+      <p class="pr-lede">
+        <strong>n0brains</strong> is the honest edge in a market of noise — a crypto
+        signal API and trade-grading engine that publishes its own record. Every call
+        it makes is scored in public. No hype, no deleted losses, no "trust me."
+      </p>
+      <p class="pr-signoff">Everything below is free to use. The receipts are at
+        <a href="/proof">n0brains.com/proof</a>.</p>
+    </div>
+
+    <!-- 01 · boilerplate -->
+    <div class="pr-section">
+      <div class="pr-side">
+        <div class="pr-label">01 · boilerplate</div>
+        <div class="pr-side-title">COPY.<br />PASTE.<br />QUOTE.</div>
+      </div>
+      <div class="pr-body">
+        <div class="pr-boiler">
+          <div class="pr-boiler-tag">one-liner</div>
+          <p>n0brains grades your trades, then grades its own grades — a continuously
+            improving crypto intel system with a public track record.</p>
+        </div>
+        <div class="pr-boiler">
+          <div class="pr-boiler-tag">short</div>
+          <p>n0brains is a crypto signal API and trade grader. 30+ sources, machine-classified
+            and cross-referenced into scored signals — and every call is published on a public
+            scorecard. The synthesis is the product, not the data.</p>
+        </div>
+        <div class="pr-boiler">
+          <div class="pr-boiler-tag">standard</div>
+          <p>n0brains is the honest edge in a market of noise. It watches 30+ data sources —
+            Telegram, on-chain flows, exchanges, government filings, social — classifies every
+            event with an LLM pool, corroborates across sources, and scores it, so a trader (or
+            an autonomous agent) acts on one number instead of twelve tabs. What sets it apart
+            isn't the data — it's the accountability: every signal and every graded trade lives
+            on a public record at /proof. We grade the calls we make so nobody has to take
+            anyone's word for it — not even ours.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 · fast facts -->
+    <div class="pr-section">
+      <div class="pr-side">
+        <div class="pr-label">02 · fast facts</div>
+      </div>
+      <div class="pr-body">
+        <dl class="pr-facts">
+          {facts.map((f) => (
+            <div class="pr-fact">
+              <dt>{f.k}</dt>
+              <dd>{f.v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+
+    <!-- 03 · brand assets -->
+    <div class="pr-section">
+      <div class="pr-side">
+        <div class="pr-label">03 · brand assets</div>
+        <div class="pr-side-title">USE THEM<br />STRAIGHT.</div>
+      </div>
+      <div class="pr-body">
+        <div class="pr-assets">
+          {assets.map((a) => (
+            <a class="pr-asset" href={a.href} download target="_blank" rel="noopener">
+              <span class="pr-asset-arrow">↓</span>{a.label}
+            </a>
+          ))}
+        </div>
+
+        <div class="pr-block-label">palette</div>
+        <div class="pr-swatches">
+          {swatches.map((s) => (
+            <div class="pr-swatch">
+              <span class="pr-chip" style={`background:${s.hex}`}></span>
+              <span class="pr-swatch-name">{s.name}</span>
+              <span class="pr-swatch-hex">{s.hex}</span>
+            </div>
+          ))}
+        </div>
+
+        <div class="pr-block-label">typography</div>
+        <div class="pr-type">
+          <div class="pr-type-row"><span class="pr-type-name" style="font-family:var(--font-display);font-size:1.6rem;letter-spacing:.04em">BEBAS NEUE</span><span class="pr-type-use">display / headlines</span></div>
+          <div class="pr-type-row"><span class="pr-type-name" style="font-family:var(--font-body)">DM Sans</span><span class="pr-type-use">body</span></div>
+          <div class="pr-type-row"><span class="pr-type-name" style="font-family:var(--font-mono)">Space Mono</span><span class="pr-type-use">code / labels</span></div>
+        </div>
+
+        <div class="pr-block-label">usage</div>
+        <p class="pr-usage">Don't recolor the mark or stretch it. Keep the terminal green on
+          near-black. When you cite a number, cite it from <a href="/proof">/proof</a> — that's
+          the only performance figure we stand behind.</p>
+      </div>
+    </div>
+
+    <!-- 04 · contact -->
+    <div class="pr-section">
+      <div class="pr-side">
+        <div class="pr-label">04 · contact</div>
+      </div>
+      <div class="pr-body">
+        <div class="pr-terminal">
+          <div class="pr-term-head"><span class="pr-term-dot"></span>press · partnerships · integrations</div>
+          <div class="pr-term-body">
+            <p>Writing about us, building on us, or want to partner? Reach out via
+              <a href="/contact">n0brains.com/contact</a> — or find us anywhere below.</p>
+            <div class="pr-socials">
+              {socials.map((s) => (
+                <a class="pr-social" href={s.href} target="_blank" rel="noopener">
+                  <span class="pr-social-label">{s.label}</span>
+                  <span class="pr-social-handle">{s.handle}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p class="pr-final">// the receipts are public<br />// n0brains.com/proof</p>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .press-page { max-width: 1100px; margin: 0 auto; }
+
+    /* ── Hero ── */
+    .pr-hero { position: relative; padding: 2rem 0 3.5rem; }
+    .pr-grid {
+      position: absolute; inset: -40px -10% 0; pointer-events: none; opacity: .5;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 70% 60% at 20% 0%, #000 30%, transparent 75%);
+    }
+    .pr-kicker {
+      position: relative; font-family: var(--font-mono); font-size: .8rem;
+      color: var(--text-muted); letter-spacing: .1em; text-transform: uppercase;
+      display: flex; align-items: center; gap: .6rem; margin-bottom: 1.4rem;
+    }
+    .pr-dash { width: 28px; height: 1px; background: var(--accent); display: inline-block; }
+    .pr-h1 {
+      position: relative; font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(2.8rem, 8vw, 5.5rem); line-height: .92; letter-spacing: .01em;
+      color: var(--text-heading); margin-bottom: 1.6rem;
+    }
+    .pr-h1 .accent { color: var(--accent); text-shadow: 0 0 30px var(--accent-glow-strong); }
+    .pr-lede { position: relative; max-width: 640px; font-size: 1.14rem; color: var(--text); }
+    .pr-lede strong { color: var(--text-heading); }
+    .pr-signoff { position: relative; margin-top: 1rem; font-family: var(--font-mono);
+      font-size: .85rem; color: var(--text-muted); }
+
+    /* ── Section scaffold ── */
+    .pr-section {
+      display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem;
+      padding: 3rem 0; border-top: 1px solid var(--border);
+    }
+    .pr-label { font-family: var(--font-mono); font-size: .78rem; color: var(--accent);
+      letter-spacing: .08em; text-transform: uppercase; }
+    .pr-side-title { font-family: var(--font-display); font-weight: 400; font-size: 2rem;
+      line-height: .95; color: var(--text-heading); margin-top: 1rem; }
+    .pr-body { min-width: 0; }
+
+    /* ── Boilerplate ── */
+    .pr-boiler {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.1rem 1.2rem; margin-bottom: 1rem;
+      position: relative;
+    }
+    .pr-boiler-tag {
+      font-family: var(--font-mono); font-size: .7rem; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--accent-dim); margin-bottom: .5rem;
+    }
+    .pr-boiler p { color: var(--text); }
+    .pr-boiler strong { color: var(--text-heading); }
+
+    /* ── Facts ── */
+    .pr-facts { display: flex; flex-direction: column; }
+    .pr-fact {
+      display: grid; grid-template-columns: 130px 1fr; gap: 1.2rem;
+      padding: .9rem 0; border-bottom: 1px solid var(--border); align-items: baseline;
+    }
+    .pr-fact dt { font-family: var(--font-mono); font-size: .78rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .05em; }
+    .pr-fact dd { color: var(--text); }
+
+    /* ── Assets ── */
+    .pr-assets { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 2rem; }
+    .pr-asset {
+      display: flex; align-items: center; gap: .8rem; padding: .8rem 1rem;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      color: var(--text); font-family: var(--font-mono); font-size: .9rem; transition: all .15s;
+    }
+    .pr-asset:hover { border-color: var(--border-accent); color: var(--text-heading); background: var(--bg-hover); }
+    .pr-asset-arrow { color: var(--accent); }
+
+    .pr-block-label { font-family: var(--font-mono); font-size: .72rem; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--text-faint); margin: 1.6rem 0 .8rem; }
+    .pr-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .7rem; }
+    .pr-swatch { display: flex; align-items: center; gap: .6rem; font-family: var(--font-mono); font-size: .8rem; }
+    .pr-chip { width: 26px; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--border); flex-shrink: 0; }
+    .pr-swatch-name { color: var(--text); }
+    .pr-swatch-hex { color: var(--text-muted); margin-left: auto; }
+
+    .pr-type { display: flex; flex-direction: column; gap: .6rem; }
+    .pr-type-row { display: flex; align-items: baseline; justify-content: space-between;
+      padding-bottom: .5rem; border-bottom: 1px solid var(--border); }
+    .pr-type-name { color: var(--text-heading); }
+    .pr-type-use { font-family: var(--font-mono); font-size: .75rem; color: var(--text-muted); }
+    .pr-usage { color: var(--text); margin-top: .3rem; }
+
+    /* ── Terminal / contact ── */
+    .pr-terminal { background: var(--bg-code); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; }
+    .pr-term-head { display: flex; align-items: center; gap: .6rem; padding: .7rem 1rem;
+      border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: .8rem;
+      color: var(--text-muted); }
+    .pr-term-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 8px var(--accent); }
+    .pr-term-body { padding: 1.1rem 1.2rem; }
+    .pr-socials { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: .5rem; margin-top: 1rem; }
+    .pr-social { display: flex; flex-direction: column; padding: .6rem .8rem;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+    .pr-social:hover { border-color: var(--border-accent); }
+    .pr-social-label { font-family: var(--font-mono); font-size: .72rem; color: var(--accent-dim);
+      text-transform: uppercase; letter-spacing: .08em; }
+    .pr-social-handle { color: var(--text-heading); font-size: .9rem; }
+    .pr-final { font-family: var(--font-mono); font-size: .85rem; color: var(--text-faint);
+      margin-top: 1.6rem; line-height: 1.8; }
+
+    @media (max-width: 720px) {
+      .pr-section { grid-template-columns: 1fr; gap: 1.2rem; padding: 2.2rem 0; }
+      .pr-side-title { display: none; }
+      .pr-fact { grid-template-columns: 1fr; gap: .2rem; }
+    }
+  </style>
+</BaseLayout>
