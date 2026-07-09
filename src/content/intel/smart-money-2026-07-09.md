@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — July 09, 2026"
-description: "Macro regime: risk-off. BTC bias: bearish (0.75 conviction). 4 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: risk-off. BTC bias: bearish (0.75 conviction). 13 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-07-09
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -16,9 +16,13 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| 🔴 | XRP | whale | SMART MONEY: rXzRVoohqvah moved 9,908,321 XRP → Bitstamp | N/A | 0.5 | 42% |
-| 🔴 | XRP | whale | SMART MONEY: rBNCyNEwpaEb moved 400,000 XRP → Bybit | N/A | 0.5 | 42% |
-| 🔴 | ETH | whale | SMART MONEY: Binance 28 moved 3246.0 ETH → Binance 28 | N/A | 0.5 | 42% |
+| 🔴 | XRP | whale | SMART MONEY: Bitso moved 100,000 XRP → Bitstamp | N/A | 0.5 | 42% |
+| 🔴 | ETH | whale | SMART MONEY: Binance Pool moved 618.4 ETH → Binance 14 | N/A | 0.5 | 42% |
+| 🔴 | XRP | whale | SMART MONEY: Bitso moved 100,000 XRP → Bitstamp | N/A | 0.5 | 42% |
+| 🔴 | XRP | whale | SMART MONEY: Binance moved 399,999 XRP → Coinbase | N/A | 0.5 | 42% |
+| 🔴 | XRP | whale | SMART MONEY: r9EmPfAdB5Ah moved 100,000 XRP → Kraken | N/A | 0.5 | 42% |
+| ⚪ | XAUT | whale | Tether Gold outflows surge 16x daily average as whales accumulate. | N/A | 0.2 | 42% |
+| 🔴 | XRP | whale | SMART MONEY: Binance moved 399,999 XRP → Coinbase | N/A | 0.5 | 42% |
 | 🔴 | ETH | whale | SMART MONEY: Bitfinex: Contract 2 moved 301.0 ETH → Bitfinex: Contract | N/A | 0.5 | 42% |
 
 ## High-Conviction Signals (≥85% confidence)
@@ -36,9 +40,9 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 
 ## Key Takeaways
 
-1. **Whale on XRP**: SMART MONEY: rXzRVoohqvah moved 9,908,321 XRP → Bitstamp
-2. **Whale on XRP**: SMART MONEY: rBNCyNEwpaEb moved 400,000 XRP → Bybit
-3. **Whale on ETH**: SMART MONEY: Binance 28 moved 3246.0 ETH → Binance 28
+1. **Whale on XRP**: SMART MONEY: Bitso moved 100,000 XRP → Bitstamp
+2. **Whale on ETH**: SMART MONEY: Binance Pool moved 618.4 ETH → Binance 14
+3. **Whale on XRP**: SMART MONEY: Bitso moved 100,000 XRP → Bitstamp
 
 ## Track Smart Money in Real-Time
 
@@ -52,4 +56,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on July 09, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on July 09, 2026.
