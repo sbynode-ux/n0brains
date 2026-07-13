@@ -496,8 +496,11 @@ try {
           : `<span style="color:${g.avg_ret_pct >= 0 ? "#4ade80" : "#e03a3a"}">${g.avg_ret_pct > 0 ? "+" : ""}${g.avg_ret_pct}%</span>`;
         const wr = g.win_rate == null ? "—" : `${(g.win_rate * 100).toFixed(0)}%`;
         const pending = g.n_total - g.n_resolved;
+        const prov = g.provenance
+          ? ` <span class="meta" style="font-size:0.66rem;opacity:0.8">${g.provenance}</span>`
+          : "";
         return `<tr>
-          <td><b style="color:${c}">${g.grade}</b></td>
+          <td><b style="color:${c}">${g.grade}</b>${prov}</td>
           <td>${g.n_total}</td>
           <td>${g.n_resolved}${pending ? ` <span class="meta">(+${pending} pending)</span>` : ""}</td>
           <td>${wr}</td>
@@ -506,6 +509,21 @@ try {
       };
       const byVer = {};
       for (const g of cg.grades) (byVer[g.engine_version || "v1"] ||= []).push(g);
+      // provenance split (attribution honesty): every grade can appear twice
+      // per version — real customer checks vs our disclosed calibration probe.
+      // Sort real-first within each grade and say what the labels mean, or
+      // the table reads as duplicated letters.
+      const GRADE_ORDER = { "A": 0, "B+": 1, "B": 2, "C": 3, "D": 4, "F": 5 };
+      for (const v of Object.keys(byVer))
+        byVer[v].sort((a, b) => (GRADE_ORDER[a.grade] ?? 9) - (GRADE_ORDER[b.grade] ?? 9)
+          || String(a.provenance || "").localeCompare(String(b.provenance || "")));
+      const provLegend = cg.grades.some((g) => g.provenance)
+        ? `<p class="meta" style="margin:0.3rem 0 0.5rem;font-size:0.72rem">
+            rows are split by origin — <b>probe</b> = our own automated
+            calibration account (hits the same public /check around the clock so
+            every grade accumulates a scoreable record; disclosed, never blended
+            into the customer rows) · <b>real</b> = customer checks</p>`
+        : "";
       const vers = Object.keys(byVer).sort().reverse();   // newest first
       const cur = vers[0];
       const THEAD = `<thead><tr><th>grade</th><th>given</th><th>resolved</th>
@@ -513,6 +531,7 @@ try {
       let html = `
         <p class="meta" style="margin:0.4rem 0 0.3rem">engine ${cur} — current ·
         weights derived from measured outcomes · calibrating fresh since 2026-07-06</p>
+        ${provLegend}
         <table>${THEAD}<tbody>${byVer[cur].map(rowHtml).join("")}</tbody></table>`;
       const archived = vers.slice(1);
       if (archived.length) {
