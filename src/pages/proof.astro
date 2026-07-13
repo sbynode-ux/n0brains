@@ -497,7 +497,7 @@ try {
         const wr = g.win_rate == null ? "—" : `${(g.win_rate * 100).toFixed(0)}%`;
         const pending = g.n_total - g.n_resolved;
         const prov = g.provenance
-          ? ` <span class="meta" style="font-size:0.66rem;opacity:0.8">${g.provenance}</span>`
+          ? ` <span class="cg-prov">${g.provenance}</span>`
           : "";
         return `<tr>
           <td><b style="color:${c}">${g.grade}</b>${prov}</td>
@@ -532,7 +532,7 @@ try {
         <p class="meta" style="margin:0.4rem 0 0.3rem">engine ${cur} — current ·
         weights derived from measured outcomes · calibrating fresh since 2026-07-06</p>
         ${provLegend}
-        <table>${THEAD}<tbody>${byVer[cur].map(rowHtml).join("")}</tbody></table>`;
+        <table class="cg-table">${THEAD}<tbody>${byVer[cur].map(rowHtml).join("")}</tbody></table>`;
       const archived = vers.slice(1);
       if (archived.length) {
         html += `<details style="margin-top:0.8rem"><summary class="meta"
@@ -541,7 +541,7 @@ try {
           the engine and kept the receipt — that is the point of this page)</summary>`
           + archived.map((v) => `
             <p class="meta" style="margin:0.8rem 0 0.3rem">engine ${v} — archived</p>
-            <table>${THEAD}<tbody>${byVer[v].map(rowHtml).join("")}</tbody></table>`).join("")
+            <table class="cg-table">${THEAD}<tbody>${byVer[v].map(rowHtml).join("")}</tbody></table>`).join("")
           + `</details>`;
       }
       // ── fenced BACKTEST block (explicitly not a live record) ──
@@ -560,7 +560,7 @@ try {
           <p class="meta" style="margin:0 0 0.5rem;letter-spacing:0.05em">
             ⎇ BACKTEST · engine ${bt.engine_version} re-scored on ${bt.n.toLocaleString()}
             prior resolved crypto checks — <b>NOT a live record</b></p>
-          <table><thead><tr><th>grade</th><th>n (backtest)</th><th>win rate</th>
+          <table class="cg-table"><thead><tr><th>grade</th><th>n (backtest)</th><th>win rate</th>
             <th>avg return</th></tr></thead><tbody>${btRows}</tbody></table>
           <p class="meta" style="margin:0.6rem 0 0;font-size:0.72rem">${bt.note}</p>
         </div>`;
@@ -1060,4 +1060,25 @@ try {
   .btn-primary:hover { background: #fff; }
   .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* check-grades tables are built client-side — style via :global */
+  :global(.cg-table) { border-collapse: collapse; margin: 0.5rem 0 0.3rem; }
+  :global(.cg-table th) {
+    text-align: left; padding: 0.3rem 1.4rem 0.35rem 0;
+    font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted, #8b95a1); border-bottom: 1px solid var(--border);
+    white-space: nowrap; font-weight: 600;
+  }
+  :global(.cg-table td) {
+    padding: 0.38rem 1.4rem 0.38rem 0; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
+  }
+  :global(.cg-table tr:last-child td) { border-bottom: none; }
+  :global(.cg-table td:first-child) { min-width: 6rem; }
+  :global(.cg-prov) {
+    font-size: 0.6rem; letter-spacing: 0.05em; opacity: 0.75;
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 0.06rem 0.45rem; margin-left: 0.4rem; vertical-align: 2px;
+  }
 </style>
