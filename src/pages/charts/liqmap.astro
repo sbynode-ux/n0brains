@@ -166,7 +166,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // per-venue defaults: time range + liquidity threshold. DEX has a strong
     // above/below asymmetry (one side can be 4x the other), so a high threshold
     // amputates the smaller side — DEX uses a lower floor to show BOTH sides.
-    const VENUE_DEFAULT_DAYS = { dex: 1, cex: 7 };
+    const VENUE_DEFAULT_DAYS = { dex: 1, cex: 1 };  // 24h default (Coinglass parity); 7d stays a button
     const VENUE_DEFAULT_THR  = { dex: 0.8, cex: 0.85 };
     let coin = "BTC", venue = "cex", days = VENUE_DEFAULT_DAYS.cex, timer = null, reqId = 0, lastData = null, resizeT = null, threshold = VENUE_DEFAULT_THR.cex;
     let FOCUS_PCT = "auto";   // y-axis zoom: "auto" fits the band holding most liquidity
@@ -190,8 +190,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // Selectable colormaps (like Coinglass's palette swatches). Each = stop list
     // [t, [r,g,b]] from low→high; the dark first stop blends into the bg.
     const PALETTES = {
-      viridis: [   // purple → teal → green → yellow (default)
-        [0.00, [13, 11, 26]], [0.18, [40, 22, 90]], [0.40, [38, 70, 150]],
+      viridis: [   // purple → teal → green → yellow (default). Zero-stop is a
+        // VISIBLE dark violet — the ambient floor must read as "low data",
+        // not blend into the page black (ops #86, Coinglass parity)
+        [0.00, [36, 18, 60]], [0.18, [48, 28, 98]], [0.40, [38, 70, 150]],
         [0.60, [20, 150, 150]], [0.80, [40, 200, 90]], [1.00, [240, 240, 40]] ],
       bluered: [   // blue → cyan → yellow → red
         [0.00, [10, 12, 30]], [0.25, [30, 80, 200]], [0.50, [20, 200, 210]],
@@ -312,8 +314,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         return Math.max(0, Math.min(1, (Math.log(v) - lCut) / den));
       };
 
-      // geometry: fit container width, no scroll
-      const padL = 70, padB = 26, padT = 10, padR = 10;
+      // geometry: fit container width, no scroll. Left gutter holds the
+      // magnitude colorbar (Coinglass-style) + the price tick labels.
+      const padL = 108, padB = 26, padT = 26, padR = 10;
+      const CBAR_X = 10, CBAR_W = 12;
       const W = Math.max(360, Math.floor(wrap.clientWidth || 1000));
       const plotW = W - padL - padR;
       const plotH = Math.max(320, Math.min(620, rows * 7));
@@ -382,6 +386,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       // window (rows are evenly binned across the FULL range, so we place them by
       // price, not by row index, and skip rows outside the band).
       const rowH = plotH * ( (fullSpan / rows) / vSpan );  // a full-range bin's height in the zoomed view
+      // ambient heat floor: the WHOLE plane is the heatmap (zero-liquidity =
+      // dark violet, never page-black) — bands become texture in one field
+      ctx.fillStyle = heatColor(0);
+      ctx.fillRect(padL, padT, plotW, plotH);
       ctx.save();
       ctx.beginPath(); ctx.rect(padL, padT, plotW, plotH); ctx.clip();
       for (let ri = 0; ri < rows; ri++) {
@@ -444,13 +452,29 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         ctx.restore();
       }
 
-      // price axis (Y) — ticks stepped evenly across the FOCUS window (vMin..vMax)
-      ctx.fillStyle = "#8b909c"; ctx.font = "11px system-ui"; ctx.textAlign = "right";
-      const yticks = 7;
-      for (let k = 0; k <= yticks; k++) {
-        const price = vMax - vSpan * k / yticks;
-        const py = padT + (k / yticks) * plotH;
-        ctx.fillStyle = "rgba(35,38,47,0.6)"; ctx.fillRect(padL, py, plotW, 0.5);
+      // magnitude colorbar (left): 0 → strongest cell, same palette + gamma
+      for (let i = 0; i <= 100; i++) {
+        ctx.fillStyle = heatColor(1 - i / 100);
+        ctx.fillRect(CBAR_X, padT + (i / 100) * plotH, CBAR_W, plotH / 100 + 1);
+      }
+      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.strokeRect(CBAR_X + 0.5, padT + 0.5, CBAR_W, plotH);
+      ctx.fillStyle = "#8b909c"; ctx.font = "10px system-ui"; ctx.textAlign = "left";
+      ctx.fillText(fmtUsd(maxV), CBAR_X - 2, padT - 8);
+      ctx.fillText("0", CBAR_X + 3, padT + plotH + 12);
+
+      // price axis (Y) — ROUND-step ticks across the focus window (data-driven
+      // odd values like $61,504 read amateur; ops #86)
+      ctx.font = "11px system-ui"; ctx.textAlign = "right";
+      const niceStep = (range, target) => {
+        const raw = range / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        for (const m of [1, 2, 2.5, 5, 10]) if (raw <= m * mag) return m * mag;
+        return 10 * mag;
+      };
+      const stepY = niceStep(vSpan, 6);
+      for (let price = Math.ceil(vMin / stepY) * stepY; price < vMax; price += stepY) {
+        const py = yOfPrice(price);
+        ctx.fillStyle = "rgba(255,255,255,0.10)"; ctx.fillRect(padL, py, plotW, 0.5);
         ctx.fillStyle = "#8b909c"; ctx.fillText(fmtPx(price), padL-6, py+3);
       }
 
@@ -469,9 +493,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         return (dt.getMonth()+1) + "/" + dt.getDate();
       };
       const xticks = Math.min(8, cols);
+      let prevLabel = "";
       for (let k = 0; k <= xticks; k++) {
         const ci = Math.round((cols-1) * k / xticks);
-        if (times[ci] != null) ctx.fillText(fmtT(times[ci]), padL + ci*cellW + cellW/2, H-8);
+        if (times[ci] == null) continue;
+        const label = fmtT(times[ci]);
+        if (label === prevLabel) continue;   // dup-tick bug (7/11 7/11) — skip repeats
+        prevLabel = label;
+        ctx.fillText(label, padL + ci*cellW + cellW/2, H-8);
       }
 
       const spanS = times.length>1 ? (times[times.length-1]-times[0]) : 0;
