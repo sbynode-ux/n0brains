@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — July 15, 2026"
-description: "Macro regime: squeeze. BTC bias: neutral (0.4 conviction). 7 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: squeeze. BTC bias: neutral (0.4 conviction). 13 whale/sentiment signals, 10 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-07-15
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -16,19 +16,27 @@ The n0brains Macro Pulse calls the regime **squeeze** with BTC bias **neutral** 
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| 🔴 | XRP | whale | SMART MONEY: rHcFoo6a9qT5 moved 126,175 XRP → Binance | N/A | 0.1 | 41% |
-| 🔴 | XRP | whale | SMART MONEY: rarG6FaeYhnz moved 12,105,087 XRP → Binance | N/A | 0.2 | 41% |
-| 🔴 | XRP | whale | SMART MONEY: rfQ9EcLkU6Wn moved 7,497,278 XRP → Binance | N/A | 0.1 | 41% |
-| 🔴 | XRP | whale | SMART MONEY: rhWj9gaovwu2 moved 8,746,279 XRP → Binance | N/A | 0.1 | 41% |
+| 🔴 | ETH | whale | SMART MONEY: Bitfinex: Contract 2 moved 301.0 ETH → Bitfinex: Contract | N/A | 0.1 | 41% |
+| 🔴 | ETH | whale | Abraxas Capital sold $39.99M BTC and bought $15.3M ETH. | N/A | 0.1 | 41% |
+| 🔴 | XRP | whale | SMART MONEY: Bitstamp moved 220,601 XRP → Binance | N/A | 0.1 | 41% |
+| 🟢 | HYPE | whale | BackedFi purchased 500 HYPE tokens for $34.2k worth of SOL. | N/A | 0.0 | 41% |
+| 🔴 | ETH | whale | SMART MONEY: Bitstamp: Old Address 1 moved 185996.9 ETH → Bitstamp 5 | N/A | 0.1 | 41% |
 | 🔴 | ETH | whale | SMART MONEY: Bitstamp 5 moved 491.0 ETH → Bitstamp 5 | N/A | 0.1 | 41% |
-| 🔴 | ETH | whale | SMART MONEY: Binance 28 moved 3310.0 ETH → Binance 28 | N/A | 0.1 | 41% |
-| 🟢 | BTC | sentiment | CoinGecko trending list shows multiple assets with significant price g | N/A | 0.2 | 66% |
+| 🔴 | ETH | whale | SMART MONEY: Bitfinex: Old Contract 1 moved 275000.0 ETH → Bitfinex: O | N/A | 0.1 | 41% |
+| 🔴 | XRP | whale | SMART MONEY: Bitso moved 100,000 XRP → Bitstamp | N/A | 0.1 | 41% |
 
 ## High-Conviction Signals (≥85% confidence)
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| — | — | — | No high-conviction signals | — | — | — |
+| 🟢 | XLITE | listing | OKX SPOT LISTING: XLITE | N/A | 0.3 | 96% |
+| 🟢 | XAMZN | listing | OKX SPOT LISTING: XAMZN | N/A | 0.3 | 96% |
+| 🟢 | XAVGO | listing | OKX SPOT LISTING: XAVGO | N/A | 0.3 | 96% |
+| 🟢 | XAMD | listing | OKX SPOT LISTING: XAMD | N/A | 0.3 | 96% |
+| 🟢 | XTSM | listing | OKX SPOT LISTING: XTSM | N/A | 0.3 | 96% |
+| 🟢 | XIWM | listing | OKX SPOT LISTING: XIWM | N/A | 0.3 | 96% |
+| 🟢 | XMSTR | listing | OKX SPOT LISTING: XMSTR | N/A | 0.3 | 96% |
+| 🟢 | XMETA | listing | OKX SPOT LISTING: XMETA | N/A | 0.3 | 96% |
 
 ## Macro Context
 
@@ -39,9 +47,9 @@ The n0brains Macro Pulse calls the regime **squeeze** with BTC bias **neutral** 
 
 ## Key Takeaways
 
-1. **Whale on XRP**: SMART MONEY: rHcFoo6a9qT5 moved 126,175 XRP → Binance
-2. **Whale on XRP**: SMART MONEY: rarG6FaeYhnz moved 12,105,087 XRP → Binance
-3. **Whale on XRP**: SMART MONEY: rfQ9EcLkU6Wn moved 7,497,278 XRP → Binance
+1. **Whale on ETH**: SMART MONEY: Bitfinex: Contract 2 moved 301.0 ETH → Bitfinex: Contract 2
+2. **Whale on ETH**: Abraxas Capital sold $39.99M BTC and bought $15.3M ETH.
+3. **Whale on XRP**: SMART MONEY: Bitstamp moved 220,601 XRP → Binance
 
 ## Track Smart Money in Real-Time
 
@@ -55,4 +63,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on July 15, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on July 15, 2026.
