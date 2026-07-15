@@ -122,9 +122,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const PADL = 10, PADR = 96, PADT = 12, PADB = 30;
     // opaque plot floor — the page's background grid must not bleed through
     ctx.fillStyle = "#0a0d0a"; ctx.fillRect(0, 0, W, H);
-    const res = (data.all_resistance || []).map((r) => r.price);
-    const sup = (data.all_support || []).map((s) => s.price);
-    const allLevels = [...res, ...sup];
+    const res = (data.all_resistance || []);
+    const sup = (data.all_support || []);
+    // measured outcome ledger (ops #87): show the raw record when the level
+    // has enough completed tests — never a composite score
+    const statTag = (l) => (l && l.win_rate != null && l.tests)
+      ? `${l.bounces}/${l.tests} held · ${Math.round(l.win_rate)}%` : "";
+    const allLevels = [...res, ...sup].map((l) => l.price);
     let lo = Math.min(price, ...candles.map((k) => k.l), ...allLevels.filter(Boolean));
     let hi = Math.max(price, ...candles.map((k) => k.h), ...allLevels.filter(Boolean));
     if (!isFinite(lo) || !isFinite(hi) || lo === hi) { lo = price * 0.95; hi = price * 1.05; }
@@ -175,8 +179,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // resolved down the right gutter (TradingView-style)
     ctx.font = "11px 'Space Mono', monospace";
     const items = [
-      ...res.map((p) => ({ p, color: "#ef4444" })),
-      ...sup.map((p) => ({ p, color: "#00ff41" })),
+      ...res.map((l) => ({ p: l.price, color: "#ef4444", stat: statTag(l) })),
+      ...sup.map((l) => ({ p: l.price, color: "#00ff41", stat: statTag(l) })),
       { p: price, color: "#efefef", isPrice: true },
     ].filter((it) => it.p > lo && it.p < hi).sort((a, b) => Y(a.p) - Y(b.p));
     let lastY = -99;
@@ -187,6 +191,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ctx.setLineDash(it.isPrice ? [2, 3] : [5, 4]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1;
+      if (it.stat) {
+        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.font = "9.5px 'Space Mono', monospace"; ctx.textAlign = "right";
+        ctx.fillText(it.stat, W - PADR - 8, y - 5);
+        ctx.font = "11px 'Space Mono', monospace";
+      }
       const label = fmtPx(it.p), tw = ctx.measureText(label).width;
       ctx.fillStyle = it.color;
       ctx.beginPath();
