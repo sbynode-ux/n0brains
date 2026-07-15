@@ -67,8 +67,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
 
   async function fetchCandles(c) {
+    // 24h window (30-min candles): the levels come from the CURRENT order
+    // book so they live within ~1.5% of spot — a 7d window crushed them into
+    // the top sliver of the panel (ops #86 root cause).
     try {
-      const r = await fetch(`https://api.coingecko.com/api/v3/coins/${CG_ID[c]}/ohlc?vs_currency=usd&days=7`, { cache: "no-store" });
+      const r = await fetch(`https://api.coingecko.com/api/v3/coins/${CG_ID[c]}/ohlc?vs_currency=usd&days=1`, { cache: "no-store" });
       const raw = await r.json();
       return raw.map((k) => ({ t: k[0] / 1000, o: k[1], h: k[2], l: k[3], c: k[4] }));
     } catch (e) { return []; }
@@ -116,7 +119,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     $("lv-price").textContent = fmtPx(price);
     banner("status-up", coin + " · " + fmtPx(price) + " · live S/R");
 
-    const PADL = 8, PADR = 86, PADT = 16, PADB = 28;
+    const PADL = 10, PADR = 96, PADT = 12, PADB = 30;
+    // opaque plot floor — the page's background grid must not bleed through
+    ctx.fillStyle = "#0a0d0a"; ctx.fillRect(0, 0, W, H);
     const res = (data.all_resistance || []).map((r) => r.price);
     const sup = (data.all_support || []).map((s) => s.price);
     const allLevels = [...res, ...sup];
@@ -126,40 +131,76 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
     const Y = (p) => PADT + (1 - (p - lo) / (hi - lo)) * (H - PADT - PADB);
 
-    // candles
+    // y axis: round-step gridlines + faint right-gutter ticks (level pills
+    // draw over them opaquely afterwards — pills win any overlap)
+    ctx.font = "10px 'Space Mono', monospace";
+    const niceStep = (range, target) => {
+      const raw = range / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      for (const m of [1, 2, 2.5, 5, 10]) if (raw <= m * mag) return m * mag;
+      return 10 * mag;
+    };
+    const stepY = niceStep(hi - lo, 6);
+    for (let p = Math.ceil(lo / stepY) * stepY; p < hi; p += stepY) {
+      const y = Y(p);
+      ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.38)"; ctx.textAlign = "left";
+      ctx.fillText(fmtPx(p), W - PADR + 6, y + 3);
+    }
+
+    // x axis + candles
     if (candles.length) {
       const t0 = candles[0].t, t1 = candles[candles.length - 1].t;
       const X = (t) => PADL + ((t - t0) / (t1 - t0 || 1)) * (W - PADL - PADR);
-      const cw = Math.max(1.5, (W - PADL - PADR) / candles.length - 1.5);
+      const stepX = 4 * 3600; // 4h ticks across the 24h window
+      for (let t = Math.ceil(t0 / stepX) * stepX; t <= t1; t += stepX) {
+        const x = X(t);
+        ctx.strokeStyle = "rgba(255,255,255,0.045)";
+        ctx.beginPath(); ctx.moveTo(x, PADT); ctx.lineTo(x, H - PADB); ctx.stroke();
+        ctx.fillStyle = "rgba(255,255,255,0.38)"; ctx.textAlign = "center";
+        ctx.fillText(new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), x, H - PADB + 16);
+      }
+      const cw = Math.max(2, (W - PADL - PADR) / candles.length - 2);
+      ctx.lineWidth = 1.4;
       for (const k of candles) {
         const up = k.c >= k.o; ctx.strokeStyle = ctx.fillStyle = up ? "#26d07c" : "#ef4444";
         const x = X(k.t) + cw / 2;
         ctx.beginPath(); ctx.moveTo(x, Y(k.h)); ctx.lineTo(x, Y(k.l)); ctx.stroke();
-        ctx.fillRect(X(k.t), Y(Math.max(k.o, k.c)), cw, Math.max(1.5, Math.abs(Y(k.o) - Y(k.c))));
+        ctx.fillRect(X(k.t), Y(Math.max(k.o, k.c)), cw, Math.max(2, Math.abs(Y(k.o) - Y(k.c))));
       }
+      ctx.lineWidth = 1;
     }
-    // level lines
+
+    // levels + current price: dashed lines at true y, axis PILLS collision-
+    // resolved down the right gutter (TradingView-style)
     ctx.font = "11px 'Space Mono', monospace";
-    function drawLevel(p, color, label) {
-      const y = Y(p);
-      ctx.strokeStyle = color; ctx.globalAlpha = 0.55; ctx.setLineDash([5, 4]); ctx.lineWidth = 1;
+    const items = [
+      ...res.map((p) => ({ p, color: "#ef4444" })),
+      ...sup.map((p) => ({ p, color: "#00ff41" })),
+      { p: price, color: "#efefef", isPrice: true },
+    ].filter((it) => it.p > lo && it.p < hi).sort((a, b) => Y(a.p) - Y(b.p));
+    let lastY = -99;
+    for (const it of items) { it.y = Math.max(Y(it.p), lastY + 16); lastY = it.y; }
+    for (const it of items) {
+      const y = Y(it.p);
+      ctx.strokeStyle = it.color; ctx.globalAlpha = it.isPrice ? 0.9 : 0.5;
+      ctx.setLineDash(it.isPrice ? [2, 3] : [5, 4]); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1;
-      ctx.fillStyle = color; ctx.textAlign = "left";
-      ctx.fillText(fmtPx(p), W - PADR + 4, y + 4);
+      const label = fmtPx(it.p), tw = ctx.measureText(label).width;
+      ctx.fillStyle = it.color;
+      ctx.beginPath();
+      ctx.roundRect(W - PADR + 2, it.y - 9, tw + 12, 17, 3);
+      ctx.fill();
+      ctx.fillStyle = "#000"; ctx.textAlign = "left";
+      ctx.fillText(label, W - PADR + 8, it.y + 4);
     }
-    res.forEach((p) => drawLevel(p, "#ef4444", "R"));
-    sup.forEach((p) => drawLevel(p, "#00ff41", "S"));
-    // current price line
-    const yp = Y(price);
-    ctx.strokeStyle = "#efefef"; ctx.lineWidth = 1.5; ctx.beginPath();
-    ctx.moveTo(PADL, yp); ctx.lineTo(W - PADR, yp); ctx.stroke();
-    ctx.fillStyle = "#efefef"; ctx.fillText(fmtPx(price), W - PADR + 4, yp - 4);
 
     $("lv-legend").innerHTML =
       `<span class="lg"><span class="lg-line" style="background:#00ff41"></span>support</span>` +
       `<span class="lg"><span class="lg-line" style="background:#ef4444"></span>resistance</span>` +
       `<span class="lg"><span class="lg-line" style="background:#efefef"></span>price</span>` +
+      `<span class="lg muted">24h · 30m candles</span>` +
       (proVerified ? `<span class="lg pro-on">PRO ✓ all coins</span>` : `<span class="lg muted">BTC/ETH free · <a href="/pricing">Pro for all coins</a></span>`);
     if (data.disclaimer) $("lv-meta").textContent = data.disclaimer;
   }
