@@ -11,7 +11,7 @@ const claudeDesktopConfig = JSON.stringify({
 }, null, 2);
 ---
 
-<BaseLayout title={title} description="n0brains MCP server for Claude Desktop, Cursor, Cline, Continue. Free tier: 13 tools including check_trade. Pro: all 33 tools real-time. Listed on the official MCP Registry as com.n0brains/mcp.">
+<BaseLayout title={title} description="n0brains MCP server for Claude Desktop, Cursor, Cline, Continue. Free tier: 14 tools including check_trade. Pro: all 40 tools real-time. Listed on the official MCP Registry as com.n0brains/mcp.">
   <main class="prose mx-auto py-12 px-4">
     <h1>MCP Server</h1>
     <p class="lead">
@@ -21,9 +21,9 @@ const claudeDesktopConfig = JSON.stringify({
     </p>
 
     <div class="callout callout-pro">
-      <strong>Free tier works here.</strong> Any valid API key can call 13 tools —
+      <strong>Free tier works here.</strong> Any valid API key can call 14 tools —
       including <code>check_trade</code> (3/day), delayed signals, levels, regime,
-      and the public proof scoreboard. Pro unlocks all 33 tools in real time.
+      and the public proof scoreboard. Pro unlocks all 40 tools in real time.
       <a href="/signup">Get a free key →</a> · Listed on the official
       <a href="https://registry.modelcontextprotocol.io/v0/servers?search=n0brains">MCP Registry</a>
       as <code>com.n0brains/mcp</code>.
@@ -44,7 +44,7 @@ Authorization: Bearer &lt;your_api_key&gt;
 Content-Type: application/json</code></pre>
 
     <p>Get your API key when you <a href="/signup">sign up</a> — it is shown once,
-    so copy it then. Free keys call the 13 free tools; a Pro-only tool called
+    so copy it then. Free keys call the 14 free tools; a Pro-only tool called
     with a free key returns JSON-RPC error <code>-32001</code> whose
     <code>error.data.free_tools</code> lists everything that works on your tier.</p>
 
