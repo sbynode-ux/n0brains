@@ -286,7 +286,7 @@ header.scrolled .header-hero-text { opacity: 1; }
 header.scrolled .logo { opacity: 0; pointer-events: none; }
 
 /* ─── Grouped Rail nav (desktop) ─── */
-.rail { display: flex; align-items: center; gap: 28px; }
+.rail { display: flex; align-items: center; gap: 20px; }
 
 .rail-cluster { display: flex; flex-direction: column; gap: 4px; }
 
@@ -298,9 +298,10 @@ header.scrolled .logo { opacity: 0; pointer-events: none; }
   color: var(--accent);
 }
 
-.rail-links { display: flex; gap: 18px; }
+.rail-links { display: flex; gap: 13px; }
 
 .rail a {
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 0.69rem;
   font-weight: 700;
@@ -314,7 +315,7 @@ header.scrolled .logo { opacity: 0; pointer-events: none; }
 
 .rail-divider { width: 1px; height: 30px; background: #1e1e1e; }
 
-.rail-auth { display: flex; align-items: center; gap: 16px; }
+.rail-auth { display: flex; align-items: center; gap: 12px; }
 
 .rail-cta {
   color: #000 !important;
@@ -987,13 +988,13 @@ footer .footer-socials svg { display: block; }
 }
 
 /* ─── Responsive ─── */
-@media (max-width: 900px) {
+@media (max-width: 1080px) {
   /* Grouped rail collapses into burger + full-screen sheet. */
   .rail { display: none; }
   .nav-burger { display: flex; }
   header .inner { padding: 0 18px; height: 54px; }
 }
-@media (min-width: 901px) {
+@media (min-width: 1081px) {
   .nav-sheet { display: none !important; }
 }
 

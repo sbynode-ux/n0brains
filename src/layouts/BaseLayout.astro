@@ -174,7 +174,8 @@ const softwareAppLd = homepage ? {
             <span class="rail-label">product</span>
             <div class="rail-links">
               <a href="/check" class={navPath.startsWith("/check") ? "active" : ""}>check</a>
-              <a href="/docs/" class={navPath.startsWith("/docs") ? "active" : ""}>docs</a>
+              <a href="/docs/" class={navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart") ? "active" : ""}>docs</a>
+              <a href="/docs/quickstart" class={navPath.startsWith("/docs/quickstart") ? "active" : ""}>quickstart</a>
               <a href="/proof" class={navPath.startsWith("/proof") ? "active" : ""}>proof</a>
               <a href="/charts" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
               <a href="/pricing" class={navPath.startsWith("/pricing") ? "active" : ""}>pricing</a>
@@ -206,14 +207,17 @@ const softwareAppLd = homepage ? {
         {[
           ["/check", "check", "01"],
           ["/docs/", "docs", "02"],
-          ["/proof", "proof", "03"],
-          ["/charts", "charts", "04"],
-          ["/pricing", "pricing", "05"],
-          ["/intel", "intel", "06"],
-          ["/blog", "blog", "07"],
-          ["/podcast", "podcast", "08"],
+          ["/docs/quickstart", "quickstart", "03"],
+          ["/proof", "proof", "04"],
+          ["/charts", "charts", "05"],
+          ["/pricing", "pricing", "06"],
+          ["/intel", "intel", "07"],
+          ["/blog", "blog", "08"],
+          ["/podcast", "podcast", "09"],
         ].map(([href, label, idx]) => {
-          const active = navPath.startsWith(href === "/docs/" ? "/docs" : href);
+          const active = href === "/docs/"
+            ? navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart")
+            : navPath.startsWith(href);
           return (
             <a href={href} class={`sheet-link ${active ? "active" : ""}`}>
               <span class="sheet-name">{label}{active && <span class="sheet-here"> · here</span>}</span>
