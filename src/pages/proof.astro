@@ -177,15 +177,15 @@ try {
     </div>
     <p class="meta" id="equity-meta"></p>
 
-    <h2 class="proof-h2">We grade our own grades</h2>
+    <h2 class="proof-h2">Pre-trade calibration is in progress</h2>
     <p class="proof-sub">
       Every <a href="/check">pre-trade check</a> verdict we hand out is logged the
-      moment we give it and scored at its horizon against real prices. If our
-      grades mean anything, A-graded setups outperform F-graded ones. Small
-      sample for now — we show it anyway, from day one.
+      moment we give it and resolved at its stated horizon against real prices.
+      Cross-grade performance is deliberately withheld until the deployed engine
+      clears the full weekly truth gate twice. Candidate-model results do not
+      unlock this section.
     </p>
-    <div class="table-wrap" id="check-grades-table"><span class="meta">loading…</span></div>
-    <p class="meta" id="check-grades-meta"></p>
+    <p class="meta">No grade-performance claim is being made while calibration accrues.</p>
 
     <p class="legal-updated" style="margin-top: 32px;">
       A type is shown as <strong>forward-return proven</strong> only when its
@@ -483,7 +483,11 @@ try {
       const d = await r.json();
       const cg = d.check_grades;
       if (!cg || !cg.grades || !cg.grades.length) {
-        wrap.innerHTML = "<span class='meta'>no checks logged yet</span>";
+        const st = d.check_grade_status || {};
+        wrap.innerHTML = (st.claims_published === false || st.status === "calibration_in_progress")
+          ? "<span class='meta'>grade calibration in progress — every check is logged and resolved, but grade-performance claims are withheld until the deployed truth gate passes</span>"
+          : "<span class='meta'>no checks logged yet</span>";
+        if (meta) meta.textContent = "";
         return;
       }
       // rows are split by ENGINE VERSION — each set of weights is its own

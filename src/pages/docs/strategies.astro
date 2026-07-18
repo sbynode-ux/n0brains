@@ -135,7 +135,7 @@ Rules:
           <span class="pb-chip">checking gate…</span>
         </div>
         <div class="pb-stats" data-stats>
-          <div class="pb-stat"><b data-f="win">{s ? Math.round(s.win_rate * 100) + "%" : "—"}</b><span>win rate</span></div>
+          <div class="pb-stat"><b data-f="win">{s && s.win_rate != null ? Math.round(s.win_rate * 100) + "%" : "—"}</b><span>win rate</span></div>
           <div class="pb-stat"><b data-f="excess">{s && s.excess_pct != null ? (s.excess_pct > 0 ? "+" : "") + s.excess_pct.toFixed(2) + "%" : "—"}</b><span>excess vs BTC</span></div>
           <div class="pb-stat"><b data-f="n">{s ? s.n : "—"}</b><span>signals · 30d</span></div>
           <div class="pb-stat"><b data-f="hz">{s ? s.horizon : "—"}</b><span>horizon</span></div>
@@ -279,7 +279,7 @@ Rules:
         ? `<span class="pb-chip on">proven now · ${t.proven_horizon} · gate passing</span>`
         : '<span class="pb-chip off">not currently proven — stand down</span>';
       const set = (f, v) => { const el = card.querySelector(`[data-f="${f}"]`); if (el) el.textContent = v; };
-      set("win", Math.round(t.win_rate * 100) + "%");
+      set("win", t.win_rate != null ? Math.round(t.win_rate * 100) + "%" : "—");
       set("excess", t.excess_pct != null ? (t.excess_pct > 0 ? "+" : "") + t.excess_pct.toFixed(2) + "%" : "—");
       set("n", t.n);
       set("hz", t.horizon || "24h");

@@ -1,6 +1,6 @@
 # n0brains
 
-> AI-powered crypto intelligence platform. Machine-classified signals from 10+ sources — whales, funding, liquidations, on-chain flows, news, macro, congress trades — fused, scored, and delivered via one REST/WebSocket/Webhook API.
+> Pre-trade conditions intelligence for people and agents — crowding, event risk, liquidity, volatility, structure, levels and stop geometry over REST, WebSocket, Webhook, MCP and x402.
 
 ## What it is
 
@@ -12,15 +12,14 @@ Most signal services ask you to trust a backtest. n0brains publishes its real, l
 
 ## Key capabilities
 
-- **Macro Pulse** — daily BTC + ETH directional bias (regime, conviction, key levels, invalidation). Weekly 30-day deep-dive every Sunday.
+- **Macro conditions** — daily deterministic regime and calendar-risk context; per-asset bias is withheld when its supporting model is unavailable.
 - **Whale tracking** — Hyperliquid leaderboard consensus: when top traders pile into the same side, we detect it.
-- **Funding & liquidations** — Binance funding extremes + real-time liquidation cascades via WebSocket.
+- **Funding & liquidations** — multi-venue funding/open-interest positioning plus OKX public liquidation prints.
 - **On-chain flows** — large ETH/BTC exchange inflows/outflows.
 - **L/S ratios** — Bybit, Binance, Gate.io positioning; detect extreme crowding.
 - **S/R levels** — real-time support/resistance from the Hyperliquid order book.
 - **Telegram channels** — WatcherGuru, ZachXBT, and others for breaking events.
 - **News & RSS** — CoinDesk, Decrypt, CoinTelegraph, Reddit, Trump's Truth Social.
-- **Congress trades** — CapitolExposed API; every crypto-related congressional disclosure, conflict-scored.
 - **Narrative heatmap** — rolling 1h/4h/24h signal momentum per asset; coordination detection.
 - **Manipulation detection** — social burst scoring, coordinated pump flags, liquidation cascade ID.
 - **Wallet DNA** — whale wallet archetypes (VC, market maker, MEV, smart whale, government, sniper); stealth accumulation flag.
@@ -34,10 +33,6 @@ At https://n0brains.com/charts — live data, most of it free:
 - **Market-state gauge** (/charts/market-state) — live bull/bear/neutral directional consensus per coin (BTC + ETH free).
 - **Liquidation heatmap** (/charts/liqmap) — REAL on-chain DEX positions (Hyperliquid + GMX) showing where leveraged traders get liquidated. The kind of data other tools charge hundreds a month for; here it's free.
 - **Support/resistance levels** (/charts/levels) — order-book + pivot levels overlaid on price.
-
-## The Agent Race
-
-20 trading bots, each a different strategy, compete live 24/7 paper-trading real n0brains signals on a public stream. It's an always-on, transparent proof that the signals work — and surfaces which strategies actually win.
 
 ## Delivery for agents
 

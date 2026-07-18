@@ -584,10 +584,15 @@ import DashShell from "../components/DashShell.astro";
   async function renderMacro() {
     const d = (await apiGet("/macro")).current || {};
     const b = d.btc || {}, e = d.eth || {};
+    // Per-asset bias can be explicitly withheld (bias: null + bias_status) —
+    // render the withholding honestly instead of a bare dash.
+    const biasCell = (o) => o.bias
+      ? `${dirCh(o.bias)} <span class="dim">${esc(o.conviction || "")}</span>`
+      : `<span class="ch">withheld</span> <span class="dim mono" style="font-size:0.64rem">${esc(o.bias_status || o.status || d.bias_status || "insufficient data")}</span>`;
     return `
       <div class="row"><span class="k">regime</span><span class="v">${dirCh(d.regime === "risk-on" ? "bullish" : d.regime === "risk-off" ? "bearish" : d.regime)} <span class="mono dim" style="font-size:0.66rem">${esc(d.regime || "—")}</span></span></div>
-      <div class="row"><span class="k">btc bias</span><span class="v">${dirCh(b.bias)} <span class="dim">${esc(b.conviction || "")}</span></span></div>
-      <div class="row"><span class="k">eth bias</span><span class="v">${dirCh(e.bias)} <span class="dim">${esc(e.conviction || "")}</span></span></div>
+      <div class="row"><span class="k">btc bias</span><span class="v">${biasCell(b)}</span></div>
+      <div class="row"><span class="k">eth bias</span><span class="v">${biasCell(e)}</span></div>
       <div class="dg-foot">generated ${d.generated_at ? ago(new Date(d.generated_at).getTime() / 1000) + " ago" : "—"}</div>`;
   }
 

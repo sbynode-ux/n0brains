@@ -4,7 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="check"
-  description="Ask n0brains First — graded pre-trade conditions check. Submit your trade idea (asset, side, leverage, stop) and get a grade A–F with the reasons: crowding, event risk, liquidation distance vs volatility, proven-edge conflicts. Every grade is logged and audited on /proof."
+  description="Ask n0brains First — graded pre-trade conditions check. Submit your trade idea (asset, side, leverage, stop) and get a grade A–F with the reasons: crowding, event risk, liquidation distance vs volatility, and evidence conflicts. Every verdict is logged and resolved."
 >
   <section class="check-page">
     <div class="ck-hero">
@@ -14,11 +14,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         About to take a trade? Tell us what you're planning. We check the market
         around it — who's crowded on your side, what news is coming, whether your
         leverage survives a normal day — and give it a grade from A to F.
-        Every grade we give goes on the public record at <a href="/proof">/proof</a>.
+        Every verdict is logged before its outcome and resolved at the selected horizon. Cross-grade performance stays withheld while calibration accrues.
       </p>
       <div class="ck-status" id="ck-status">
         <span class="ck-live-dot"></span>
-        <span id="ck-status-text">engine online · every grade logged &amp; publicly scored</span>
+        <span id="ck-status-text">engine online · every verdict logged &amp; resolved</span>
       </div>
       <div class="ck-examples">
         <span class="ck-opt">try one:</span>
@@ -186,10 +186,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <ol class="ck-list">
         <li>Type in the trade you're thinking about. Only the coin and long/short are required.</li>
         <li>We grade the conditions around it, A to F, and show every reason.</li>
-        <li>Come back after the horizon — your grade gets scored against what actually happened, publicly, on <a href="/proof">/proof</a>.</li>
+        <li>Come back after the horizon — the verdict resolves against what actually happened and stays logged. Grade-performance calibration remains withheld until its release gate passes.</li>
       </ol>
     </div>
-    <p class="ck-signoff">// every grade goes on the record</p>
+    <p class="ck-signoff">// every verdict is logged before the outcome</p>
   </section>
 
   <script>
@@ -570,6 +570,12 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         $("ck-trust").innerHTML = `${cg.n_resolved} grades already resolved on the ` +
           `<a href="/proof">public record</a> — we grade our own grades.`;
         $("ck-trust").hidden = false;
+      } else if (d.check_grade_status && d.check_grade_status.claims_published === false) {
+        // API withholds cross-grade performance while calibration accrues —
+        // say so plainly instead of implying a published record.
+        $("ck-trust").textContent = "grade calibration in progress — every verdict is " +
+          "logged and resolved, but grade-performance claims are withheld until the truth gate passes.";
+        $("ck-trust").hidden = false;
       }
     }).catch(() => {});
 
@@ -582,7 +588,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       const sup = (d.supports || []).map(x => `✓ ${x.note}`).join("\n");
       const txt = `n0brains graded my ${d.asset} ${d.side === "bullish" ? "LONG" : "SHORT"}: ${d.grade}\n` +
         [flags, sup].filter(Boolean).join("\n") +
-        `\n— every grade goes on the record: https://n0brains.com/check`;
+        `\n— conditions checked before entry: https://n0brains.com/check`;
       navigator.clipboard.writeText(txt).then(() => {
         $("ck-copy").textContent = "✓ copied";
         setTimeout(() => { $("ck-copy").textContent = "copy result"; }, 1500);

@@ -7,7 +7,7 @@ const routes = [
   ["GET /x402/correlation/{coin}", "$0.005", "Correlation + beta to BTC/ETH"],
   ["GET /x402/liquidation-map/{coin}", "$0.005", "Estimated liquidation zones"],
   ["GET /x402/levels/{coin}", "$0.002", "Support/resistance"],
-  ["GET /x402/macro", "$0.002", "Daily BTC/ETH macro bias"],
+  ["GET /x402/macro", "$0.002", "Macro conditions; asset bias withheld when unsupported"],
   ["GET /x402/plan/{coin}", "$0.01", "Assembled trade plan — direction, entry, target, stop, R:R, options + warnings"],
   ["GET /x402/rank", "$0.015", "Cross-asset ranking — which coin is the best trade now"],
 ];
@@ -21,7 +21,7 @@ X-PAYMENT: <signed payload>
 # 4. Facilitator verifies + settles on Base; the data is returned`;
 ---
 
-<BaseLayout title={title} description="n0brains x402 pay-per-call — autonomous agents pay per request in USDC on Base, no account or API key. Permissionless via the xpay facilitator.">
+<BaseLayout title={title} description="n0brains x402 pay-per-call — autonomous agents pay per request in USDC on Base, no account or API key.">
   <main class="docs-page">
     <h1>x402 Pay-Per-Call</h1>
     <p class="lead">

@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Generate public/og-default.png — the default social/link-preview card.
-
-Was baked 2026-05-14 with the OLD tagline "THINK LESS, TRADE MORE" + "trading
-agents"; the site rebranded to "Think Less, Ship More" but this static PNG was
-never regenerated, so link previews still showed the old text. This recreates it
-with the current tagline. Re-run: python3 scripts/gen_og_default.py
-"""
+"""Generate the claim-free, check-first default social/link-preview card."""
 import os
 
 from PIL import Image, ImageDraw, ImageFont
@@ -38,7 +32,7 @@ def main():
 
     pad = 96
 
-    # ── header: ── N0BRAINS // SIGNALS API
+    # ── header: ── N0BRAINS // PRE-TRADE CHECK
     hy = 120
     d.line([(pad, hy + 8), (pad + 56, hy + 8)], fill=ACCENT, width=3)
     hx = pad + 72
@@ -47,27 +41,25 @@ def main():
     w1 = d.textlength("N0BRAINS", font=hf)
     d.text((hx + w1 + 18, hy - 6), "//", font=hf, fill=(90, 110, 90))
     w2 = d.textlength("//", font=hf)
-    d.text((hx + w1 + 18 + w2 + 18, hy - 6), "SIGNALS API", font=hf, fill=ACCENT)
+    d.text((hx + w1 + 18 + w2 + 18, hy - 6), "PRE-TRADE CHECK", font=hf, fill=ACCENT)
 
-    # ── big tagline: THINK LESS, / SHIP MORE.  (SHIP in green, underlined)
-    big = f(SANS_BOLD, 130)
+    # ── big tagline: ASK N0BRAINS / FIRST.
+    big = f(SANS_BOLD, 120)
     line1_y = 165
     line2_y = line1_y + 140
-    d.text((pad, line1_y), "THINK LESS,", font=big, fill=HEAD)
+    d.text((pad, line1_y), "ASK N0BRAINS", font=big, fill=HEAD)
 
-    ship = "SHIP"
-    rest = " MORE."
-    sw = d.textlength(ship, font=big)
-    d.text((pad, line2_y), ship, font=big, fill=ACCENT)
-    d.text((pad + sw, line2_y), rest, font=big, fill=HEAD)
-    # underline under SHIP
+    first = "FIRST."
+    fw = d.textlength(first, font=big)
+    d.text((pad, line2_y), first, font=big, fill=ACCENT)
+    # underline under FIRST
     ul_y = line2_y + 132
-    d.line([(pad, ul_y), (pad + sw, ul_y)], fill=ACCENT, width=4)
+    d.line([(pad, ul_y), (pad + fw, ul_y)], fill=ACCENT, width=4)
 
     # ── bottom subtitle
     subf = f(MONO, 28)
     sy = 500
-    d.text((pad, sy), "// crypto signals · for autonomous agents", font=subf, fill=SUB)
+    d.text((pad, sy), "// conditions before conviction", font=subf, fill=SUB)
     # n0brains /> tag on the right
     tagf = f(MONO_BOLD, 30)
     tag = "<n0brains />"
