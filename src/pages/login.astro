@@ -210,6 +210,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 </style>
 
 <script>
+  // Already signed in — skip the form, honor ?next like a fresh login would.
+  try {
+    if (localStorage.getItem('auth_token')) {
+      const next = new URLSearchParams(window.location.search).get('next');
+      const safe = next && next.startsWith('/') && !next.startsWith('//');
+      window.location.replace(safe ? next : '/dashboard');
+    }
+  } catch { /* storage blocked */ }
+
   const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:8000'
     : 'https://api.n0brains.com';

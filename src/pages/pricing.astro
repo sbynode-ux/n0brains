@@ -340,6 +340,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   </style>
 
   <script>
+  const AUTHED = (() => { try { return !!localStorage.getItem("auth_token"); } catch { return false; } })();
+
     (() => {
       const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -367,10 +369,21 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         $("sp-support").textContent = free ? "community" : "email";
         $("sp-price").textContent = free ? "$0" : "$39.99";
         const cta = $("sp-cta") as HTMLAnchorElement;
-        cta.textContent = free ? "start free" : "start pro →";
-        cta.href = free ? "/signup" : "/signup?redirect=checkout&tier=pro";
+        cta.textContent = free ? (AUTHED ? "open dashboard →" : "start free")
+                               : (AUTHED ? "upgrade to pro →" : "start pro →");
+        cta.href = free ? (AUTHED ? "/dashboard" : "/signup")
+                        : (AUTHED ? "/account#billing" : "/signup?redirect=checkout&tier=pro");
         cta.className = free ? "pp-cta pp-cta-ghost" : "pp-cta pp-cta-solid";
       };
+      // Signed-in users: free CTAs open the dashboard, pro CTAs go to billing.
+      if (AUTHED) {
+        document.querySelectorAll('a[href="/signup"]').forEach((a) => {
+          a.textContent = "open dashboard →"; a.setAttribute("href", "/dashboard");
+        });
+        document.querySelectorAll('a[href^="/signup?redirect=checkout"]').forEach((a) => {
+          a.textContent = "upgrade to pro →"; a.setAttribute("href", "/account#billing");
+        });
+      }
       tabFree.addEventListener("click", () => setTier("free"));
       tabPro.addEventListener("click", () => setTier("pro"));
 

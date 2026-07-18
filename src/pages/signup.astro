@@ -230,6 +230,11 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 </style>
 
 <script>
+  // Already signed in — no second account push; go to the dashboard.
+  try {
+    if (localStorage.getItem('auth_token')) window.location.replace('/dashboard');
+  } catch { /* storage blocked */ }
+
   const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:8000'
     : 'https://api.n0brains.com';

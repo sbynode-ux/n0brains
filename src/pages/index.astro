@@ -190,6 +190,10 @@ import CoverLayout from "../layouts/CoverLayout.astro";
           a.textContent = "dashboard";
           a.setAttribute("href", "/dashboard");
         });
+        document.querySelectorAll('.cards a[href$="/signup"]').forEach((a) => {
+          a.textContent = "open dashboard →";
+          a.setAttribute("href", "/dashboard");
+        });
         document.querySelectorAll('#cover-nav .cn-links a[href="/signup"]').forEach((a) => {
           a.textContent = "log out";
           a.setAttribute("href", "/login");

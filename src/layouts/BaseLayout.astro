@@ -294,6 +294,13 @@ const softwareAppLd = homepage ? {
                 localStorage.removeItem("api_key");
               });
             });
+            /* In-content signup buttons (home hero, /proof, charts) stop
+               pushing signup at people who already signed up. Prose links
+               are left alone — /signup itself bounces authed visitors. */
+            document.querySelectorAll('a.btn-primary[href^="/signup"], a.btn-secondary[href^="/signup"], a.lm-cta[href^="/signup"]').forEach((a) => {
+              a.textContent = "open dashboard →";
+              a.setAttribute("href", "/dashboard");
+            });
           }
         } catch { /* storage blocked — leave login link */ }
 
