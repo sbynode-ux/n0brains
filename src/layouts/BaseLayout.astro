@@ -274,14 +274,25 @@ const softwareAppLd = homepage ? {
 
     <script>
       (() => {
-        /* Logged-in nav: login → dashboard (desktop rail + mobile sheet).
-           auth_token may be expired — /dashboard itself re-validates. */
+        /* Logged-in nav: login → dashboard, start-free CTA → log out
+           (desktop rail + mobile sheet). auth_token may be expired —
+           /dashboard itself re-validates. */
         try {
           if (localStorage.getItem("auth_token")) {
             document.querySelectorAll('a[href="/login"]').forEach((a) => {
               a.textContent = "dashboard";
               a.setAttribute("href", "/dashboard");
               a.classList.toggle("active", window.location.pathname.startsWith("/dashboard"));
+            });
+            document.querySelectorAll('.rail-cta[href="/signup"], .sheet-btn-solid[href="/signup"]').forEach((a) => {
+              a.textContent = "log out";
+              a.setAttribute("href", "/login");
+              a.classList.add("is-logout");
+              a.addEventListener("click", () => {
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("tier");
+                localStorage.removeItem("api_key");
+              });
             });
           }
         } catch { /* storage blocked — leave login link */ }

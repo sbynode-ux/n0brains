@@ -190,6 +190,15 @@ import CoverLayout from "../layouts/CoverLayout.astro";
           a.textContent = "dashboard";
           a.setAttribute("href", "/dashboard");
         });
+        document.querySelectorAll('#cover-nav .cn-links a[href="/signup"]').forEach((a) => {
+          a.textContent = "log out";
+          a.setAttribute("href", "/login");
+          a.addEventListener("click", () => {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("tier");
+            localStorage.removeItem("api_key");
+          });
+        });
       }
     } catch { /* storage blocked */ }
   </script>

@@ -35,8 +35,8 @@ import DashShell from "../components/DashShell.astro";
       </div>
 
       <div class="ov-keybanner" id="ov-keybanner" hidden>
-        <p><strong>Data cards need an API key in this browser.</strong>
-        Your key is only ever stored locally and sent straight to the n0brains API.</p>
+        <p><strong>Couldn't set this browser up automatically.</strong>
+        Data cards need an API key; it's only ever stored locally and sent straight to the n0brains API.</p>
         <div class="ov-keyrow">
           <input id="ov-keyinput" type="password" placeholder="paste a key — intel_sk_…" autocomplete="off" spellcheck="false" />
           <button type="button" class="ov-btn" id="ov-keysave">save</button>
@@ -754,6 +754,15 @@ import DashShell from "../components/DashShell.astro";
       localStorage.setItem("tier", tier);
       if (me.terms_accepted_at == null) { window.location.href = "/account"; return; }
     } catch (e) { return; /* jwtApi already redirected on 401 */ }
+    if (!apiKey) {
+      // Keys are stored hashed server-side and shown once, so a login-only
+      // browser can't recover an existing key — mint one silently instead.
+      try {
+        const d = await jwtApi("/auth/api-keys", { method: "POST", body: JSON.stringify({ name: "dashboard" }) });
+        apiKey = d.api_key;
+        localStorage.setItem("api_key", apiKey);
+      } catch { /* banner below stays as the manual fallback */ }
+    }
     $("ov-tiernote").innerHTML = tier === "pro"
       ? "<b>pro</b> · real-time"
       : 'free tier · intel delayed 15 min · <a href="/account#billing" style="color:var(--accent)">go real-time →</a>';

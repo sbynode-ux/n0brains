@@ -327,6 +327,12 @@ header.scrolled .logo { opacity: 0; pointer-events: none; }
 }
 .rail-cta:hover { background: #fff; color: #000 !important; }
 
+/* Logged-in: the start-free CTA becomes a quiet log-out */
+.rail-cta.is-logout { background: transparent; color: var(--text) !important; border: 1px solid var(--border); }
+.rail-cta.is-logout:hover { background: transparent; border-color: var(--accent-secondary); color: var(--accent-secondary) !important; }
+.sheet-btn-solid.is-logout { background: transparent; color: var(--text); border: 1px solid #2a2a2a; }
+.sheet-btn-solid.is-logout:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+
 /* Burger (mobile only) */
 .nav-burger {
   display: none;
