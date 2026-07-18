@@ -1,0 +1,458 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import DashShell from "../components/DashShell.astro";
+---
+
+<BaseLayout title="Account" description="Manage your n0brains account, API keys, usage, and billing.">
+  <section class="dashwrap">
+    <DashShell active="account">
+      <div class="dash">
+    <!-- Loading -->
+    <div id="loading" class="dash-loading">loading account…</div>
+
+    <!-- Terms gate (blocks the rest until accepted) -->
+    <div id="terms-gate" class="terms-gate" style="display:none;">
+      <h2>accept terms to continue</h2>
+      <p>We've updated our Terms of Service. To keep using your account, please review and accept the
+        <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</p>
+      <button class="btn btn-primary" id="accept-terms-btn">I accept the Terms &amp; Privacy Policy</button>
+      <p class="auth-error" id="terms-error"></p>
+    </div>
+
+    <!-- Main dashboard -->
+    <div id="dash-main" style="display:none;">
+      <div class="dash-head">
+        <h1>account</h1>
+        <button class="btn btn-secondary" id="logout-btn">log out</button>
+      </div>
+
+      <!-- Profile -->
+      <div class="dash-section">
+        <h2 class="dash-h2">profile</h2>
+        <div class="kv"><span>email</span><strong id="p-email">—</strong></div>
+        <div class="kv"><span>plan</span><strong id="p-tier">—</strong></div>
+      </div>
+
+      <!-- Billing -->
+      <div class="dash-section" id="billing">
+        <h2 class="dash-h2">billing</h2>
+        <div class="kv"><span>current plan</span><strong id="b-plan">—</strong></div>
+        <div class="kv" id="b-renew-row" style="display:none;"><span>renews</span><strong id="b-renew">—</strong></div>
+        <div class="dash-actions">
+          <button class="btn btn-primary" id="upgrade-btn" style="display:none;">Upgrade to Pro — $39.99/mo</button>
+          <button class="btn btn-secondary" id="portal-btn" style="display:none;">Manage billing</button>
+        </div>
+        <p class="auth-subtle">Pay-per-call without an account? See <a href="/docs/x402">x402</a>.</p>
+      </div>
+
+      <!-- Credits -->
+      <div class="dash-section">
+        <h2 class="dash-h2">pay-per-call credits</h2>
+        <div class="kv"><span>balance</span><strong id="c-balance">—</strong></div>
+        <p class="auth-subtle">1 credit = 1 data API call beyond your tier's included rate limit. Within your rate limit, calls are free.</p>
+        <div id="credit-packs" class="dash-actions"></div>
+        <div id="credit-history" class="credit-history"></div>
+      </div>
+
+      <!-- API keys -->
+      <div class="dash-section" id="keys">
+        <h2 class="dash-h2">api keys</h2>
+        <div id="keys-list"></div>
+        <div class="dash-actions">
+          <button class="btn btn-secondary" id="new-key-btn">+ create new key</button>
+        </div>
+        <p class="auth-subtle">Keys are shown once. Lost a key? Regenerate it — the old one stops working immediately.</p>
+      </div>
+
+      <!-- Usage -->
+      <div class="dash-section">
+        <h2 class="dash-h2">
+          usage
+          <span class="usage-toggle">
+            <button class="usage-tab active" data-period="7d">7d</button>
+            <button class="usage-tab" data-period="30d">30d</button>
+          </span>
+        </h2>
+        <div class="kv"><span>requests</span><strong id="u-total">—</strong></div>
+        <div id="usage-chart" class="usage-bars"></div>
+        <div id="usage-endpoints" class="usage-endpoints"></div>
+        <p class="auth-subtle">Usage is recorded from 2026-06-05 onward.</p>
+      </div>
+    </div>
+
+    <!-- New-key once-modal -->
+    <div id="key-modal" class="key-modal" style="display:none;">
+      <div class="key-modal-inner">
+        <h2>new api key</h2>
+        <p><strong>Save it now — it will not be shown again.</strong></p>
+        <div class="api-key-box">
+          <code id="modal-key"></code>
+          <button class="btn btn-secondary" id="modal-copy">copy</button>
+        </div>
+        <button class="btn btn-primary" id="modal-done">done</button>
+      </div>
+        </div>
+      </div>
+    </DashShell>
+  </section>
+</BaseLayout>
+
+<style is:global>
+  .dashwrap { width: 100%; }
+  .dash { max-width: 640px; margin: 0; padding: 0 0 4rem; }
+  .dash-loading { color: var(--text-muted); font-family: var(--font-mono); padding: 4rem 0; text-align: center; }
+
+  .dash-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2rem; }
+  .dash h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--text-heading); letter-spacing: 0.05em; }
+
+  .dash-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .dash-h2 {
+    font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--accent); margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .kv { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .kv:last-of-type { border-bottom: none; }
+  .kv span { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .kv strong { color: var(--text-heading); }
+
+  .dash-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+  /* buttons (shared vocabulary with login/signup) */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    padding: 0.6rem 1.2rem; border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;
+    cursor: pointer; border: none;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #fff; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; color: var(--accent-secondary); border: 1px solid rgba(255,0,85,0.3); }
+  .btn-danger:hover { border-color: var(--accent-secondary); }
+  .btn-danger:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.7rem; }
+
+  /* api key rows */
+  .key-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .key-item:last-child { border-bottom: none; }
+  .key-meta { display: flex; flex-direction: column; gap: 0.2rem; }
+  .key-name { color: var(--text-heading); font-family: var(--font-mono); font-size: 0.85rem; }
+  .key-sub { color: var(--text-faint); font-size: 0.7rem; font-family: var(--font-mono); }
+  .key-buttons { display: flex; gap: 0.4rem; }
+
+  /* usage */
+  .usage-toggle { display: inline-flex; gap: 0.25rem; }
+  .usage-tab {
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    font-family: var(--font-mono); font-size: 0.65rem; padding: 0.15rem 0.5rem;
+    border-radius: var(--radius-sm); cursor: pointer; letter-spacing: 0.05em;
+  }
+  .usage-tab.active { border-color: var(--accent); color: var(--accent); }
+  .usage-bars {
+    display: flex; align-items: flex-end; gap: 3px; height: 90px;
+    margin: 1rem 0 0.5rem; padding-top: 0.5rem;
+  }
+  .usage-bar { flex: 1; background: var(--accent-glow); border-top: 2px solid var(--accent); min-height: 2px; position: relative; }
+  .usage-bar:hover { background: var(--accent-glow-strong); }
+  .usage-bar-empty { flex: 1; background: var(--bg-hover); min-height: 2px; }
+  .usage-endpoints { margin-top: 0.75rem; }
+  .usage-ep { display: flex; justify-content: space-between; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.2rem 0; }
+  .usage-ep strong { color: var(--text); }
+
+  /* credits */
+  #c-balance { color: var(--accent); }
+  .credit-pack-btn { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.6rem 1rem; }
+  .credit-pack-btn .cp-credits { font-size: 0.9rem; }
+  .credit-pack-btn .cp-price { font-size: 0.65rem; color: var(--text-muted); }
+  .credit-history { margin-top: 1rem; }
+  .credit-row { display: flex; justify-content: space-between; font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.25rem 0; border-bottom: 1px solid var(--border); }
+  .credit-row:last-child { border-bottom: none; }
+  .credit-row .cr-delta-pos { color: var(--accent); }
+  .credit-row .cr-delta-neg { color: var(--text-faint); }
+
+  /* terms gate */
+  .terms-gate {
+    max-width: 480px; margin: 4rem auto; padding: 2rem;
+    background: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius);
+  }
+  .terms-gate h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent); margin-bottom: 0.75rem; }
+  .terms-gate p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
+  .terms-gate a { color: var(--accent); }
+
+  /* shared */
+  .api-key-box {
+    display: flex; gap: 0.5rem; align-items: center; background: var(--bg-code);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem; margin-bottom: 1rem; overflow-x: auto;
+  }
+  .api-key-box code { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); word-break: break-all; flex: 1; }
+  .auth-subtle { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.75rem; }
+  .auth-subtle a { color: var(--accent); }
+  .auth-error { color: var(--accent-secondary); font-family: var(--font-mono); font-size: 0.8rem; min-height: 1.2rem; margin-top: 0.5rem; }
+
+  /* modal */
+  .key-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem;
+  }
+  .key-modal-inner {
+    max-width: 440px; width: 100%; background: var(--bg-card);
+    border: 1px solid var(--accent); border-radius: var(--radius); padding: 1.75rem;
+  }
+  .key-modal-inner h2 { font-family: var(--font-display); font-size: 1.4rem; color: var(--accent); margin-bottom: 0.5rem; }
+  .key-modal-inner p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+</style>
+
+<script>
+  const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+    ? 'http://127.0.0.1:8000'
+    : 'https://api.n0brains.com';
+
+  const PRO_PRICE_ID = "pro"; // tier alias — backend resolves to STRIPE_PRO_PRICE_ID env
+
+  const token = localStorage.getItem('auth_token');
+  if (!token) { window.location.href = '/login'; }
+  const authHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+  const $ = (id) => document.getElementById(id);
+
+  function logout() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('tier');
+    localStorage.removeItem('api_key');
+    window.location.href = '/login';
+  }
+
+  function fmtDate(unix) {
+    if (!unix) return '—';
+    return new Date(unix * 1000).toISOString().slice(0, 10);
+  }
+
+  async function api(path, opts = {}) {
+    const resp = await fetch(`${API_BASE}${path}`, { headers: authHeaders, ...opts });
+    if (resp.status === 401) { logout(); throw new Error('unauthorized'); }
+    return resp;
+  }
+
+  // ── New-key once-modal ──────────────────────────────────────────
+  function showKeyModal(rawKey) {
+    $('modal-key').textContent = rawKey;
+    $('key-modal').style.display = 'flex';
+  }
+  $('modal-copy').addEventListener('click', () => {
+    navigator.clipboard.writeText($('modal-key').textContent).then(() => {
+      $('modal-copy').textContent = 'copied!';
+      setTimeout(() => { $('modal-copy').textContent = 'copy'; }, 2000);
+    });
+  });
+  $('modal-done').addEventListener('click', () => {
+    $('key-modal').style.display = 'none';
+    loadAccount();  // refresh key list
+  });
+
+  // ── API keys ────────────────────────────────────────────────────
+  function renderKeys(keys) {
+    const list = $('keys-list');
+    list.innerHTML = '';
+    const onlyOne = keys.length <= 1;
+    keys.forEach((k) => {
+      const row = document.createElement('div');
+      row.className = 'key-item';
+      const last = k.last_used_at ? `last used ${fmtDate(k.last_used_at)}` : 'never used';
+      row.innerHTML = `
+        <div class="key-meta">
+          <span class="key-name">${k.name || 'default'} <span style="color:var(--text-dim)">#${k.id}</span></span>
+          <span class="key-sub">created ${fmtDate(k.created_at)} · ${last} · ${k.rate_limit}/min</span>
+        </div>
+        <div class="key-buttons">
+          <button class="btn btn-secondary btn-sm" data-regen="${k.id}">regenerate</button>
+          <button class="btn btn-danger btn-sm" data-revoke="${k.id}" ${onlyOne ? 'disabled title="Cannot revoke your last key"' : ''}>revoke</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('[data-regen]').forEach((b) =>
+      b.addEventListener('click', () => regenerateKey(b.dataset.regen)));
+    list.querySelectorAll('[data-revoke]:not([disabled])').forEach((b) =>
+      b.addEventListener('click', () => revokeKey(b.dataset.revoke)));
+  }
+
+  async function regenerateKey(id) {
+    if (!confirm('Regenerate this key? The old key stops working immediately.')) return;
+    const resp = await api(`/auth/api-keys/${id}/regenerate`, { method: 'POST', body: '{}' });
+    const data = await resp.json();
+    if (resp.ok) showKeyModal(data.api_key);
+    else alert(data.detail || 'Regenerate failed');
+  }
+
+  async function revokeKey(id) {
+    if (!confirm('Revoke this key? This cannot be undone.')) return;
+    const resp = await api(`/auth/api-keys/${id}`, { method: 'DELETE' });
+    const data = await resp.json();
+    if (resp.ok) loadAccount();
+    else alert(data.detail || 'Revoke failed');
+  }
+
+  $('new-key-btn').addEventListener('click', async () => {
+    const name = prompt('Name for the new key:', 'default');
+    if (name === null) return;
+    const resp = await api('/auth/api-keys', { method: 'POST', body: JSON.stringify({ name: name || 'default' }) });
+    const data = await resp.json();
+    if (resp.ok) showKeyModal(data.api_key);
+    else alert(data.detail || 'Create failed');
+  });
+
+  // ── Billing ─────────────────────────────────────────────────────
+  function renderBilling(me) {
+    const tier = me.tier || 'free';
+    $('b-plan').textContent = tier === 'pro' ? 'Pro' : 'Free';
+    const sub = me.subscription;
+    if (sub && sub.current_period_end) {
+      $('b-renew').textContent = fmtDate(sub.current_period_end);
+      $('b-renew-row').style.display = 'flex';
+    }
+    if (tier === 'pro') {
+      $('portal-btn').style.display = 'inline-flex';
+    } else {
+      $('upgrade-btn').style.display = 'inline-flex';
+    }
+  }
+  $('upgrade-btn').addEventListener('click', async () => {
+    const resp = await api('/billing/checkout', { method: 'POST', body: JSON.stringify({ price_id: PRO_PRICE_ID }) });
+    const data = await resp.json();
+    if (data.url) window.location.href = data.url;
+    else alert(data.detail || 'Checkout failed');
+  });
+  $('portal-btn').addEventListener('click', async () => {
+    const resp = await api('/billing/portal', { method: 'POST', body: '{}' });
+    const data = await resp.json();
+    if (data.url) window.location.href = data.url;
+    else alert(data.detail || 'Could not open billing portal');
+  });
+
+  // ── Usage ───────────────────────────────────────────────────────
+  async function loadUsage(period) {
+    const resp = await api(`/usage?period=${period}`);
+    const data = await resp.json();
+    $('u-total').textContent = data.total;
+    const chart = $('usage-chart');
+    chart.innerHTML = '';
+    const max = Math.max(1, ...data.by_day.map((d) => d.count));
+    data.by_day.forEach((d) => {
+      const bar = document.createElement('div');
+      bar.className = d.count > 0 ? 'usage-bar' : 'usage-bar-empty';
+      if (d.count > 0) bar.style.height = `${Math.max(4, (d.count / max) * 100)}%`;
+      bar.title = `${d.date}: ${d.count}`;
+      chart.appendChild(bar);
+    });
+    const eps = $('usage-endpoints');
+    eps.innerHTML = '';
+    data.by_endpoint.forEach((e) => {
+      const row = document.createElement('div');
+      row.className = 'usage-ep';
+      row.innerHTML = `<span>${e.endpoint}</span><strong>${e.count}</strong>`;
+      eps.appendChild(row);
+    });
+  }
+  document.querySelectorAll('.usage-tab').forEach((tab) =>
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.usage-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      loadUsage(tab.dataset.period);
+    }));
+
+  // ── Credits ─────────────────────────────────────────────────────
+  function fmtDelta(d) {
+    return d > 0 ? `+${d}` : `${d}`;
+  }
+  async function loadCredits() {
+    // balance + history
+    const resp = await api('/credits');
+    const data = await resp.json();
+    $('c-balance').textContent = `${data.balance} credit${data.balance === 1 ? '' : 's'}`;
+
+    const hist = $('credit-history');
+    hist.innerHTML = '';
+    (data.transactions || []).slice(0, 8).forEach((t) => {
+      const row = document.createElement('div');
+      row.className = 'credit-row';
+      const label = t.reason === 'spend' ? (t.endpoint || 'call') : t.reason;
+      const cls = t.delta > 0 ? 'cr-delta-pos' : 'cr-delta-neg';
+      row.innerHTML = `<span>${fmtDate(t.created_at)} · ${label}</span><span class="${cls}">${fmtDelta(t.delta)}</span>`;
+      hist.appendChild(row);
+    });
+
+    // buy buttons from configured packs
+    const packsResp = await api('/billing/credit-packs');
+    const packsData = await packsResp.json();
+    const wrap = $('credit-packs');
+    wrap.innerHTML = '';
+    const packs = (packsData.packs || []).sort((a, b) => a.credits - b.credits);
+    if (packs.length === 0) {
+      wrap.innerHTML = '<p class="auth-subtle" style="margin:0;">Credit purchases are not available yet — check back soon.</p>';
+      return;
+    }
+    packs.forEach((p) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-primary credit-pack-btn';
+      btn.innerHTML = `<span class="cp-credits">${p.credits.toLocaleString()} credits</span>`;
+      btn.addEventListener('click', () => buyCredits(p.price_id, btn));
+      wrap.appendChild(btn);
+    });
+  }
+  async function buyCredits(priceId, btn) {
+    btn.disabled = true;
+    const resp = await api('/billing/buy-credits', { method: 'POST', body: JSON.stringify({ price_id: priceId }) });
+    const data = await resp.json();
+    if (data.url) window.location.href = data.url;
+    else { alert(data.detail || 'Could not start checkout'); btn.disabled = false; }
+  }
+
+  // ── Terms gate ──────────────────────────────────────────────────
+  $('accept-terms-btn').addEventListener('click', async () => {
+    $('accept-terms-btn').disabled = true;
+    const resp = await api('/auth/accept-terms', { method: 'POST', body: '{}' });
+    if (resp.ok) { $('terms-gate').style.display = 'none'; loadAccount(); }
+    else { $('terms-error').textContent = 'Could not record acceptance — try again.'; $('accept-terms-btn').disabled = false; }
+  });
+
+  // ── Load ────────────────────────────────────────────────────────
+  async function loadAccount() {
+    const resp = await api('/auth/me');
+    const me = await resp.json();
+    $('loading').style.display = 'none';
+
+    if (me.terms_accepted_at == null) {
+      $('terms-gate').style.display = 'block';
+      $('dash-main').style.display = 'none';
+      return;
+    }
+    $('terms-gate').style.display = 'none';
+    $('dash-main').style.display = 'block';
+
+    $('p-email').textContent = me.email;
+    $('p-tier').textContent = (me.tier || 'free') === 'pro' ? 'Pro' : 'Free';
+    renderKeys(me.api_keys || []);
+    renderBilling(me);
+    loadUsage('7d');
+    loadCredits();
+  }
+
+  $('logout-btn').addEventListener('click', logout);
+
+  loadAccount().catch((e) => {
+    if (e.message !== 'unauthorized') {
+      $('loading').textContent = 'Could not load account. Try logging in again.';
+    }
+  });
+</script>

@@ -1,0 +1,119 @@
+---
+/* Logged-in shell: left menu + content slot. Used by /dashboard (overview
+   grid) and /account (profile / keys / billing / usage). Auth guarding
+   happens in the pages — this is chrome only. */
+interface Props { active: "overview" | "account" }
+const { active } = Astro.props;
+
+const items = [
+  { id: "overview", label: "overview", href: "/dashboard", icon: "▦" },
+  { id: "account",  label: "account",  href: "/account",   icon: "⌘" },
+  { id: "keys",     label: "api keys", href: "/account#keys", icon: "⚿" },
+  { id: "billing",  label: "billing",  href: "/account#billing", icon: "$" },
+];
+---
+
+<div class="shell">
+  <aside class="shell-side" aria-label="Dashboard menu">
+    <p class="shell-head">// control room</p>
+    <nav class="shell-nav">
+      {items.map((i) => (
+        <a href={i.href} class={active === i.id ? "active" : ""}>
+          <span class="shell-ic" aria-hidden="true">{i.icon}</span>{i.label}
+        </a>
+      ))}
+    </nav>
+    <div class="shell-foot">
+      <span class="shell-tier" id="shell-tier">…</span>
+      <a href="/docs/quickstart">quickstart →</a>
+      <a href="/proof">proof →</a>
+      <button type="button" id="shell-logout">log out</button>
+    </div>
+  </aside>
+  <div class="shell-main"><slot /></div>
+</div>
+
+<style>
+  .shell {
+    display: grid; grid-template-columns: 185px minmax(0, 1fr);
+    gap: 38px; align-items: start;
+    max-width: var(--max-width-app); margin: 0 auto; padding: 2.4rem 0 5rem;
+  }
+  .shell-side {
+    position: sticky; top: 90px;
+    display: flex; flex-direction: column; gap: 18px;
+    padding-right: 18px; border-right: 1px solid var(--border);
+    min-height: 320px;
+  }
+  .shell-head {
+    font-family: var(--font-mono); font-size: 0.58rem;
+    letter-spacing: 0.28em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .shell-nav { display: flex; flex-direction: column; gap: 2px; }
+  .shell-nav a {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .shell-nav a:hover { color: var(--text-heading); background: var(--bg-hover); }
+  .shell-nav a.active { color: var(--accent); background: var(--accent-glow); }
+  .shell-ic { width: 14px; text-align: center; opacity: 0.8; }
+  .shell-foot {
+    margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .shell-tier {
+    align-self: flex-start; padding: 2px 10px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--border-accent);
+  }
+  .shell-foot a {
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); text-decoration: none;
+  }
+  .shell-foot a:hover { color: var(--accent); }
+  .shell-foot button {
+    align-self: flex-start; margin-top: 4px; padding: 6px 12px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text); background: transparent;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+  }
+  .shell-foot button:hover { border-color: var(--accent-secondary); color: var(--accent-secondary); }
+
+  @media (max-width: 900px) {
+    .shell { display: block; padding-top: 1.4rem; }
+    .shell-side {
+      position: static; min-height: 0; border-right: 0;
+      border-bottom: 1px solid var(--border); padding: 0 0 12px; margin-bottom: 22px;
+    }
+    .shell-head { display: none; }
+    .shell-nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+    .shell-nav::-webkit-scrollbar { display: none; }
+    .shell-nav a { white-space: nowrap; }
+    .shell-foot {
+      margin-top: 10px; padding-top: 10px; border-top: 0;
+      flex-direction: row; align-items: center; gap: 14px;
+    }
+    .shell-foot button { margin-top: 0; margin-left: auto; }
+  }
+</style>
+
+<script>
+  (() => {
+    const tier = localStorage.getItem("tier") || "free";
+    const el = document.getElementById("shell-tier");
+    if (el) el.textContent = tier === "pro" ? "pro" : "free tier";
+    document.getElementById("shell-logout")?.addEventListener("click", () => {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("tier");
+      localStorage.removeItem("api_key");
+      window.location.href = "/login";
+    });
+  })();
+</script>

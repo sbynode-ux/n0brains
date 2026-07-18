@@ -1,452 +1,770 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import DashShell from "../components/DashShell.astro";
+
+/* /dashboard — logged-in overview: a customizable card grid.
+   - Layout (order / size / which cards) persists in localStorage per browser.
+   - Edit mode: drag cards to reorder (snap into the grid), move with ◀ ▶,
+     cycle size S/M/L, remove, add from the catalog drawer, reset to default.
+   - Data cards call the REST API with the browser's stored api_key
+     (signup stores it; login-only browsers can mint one via JWT).
+   - Tier rules (enforced server-side, labeled here): free intel is
+     15-min delayed (prices are live by design); Pro-only endpoints render
+     as locked cards with an upgrade path for free users.
+   Account management lives at /account (same shell). */
 ---
 
-<BaseLayout title="Account" description="Manage your n0brains account, API keys, usage, and billing.">
-  <section class="dash">
-    <!-- Loading -->
-    <div id="loading" class="dash-loading">loading account…</div>
-
-    <!-- Terms gate (blocks the rest until accepted) -->
-    <div id="terms-gate" class="terms-gate" style="display:none;">
-      <h2>accept terms to continue</h2>
-      <p>We've updated our Terms of Service. To keep using your account, please review and accept the
-        <a href="/terms" target="_blank">Terms</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</p>
-      <button class="btn btn-primary" id="accept-terms-btn">I accept the Terms &amp; Privacy Policy</button>
-      <p class="auth-error" id="terms-error"></p>
-    </div>
-
-    <!-- Main dashboard -->
-    <div id="dash-main" style="display:none;">
-      <div class="dash-head">
-        <h1>account</h1>
-        <button class="btn btn-secondary" id="logout-btn">log out</button>
-      </div>
-
-      <!-- Profile -->
-      <div class="dash-section">
-        <h2 class="dash-h2">profile</h2>
-        <div class="kv"><span>email</span><strong id="p-email">—</strong></div>
-        <div class="kv"><span>plan</span><strong id="p-tier">—</strong></div>
-      </div>
-
-      <!-- Billing -->
-      <div class="dash-section">
-        <h2 class="dash-h2">billing</h2>
-        <div class="kv"><span>current plan</span><strong id="b-plan">—</strong></div>
-        <div class="kv" id="b-renew-row" style="display:none;"><span>renews</span><strong id="b-renew">—</strong></div>
-        <div class="dash-actions">
-          <button class="btn btn-primary" id="upgrade-btn" style="display:none;">Upgrade to Pro — $39.99/mo</button>
-          <button class="btn btn-secondary" id="portal-btn" style="display:none;">Manage billing</button>
+<BaseLayout title="Dashboard" description="Your n0brains control room — live market intelligence cards, customizable layout.">
+  <section class="dashwrap">
+    <DashShell active="overview">
+      <div class="ov-head">
+        <h1>overview</h1>
+        <div class="ov-actions">
+          <span class="ov-note" id="ov-tiernote"></span>
+          <button type="button" class="ov-btn" id="ov-edit">edit layout</button>
         </div>
-        <p class="auth-subtle">Pay-per-call without an account? See <a href="/docs/x402">x402</a>.</p>
       </div>
 
-      <!-- Credits -->
-      <div class="dash-section">
-        <h2 class="dash-h2">pay-per-call credits</h2>
-        <div class="kv"><span>balance</span><strong id="c-balance">—</strong></div>
-        <p class="auth-subtle">1 credit = 1 data API call beyond your tier's included rate limit. Within your rate limit, calls are free.</p>
-        <div id="credit-packs" class="dash-actions"></div>
-        <div id="credit-history" class="credit-history"></div>
-      </div>
-
-      <!-- API keys -->
-      <div class="dash-section">
-        <h2 class="dash-h2">api keys</h2>
-        <div id="keys-list"></div>
-        <div class="dash-actions">
-          <button class="btn btn-secondary" id="new-key-btn">+ create new key</button>
+      <div class="ov-editbar" id="ov-editbar" hidden>
+        <span>edit mode — drag cards to reorder, or use the card controls</span>
+        <div class="ov-editbar-btns">
+          <button type="button" class="ov-btn" id="ov-add">+ add card</button>
+          <button type="button" class="ov-btn" id="ov-reset">reset default</button>
+          <button type="button" class="ov-btn ov-btn-solid" id="ov-done">done</button>
         </div>
-        <p class="auth-subtle">Keys are shown once. Lost a key? Regenerate it — the old one stops working immediately.</p>
       </div>
 
-      <!-- Usage -->
-      <div class="dash-section">
-        <h2 class="dash-h2">
-          usage
-          <span class="usage-toggle">
-            <button class="usage-tab active" data-period="7d">7d</button>
-            <button class="usage-tab" data-period="30d">30d</button>
-          </span>
-        </h2>
-        <div class="kv"><span>requests</span><strong id="u-total">—</strong></div>
-        <div id="usage-chart" class="usage-bars"></div>
-        <div id="usage-endpoints" class="usage-endpoints"></div>
-        <p class="auth-subtle">Usage is recorded from 2026-06-05 onward.</p>
-      </div>
-    </div>
-
-    <!-- New-key once-modal -->
-    <div id="key-modal" class="key-modal" style="display:none;">
-      <div class="key-modal-inner">
-        <h2>new api key</h2>
-        <p><strong>Save it now — it will not be shown again.</strong></p>
-        <div class="api-key-box">
-          <code id="modal-key"></code>
-          <button class="btn btn-secondary" id="modal-copy">copy</button>
+      <div class="ov-keybanner" id="ov-keybanner" hidden>
+        <p><strong>Data cards need an API key in this browser.</strong>
+        Your key is only ever stored locally and sent straight to the n0brains API.</p>
+        <div class="ov-keyrow">
+          <input id="ov-keyinput" type="password" placeholder="paste a key — intel_sk_…" autocomplete="off" spellcheck="false" />
+          <button type="button" class="ov-btn" id="ov-keysave">save</button>
+          <span class="ov-keyor">or</span>
+          <button type="button" class="ov-btn ov-btn-solid" id="ov-keymint">mint a key for this browser</button>
         </div>
-        <button class="btn btn-primary" id="modal-done">done</button>
+        <p class="ov-keymsg" id="ov-keymsg"></p>
       </div>
-    </div>
+
+      <div class="dg" id="dg"></div>
+
+      <div class="ov-drawer" id="ov-drawer" hidden>
+        <div class="ov-drawer-head">
+          <h2>add cards</h2>
+          <button type="button" class="ov-btn" id="ov-drawer-close">close</button>
+        </div>
+        <div class="ov-drawer-list" id="ov-drawer-list"></div>
+      </div>
+    </DashShell>
   </section>
 </BaseLayout>
 
-<style>
-  .dash { max-width: 640px; margin: 0 auto; padding: 3rem 0 5rem; }
-  .dash-loading { color: var(--text-muted); font-family: var(--font-mono); padding: 4rem 0; text-align: center; }
-
-  .dash-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 2rem; }
-  .dash h1 { font-family: var(--font-display); font-size: 2.5rem; color: var(--text-heading); letter-spacing: 0.05em; }
-
-  .dash-section {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+<style is:global>
+  .dashwrap { width: 100%; }
+  [hidden] { display: none !important; }
+  .ov-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .ov-head h1 {
+    font-family: var(--font-display); font-size: 2.4rem;
+    color: var(--text-heading); letter-spacing: 0.05em;
   }
-  .dash-h2 {
-    font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase;
-    letter-spacing: 0.15em; color: var(--accent); margin-bottom: 1rem;
-    display: flex; align-items: center; justify-content: space-between;
-  }
+  .ov-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ov-note { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; color: var(--text-muted); }
+  .ov-note b { color: var(--accent); font-weight: 700; }
 
-  .kv { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-  .kv:last-of-type { border-bottom: none; }
-  .kv span { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
-  .kv strong { color: var(--text-heading); }
-
-  .dash-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
-
-  /* buttons (shared vocabulary with login/signup) */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    padding: 0.6rem 1.2rem; border-radius: var(--radius-sm);
-    font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s ease;
-    cursor: pointer; border: none;
-  }
-  .btn-primary { background: var(--accent); color: #000; }
-  .btn-primary:hover { background: #fff; }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-danger { background: transparent; color: var(--accent-secondary); border: 1px solid rgba(255,0,85,0.3); }
-  .btn-danger:hover { border-color: var(--accent-secondary); }
-  .btn-danger:disabled { opacity: 0.35; cursor: not-allowed; }
-  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.7rem; }
-
-  /* api key rows */
-  .key-item {
-    display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-    padding: 0.75rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap;
-  }
-  .key-item:last-child { border-bottom: none; }
-  .key-meta { display: flex; flex-direction: column; gap: 0.2rem; }
-  .key-name { color: var(--text-heading); font-family: var(--font-mono); font-size: 0.85rem; }
-  .key-sub { color: var(--text-faint); font-size: 0.7rem; font-family: var(--font-mono); }
-  .key-buttons { display: flex; gap: 0.4rem; }
-
-  /* usage */
-  .usage-toggle { display: inline-flex; gap: 0.25rem; }
-  .usage-tab {
-    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
-    font-family: var(--font-mono); font-size: 0.65rem; padding: 0.15rem 0.5rem;
-    border-radius: var(--radius-sm); cursor: pointer; letter-spacing: 0.05em;
-  }
-  .usage-tab.active { border-color: var(--accent); color: var(--accent); }
-  .usage-bars {
-    display: flex; align-items: flex-end; gap: 3px; height: 90px;
-    margin: 1rem 0 0.5rem; padding-top: 0.5rem;
-  }
-  .usage-bar { flex: 1; background: var(--accent-glow); border-top: 2px solid var(--accent); min-height: 2px; position: relative; }
-  .usage-bar:hover { background: var(--accent-glow-strong); }
-  .usage-bar-empty { flex: 1; background: var(--bg-hover); min-height: 2px; }
-  .usage-endpoints { margin-top: 0.75rem; }
-  .usage-ep { display: flex; justify-content: space-between; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.2rem 0; }
-  .usage-ep strong { color: var(--text); }
-
-  /* credits */
-  #c-balance { color: var(--accent); }
-  .credit-pack-btn { display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.6rem 1rem; }
-  .credit-pack-btn .cp-credits { font-size: 0.9rem; }
-  .credit-pack-btn .cp-price { font-size: 0.65rem; color: var(--text-muted); }
-  .credit-history { margin-top: 1rem; }
-  .credit-row { display: flex; justify-content: space-between; font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); padding: 0.25rem 0; border-bottom: 1px solid var(--border); }
-  .credit-row:last-child { border-bottom: none; }
-  .credit-row .cr-delta-pos { color: var(--accent); }
-  .credit-row .cr-delta-neg { color: var(--text-faint); }
-
-  /* terms gate */
-  .terms-gate {
-    max-width: 480px; margin: 4rem auto; padding: 2rem;
-    background: var(--bg-card); border: 1px solid var(--accent); border-radius: var(--radius);
-  }
-  .terms-gate h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent); margin-bottom: 0.75rem; }
-  .terms-gate p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; }
-  .terms-gate a { color: var(--accent); }
-
-  /* shared */
-  .api-key-box {
-    display: flex; gap: 0.5rem; align-items: center; background: var(--bg-code);
+  .ov-btn {
+    padding: 6px 13px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 0.64rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text); background: transparent;
     border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 0.75rem 1rem; margin-bottom: 1rem; overflow-x: auto;
+    transition: all 0.15s ease;
   }
-  .api-key-box code { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); word-break: break-all; flex: 1; }
-  .auth-subtle { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.75rem; }
-  .auth-subtle a { color: var(--accent); }
-  .auth-error { color: var(--accent-secondary); font-family: var(--font-mono); font-size: 0.8rem; min-height: 1.2rem; margin-top: 0.5rem; }
+  .ov-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .ov-btn-solid { background: var(--accent); color: #000; border-color: var(--accent); }
+  .ov-btn-solid:hover { background: #fff; color: #000; }
 
-  /* modal */
-  .key-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem;
+  .ov-editbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 10px 14px; margin-bottom: 14px;
+    background: var(--accent-glow); border: 1px dashed var(--border-accent); border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; color: var(--text);
   }
-  .key-modal-inner {
-    max-width: 440px; width: 100%; background: var(--bg-card);
-    border: 1px solid var(--accent); border-radius: var(--radius); padding: 1.75rem;
+  .ov-editbar-btns { display: flex; gap: 8px; }
+
+  .ov-keybanner {
+    padding: 14px 16px; margin-bottom: 14px;
+    background: var(--bg-card); border: 1px dashed var(--border-accent); border-radius: var(--radius-sm);
+    font-size: 0.88rem;
   }
-  .key-modal-inner h2 { font-family: var(--font-display); font-size: 1.4rem; color: var(--accent); margin-bottom: 0.5rem; }
-  .key-modal-inner p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .ov-keybanner strong { color: var(--text-heading); }
+  .ov-keyrow { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .ov-keyrow input {
+    flex: 1; min-width: 180px; padding: 8px 11px;
+    font-family: var(--font-mono); font-size: 0.75rem;
+    background: var(--bg); color: var(--accent);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+  }
+  .ov-keyrow input:focus { border-color: var(--accent-dim); }
+  .ov-keyor { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-faint); text-transform: uppercase; }
+  .ov-keymsg { font-family: var(--font-mono); font-size: 0.68rem; color: var(--accent); margin-top: 8px; word-break: break-all; }
+
+  /* ── the grid ── */
+  .dg { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 13px; }
+  .dg-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 15px 13px; min-height: 120px; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .dg-card.sm { grid-column: span 2; }
+  .dg-card.md { grid-column: span 3; }
+  .dg-card.lg { grid-column: span 6; }
+  @media (max-width: 1100px) { .dg-card.sm { grid-column: span 3; } }
+  @media (max-width: 700px)  { .dg-card.sm, .dg-card.md, .dg-card.lg { grid-column: span 6; } }
+
+  .dg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .dg-head h3 {
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent);
+    margin: 0; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .dg-tools { display: flex; gap: 4px; }
+  .dg-tools button {
+    width: 22px; height: 22px; padding: 0; cursor: pointer; line-height: 1;
+    font-family: var(--font-mono); font-size: 0.62rem;
+    color: var(--text-muted); background: transparent;
+    border: 1px solid transparent; border-radius: 3px;
+    transition: all 0.12s ease;
+  }
+  .dg-tools button:hover { color: var(--accent); border-color: var(--border); }
+  .dg-tools .dg-x:hover { color: var(--accent-secondary); }
+  .dg-edit-tools { display: none; }
+  .dg-body { flex: 1; min-width: 0; font-size: 0.82rem; }
+  .dg-body .dim { color: var(--text-muted); }
+  .dg-loading, .dg-err { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); padding: 8px 0; }
+  .dg-err { color: var(--accent-secondary); }
+
+  /* edit mode */
+  .dg.editing .dg-card { border-style: dashed; cursor: grab; }
+  .dg.editing .dg-card:active { cursor: grabbing; }
+  .dg.editing .dg-edit-tools { display: flex; }
+  .dg.editing .dg-refresh { display: none; }
+  .dg-card.dragging { opacity: 0.35; }
+  .dg-card.drop-before { box-shadow: -3px 0 0 0 var(--accent); }
+  .dg-card.drop-after { box-shadow: 3px 0 0 0 var(--accent); }
+
+  /* shared bits inside cards */
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+  .row:last-child { border-bottom: 0; }
+  .row .k { color: var(--text-muted); font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .row .v { color: var(--text-heading); text-align: right; min-width: 0; }
+  .ch {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    border: 1px solid var(--border); color: var(--text-muted);
+  }
+  .ch.up { color: var(--accent); border-color: var(--border-accent); }
+  .ch.down { color: var(--accent-secondary); border-color: rgba(255,0,85,0.3); }
+  .ch.warn { color: #ffb347; border-color: rgba(255,179,71,0.35); }
+  .big { font-family: var(--font-display); font-size: 2.6rem; line-height: 1; color: var(--text-heading); }
+  .mono { font-family: var(--font-mono); }
+  .bar { height: 5px; background: var(--bg-hover); border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+  .sig-row { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; display: flex; gap: 8px; align-items: baseline; }
+  .sig-row:last-child { border-bottom: 0; }
+  .sig-row .sa { font-family: var(--font-mono); font-weight: 700; color: var(--text-heading); }
+  .sig-row .st { color: var(--text-muted); font-size: 0.7rem; font-family: var(--font-mono); }
+  .sig-row .sage { margin-left: auto; color: var(--text-faint); font-size: 0.66rem; font-family: var(--font-mono); white-space: nowrap; }
+  .dg-foot { margin-top: 8px; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; color: var(--text-faint); }
+  .dg-foot a { color: var(--accent-dim); text-decoration: none; }
+  .dg-foot a:hover { color: var(--accent); }
+
+  /* locked (pro-only) card */
+  .dg-lock { text-align: center; padding: 14px 6px; }
+  .dg-lock .lk { font-size: 1.4rem; }
+  .dg-lock p { color: var(--text-muted); font-size: 0.8rem; margin: 6px 0 10px; }
+  .dg-lock a {
+    display: inline-block; padding: 6px 14px;
+    font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none;
+    color: #000; background: var(--accent); border-radius: var(--radius-sm);
+  }
+  .dg-lock a:hover { background: #fff; }
+
+  /* quick-check form */
+  .qc-form { display: flex; flex-direction: column; gap: 10px; }
+  .qc-row1 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .qc-row1 input[type="text"] {
+    width: 90px; padding: 8px 10px; font-family: var(--font-mono); font-size: 0.8rem;
+    text-transform: uppercase; background: var(--bg); color: var(--text-heading);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+  }
+  .qc-side { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .qc-side button {
+    padding: 8px 16px; cursor: pointer; border: 0; background: transparent;
+    font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .qc-side button.on-long { background: var(--accent); color: #000; }
+  .qc-side button.on-short { background: var(--accent-secondary); color: #fff; }
+  .qc-details summary { font-family: var(--font-mono); font-size: 0.64rem; color: var(--text-muted); cursor: pointer; letter-spacing: 0.08em; }
+  .qc-opts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .qc-opts label { display: flex; flex-direction: column; gap: 3px; font-family: var(--font-mono); font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); }
+  .qc-opts input {
+    width: 92px; padding: 6px 8px; font-family: var(--font-mono); font-size: 0.74rem;
+    background: var(--bg); color: var(--text-heading);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+  }
+  .qc-run {
+    align-self: flex-start; padding: 8px 18px; cursor: pointer;
+    font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: #000; background: var(--accent); border: 0; border-radius: var(--radius-sm);
+  }
+  .qc-run:hover { background: #fff; }
+  .qc-run:disabled { opacity: 0.5; cursor: wait; }
+  .qc-result { margin-top: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .qc-grade-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+  .qc-grade { font-family: var(--font-display); font-size: 3.4rem; line-height: 1; color: var(--accent); }
+  .qc-grade.bad { color: var(--accent-secondary); }
+  .qc-flag { font-size: 0.78rem; padding: 3px 0; color: var(--text); }
+  .qc-flag b { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; }
+  .qc-flag.sev-high b { color: var(--accent-secondary); }
+  .qc-flag.sev-med b, .qc-flag.sev-medium b { color: #ffb347; }
+  .qc-flag.sev-low b { color: var(--text-muted); }
+
+  /* coin select */
+  .coin-sel { display: inline-flex; gap: 4px; margin-bottom: 8px; }
+  .coin-sel button {
+    padding: 3px 9px; cursor: pointer; background: transparent;
+    border: 1px solid var(--border); border-radius: 999px;
+    font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; color: var(--text-muted);
+  }
+  .coin-sel button.on { color: var(--accent); border-color: var(--accent); }
+
+  /* drawer */
+  .ov-drawer {
+    position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.82);
+    display: flex; flex-direction: column; align-items: center; padding: 8vh 16px;
+    overflow-y: auto;
+  }
+  .ov-drawer-head { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 680px; margin-bottom: 14px; }
+  .ov-drawer-head h2 { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent); letter-spacing: 0.04em; }
+  .ov-drawer-list { width: 100%; max-width: 680px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .ov-drawer-item {
+    text-align: left; cursor: pointer; padding: 13px 14px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    transition: border-color 0.15s ease;
+  }
+  .ov-drawer-item:hover { border-color: var(--accent); }
+  .ov-drawer-item h4 { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-heading); margin: 0 0 4px; }
+  .ov-drawer-item p { font-size: 0.76rem; color: var(--text-muted); margin: 0; }
+  .ov-drawer-item .pro-tag { color: var(--accent); font-size: 0.55rem; letter-spacing: 0.16em; margin-left: 6px; }
 </style>
 
 <script>
-  const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
-    ? 'http://127.0.0.1:8000'
-    : 'https://api.n0brains.com';
-
-  const PRO_PRICE_ID = "pro"; // tier alias — backend resolves to STRIPE_PRO_PRICE_ID env
-
-  const token = localStorage.getItem('auth_token');
-  if (!token) { window.location.href = '/login'; }
-  const authHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const API = "https://api.n0brains.com";
+  const token = localStorage.getItem("auth_token");
+  if (!token) window.location.href = "/login";
+  let apiKey = localStorage.getItem("api_key") || "";
+  let tier = localStorage.getItem("tier") || "free";
 
   const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const num = (v, d = 1) => (v == null || isNaN(+v) ? "—" : (+v).toFixed(d));
+  const px = (v) => (v == null ? "—" : (+v).toLocaleString(undefined, { maximumFractionDigits: +v > 100 ? 0 : 4 }));
+  const ago = (ts) => { const m = Math.max(0, (Date.now() / 1000 - ts) / 60); return m < 60 ? `${m.toFixed(0)}m` : m < 1440 ? `${(m / 60).toFixed(1)}h` : `${(m / 1440).toFixed(1)}d`; };
+  const inTime = (ts) => { const m = (ts - Date.now() / 1000) / 60; return m < 0 ? "past" : m < 60 ? `in ${m.toFixed(0)}m` : m < 2880 ? `in ${(m / 60).toFixed(1)}h` : `in ${(m / 1440).toFixed(1)}d`; };
+  const dirCh = (d) => (d === "bullish" ? '<span class="ch up">bull</span>' : d === "bearish" ? '<span class="ch down">bear</span>' : `<span class="ch">${esc(d || "—")}</span>`);
 
-  function logout() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('tier');
-    localStorage.removeItem('api_key');
-    window.location.href = '/login';
+  async function apiGet(path) {
+    const r = await fetch(API + path, { headers: { "X-API-Key": apiKey } });
+    if (!r.ok) throw new Error("http " + r.status);
+    return r.json();
+  }
+  async function apiPost(path, body) {
+    const r = await fetch(API + path, { method: "POST", headers: { "X-API-Key": apiKey, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.detail || "http " + r.status);
+    return d;
+  }
+  async function jwtApi(path, opts = {}) {
+    const r = await fetch(API + path, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, ...opts });
+    if (r.status === 401) { localStorage.removeItem("auth_token"); window.location.href = "/login"; throw new Error("unauthorized"); }
+    if (!r.ok) throw new Error("http " + r.status);
+    return r.json();
   }
 
-  function fmtDate(unix) {
-    if (!unix) return '—';
-    return new Date(unix * 1000).toISOString().slice(0, 10);
-  }
+  // ── card registry ────────────────────────────────────────────────
+  // pro:true → rendered locked unless tier==='pro' (endpoint is server-gated anyway).
+  // jwt:true → uses the login session, not the API key.
+  const CARDS = {
+    quickcheck: { title: "ask n0brains first", desc: "Grade a trade idea A–F before you take it. The flagship.", size: "lg", form: true, render: renderQuickCheck },
+    macro:      { title: "macro pulse", desc: "BTC + ETH bias, regime, conviction.", size: "md", render: renderMacro },
+    signals:    { title: "signals", desc: "The live intel feed (15-min delayed on free).", size: "md", intel: true, render: renderSignals },
+    levels:     { title: "levels", desc: "Nearest support / resistance zones per coin.", size: "md", render: renderLevels },
+    regime:     { title: "risk regime", desc: "Risk appetite + market bias composite.", size: "sm", render: renderRegime },
+    proof:      { title: "proof", desc: "The public track record, straight from /proof.", size: "sm", render: renderProof },
+    calendar:   { title: "macro calendar", desc: "Next scheduled market-moving events.", size: "md", render: renderCalendar },
+    rotation:   { title: "rotation", desc: "Capital flow: into alts, into BTC, or neutral.", size: "sm", render: renderRotation },
+    opens:      { title: "session opens", desc: "BTC price at Tokyo / London / New York opens.", size: "sm", render: renderOpens },
+    performance:{ title: "type performance", desc: "Win rates by signal type (24h horizon).", size: "md", render: renderPerformance },
+    mychecks:   { title: "my checks", desc: "Your recent trade checks and grades.", size: "md", jwtKeyEither: true, render: renderMyChecks },
+    account:    { title: "account", desc: "Plan, keys, credits at a glance.", size: "sm", jwt: true, render: renderAccount },
+    usage:      { title: "api usage", desc: "Your request volume, last 7 days.", size: "sm", jwt: true, render: renderUsage },
+    marketstate:{ title: "market state", desc: "Consensus + atmosphere composite per coin.", size: "md", pro: true, render: renderMarketState },
+  };
 
-  async function api(path, opts = {}) {
-    const resp = await fetch(`${API_BASE}${path}`, { headers: authHeaders, ...opts });
-    if (resp.status === 401) { logout(); throw new Error('unauthorized'); }
-    return resp;
-  }
+  const DEFAULT_LAYOUT = [
+    { id: "quickcheck", size: "lg" },
+    { id: "macro", size: "md" }, { id: "signals", size: "md" },
+    { id: "levels", size: "md" }, { id: "regime", size: "sm" }, { id: "proof", size: "sm" },
+    { id: "calendar", size: "md" }, { id: "usage", size: "sm" }, { id: "account", size: "sm" },
+  ];
+  const LS_KEY = "nb_dash_layout_v1";
+  const SIZES = ["sm", "md", "lg"];
 
-  // ── New-key once-modal ──────────────────────────────────────────
-  function showKeyModal(rawKey) {
-    $('modal-key').textContent = rawKey;
-    $('key-modal').style.display = 'flex';
+  function loadLayout() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(LS_KEY));
+      if (raw && Array.isArray(raw.cards)) {
+        const seen = new Set();
+        const cards = raw.cards.filter((c) => CARDS[c.id] && !seen.has(c.id) && seen.add(c.id) && SIZES.includes(c.size));
+        if (cards.length) return cards;
+      }
+    } catch { /* fall through */ }
+    return DEFAULT_LAYOUT.map((c) => ({ ...c }));
   }
-  $('modal-copy').addEventListener('click', () => {
-    navigator.clipboard.writeText($('modal-key').textContent).then(() => {
-      $('modal-copy').textContent = 'copied!';
-      setTimeout(() => { $('modal-copy').textContent = 'copy'; }, 2000);
-    });
-  });
-  $('modal-done').addEventListener('click', () => {
-    $('key-modal').style.display = 'none';
-    loadAccount();  // refresh key list
-  });
+  let layout = loadLayout();
+  const saveLayout = () => localStorage.setItem(LS_KEY, JSON.stringify({ v: 1, cards: layout }));
 
-  // ── API keys ────────────────────────────────────────────────────
-  function renderKeys(keys) {
-    const list = $('keys-list');
-    list.innerHTML = '';
-    const onlyOne = keys.length <= 1;
-    keys.forEach((k) => {
-      const row = document.createElement('div');
-      row.className = 'key-item';
-      const last = k.last_used_at ? `last used ${fmtDate(k.last_used_at)}` : 'never used';
-      row.innerHTML = `
-        <div class="key-meta">
-          <span class="key-name">${k.name || 'default'} <span style="color:var(--text-dim)">#${k.id}</span></span>
-          <span class="key-sub">created ${fmtDate(k.created_at)} · ${last} · ${k.rate_limit}/min</span>
+  // ── grid rendering ───────────────────────────────────────────────
+  const grid = $("dg");
+  let editing = false;
+
+  function renderGrid() {
+    grid.innerHTML = "";
+    layout.forEach((c, i) => {
+      const def = CARDS[c.id];
+      const el = document.createElement("article");
+      el.className = `dg-card ${c.size}`;
+      el.dataset.id = c.id;
+      el.innerHTML = `
+        <div class="dg-head">
+          <h3>${esc(def.title)}${def.pro && tier !== "pro" ? ' <span class="ch">pro</span>' : ""}</h3>
+          <div class="dg-tools">
+            <button class="dg-refresh" title="refresh">⟳</button>
+            <div class="dg-edit-tools">
+              <button class="dg-left" title="move earlier">◀</button>
+              <button class="dg-right" title="move later">▶</button>
+              <button class="dg-size" title="cycle size">${c.size}</button>
+              <button class="dg-x" title="remove">✕</button>
+            </div>
+          </div>
         </div>
-        <div class="key-buttons">
-          <button class="btn btn-secondary btn-sm" data-regen="${k.id}">regenerate</button>
-          <button class="btn btn-danger btn-sm" data-revoke="${k.id}" ${onlyOne ? 'disabled title="Cannot revoke your last key"' : ''}>revoke</button>
-        </div>`;
-      list.appendChild(row);
+        <div class="dg-body"><div class="dg-loading">loading…</div></div>`;
+      el.querySelector(".dg-refresh").addEventListener("click", () => loadCard(c.id));
+      el.querySelector(".dg-left").addEventListener("click", () => moveCard(i, -1));
+      el.querySelector(".dg-right").addEventListener("click", () => moveCard(i, 1));
+      el.querySelector(".dg-size").addEventListener("click", () => {
+        c.size = SIZES[(SIZES.indexOf(c.size) + 1) % SIZES.length];
+        saveLayout(); renderGrid(); setEditing(true);
+      });
+      el.querySelector(".dg-x").addEventListener("click", () => {
+        layout = layout.filter((x) => x.id !== c.id);
+        saveLayout(); renderGrid(); setEditing(true);
+      });
+      wireDrag(el);
+      grid.appendChild(el);
+      loadCard(c.id);
     });
-    list.querySelectorAll('[data-regen]').forEach((b) =>
-      b.addEventListener('click', () => regenerateKey(b.dataset.regen)));
-    list.querySelectorAll('[data-revoke]:not([disabled])').forEach((b) =>
-      b.addEventListener('click', () => revokeKey(b.dataset.revoke)));
+    grid.classList.toggle("editing", editing);
   }
 
-  async function regenerateKey(id) {
-    if (!confirm('Regenerate this key? The old key stops working immediately.')) return;
-    const resp = await api(`/auth/api-keys/${id}/regenerate`, { method: 'POST', body: '{}' });
-    const data = await resp.json();
-    if (resp.ok) showKeyModal(data.api_key);
-    else alert(data.detail || 'Regenerate failed');
+  function moveCard(i, delta) {
+    const j = i + delta;
+    if (j < 0 || j >= layout.length) return;
+    [layout[i], layout[j]] = [layout[j], layout[i]];
+    saveLayout(); renderGrid(); setEditing(true);
   }
 
-  async function revokeKey(id) {
-    if (!confirm('Revoke this key? This cannot be undone.')) return;
-    const resp = await api(`/auth/api-keys/${id}`, { method: 'DELETE' });
-    const data = await resp.json();
-    if (resp.ok) loadAccount();
-    else alert(data.detail || 'Revoke failed');
-  }
-
-  $('new-key-btn').addEventListener('click', async () => {
-    const name = prompt('Name for the new key:', 'default');
-    if (name === null) return;
-    const resp = await api('/auth/api-keys', { method: 'POST', body: JSON.stringify({ name: name || 'default' }) });
-    const data = await resp.json();
-    if (resp.ok) showKeyModal(data.api_key);
-    else alert(data.detail || 'Create failed');
-  });
-
-  // ── Billing ─────────────────────────────────────────────────────
-  function renderBilling(me) {
-    const tier = me.tier || 'free';
-    $('b-plan').textContent = tier === 'pro' ? 'Pro' : 'Free';
-    const sub = me.subscription;
-    if (sub && sub.current_period_end) {
-      $('b-renew').textContent = fmtDate(sub.current_period_end);
-      $('b-renew-row').style.display = 'flex';
+  async function loadCard(id) {
+    const def = CARDS[id];
+    const body = grid.querySelector(`[data-id="${id}"] .dg-body`);
+    if (!body) return;
+    if (def.pro && tier !== "pro") {
+      body.innerHTML = `<div class="dg-lock"><div class="lk">🔒</div>
+        <p>${esc(def.desc)}<br/>Real-time Pro data.</p>
+        <a href="/account#billing">upgrade to pro</a></div>`;
+      return;
     }
-    if (tier === 'pro') {
-      $('portal-btn').style.display = 'inline-flex';
-    } else {
-      $('upgrade-btn').style.display = 'inline-flex';
+    if (!def.jwt && !apiKey && !def.jwtKeyEither) {
+      body.innerHTML = '<div class="dg-err">needs an API key — see the banner above</div>';
+      return;
+    }
+    try {
+      body.innerHTML = await def.render();
+      if (def.form) wireQuickCheck(body);
+    } catch (e) {
+      body.innerHTML = `<div class="dg-err">could not load (${esc(e.message)})</div>`;
     }
   }
-  $('upgrade-btn').addEventListener('click', async () => {
-    const resp = await api('/billing/checkout', { method: 'POST', body: JSON.stringify({ price_id: PRO_PRICE_ID }) });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else alert(data.detail || 'Checkout failed');
-  });
-  $('portal-btn').addEventListener('click', async () => {
-    const resp = await api('/billing/portal', { method: 'POST', body: '{}' });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else alert(data.detail || 'Could not open billing portal');
-  });
 
-  // ── Usage ───────────────────────────────────────────────────────
-  async function loadUsage(period) {
-    const resp = await api(`/usage?period=${period}`);
-    const data = await resp.json();
-    $('u-total').textContent = data.total;
-    const chart = $('usage-chart');
-    chart.innerHTML = '';
-    const max = Math.max(1, ...data.by_day.map((d) => d.count));
-    data.by_day.forEach((d) => {
-      const bar = document.createElement('div');
-      bar.className = d.count > 0 ? 'usage-bar' : 'usage-bar-empty';
-      if (d.count > 0) bar.style.height = `${Math.max(4, (d.count / max) * 100)}%`;
-      bar.title = `${d.date}: ${d.count}`;
-      chart.appendChild(bar);
+  // ── drag to reorder (edit mode) ──────────────────────────────────
+  let dragId = null;
+  function wireDrag(el) {
+    el.addEventListener("dragstart", (e) => {
+      if (!editing) { e.preventDefault(); return; }
+      dragId = el.dataset.id;
+      el.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
     });
-    const eps = $('usage-endpoints');
-    eps.innerHTML = '';
-    data.by_endpoint.forEach((e) => {
-      const row = document.createElement('div');
-      row.className = 'usage-ep';
-      row.innerHTML = `<span>${e.endpoint}</span><strong>${e.count}</strong>`;
-      eps.appendChild(row);
+    el.addEventListener("dragend", () => {
+      el.classList.remove("dragging");
+      grid.querySelectorAll(".drop-before,.drop-after").forEach((x) => x.classList.remove("drop-before", "drop-after"));
+      dragId = null;
+    });
+    el.addEventListener("dragover", (e) => {
+      if (!editing || !dragId || el.dataset.id === dragId) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const before = e.clientX < r.left + r.width / 2;
+      el.classList.toggle("drop-before", before);
+      el.classList.toggle("drop-after", !before);
+    });
+    el.addEventListener("dragleave", () => el.classList.remove("drop-before", "drop-after"));
+    el.addEventListener("drop", (e) => {
+      if (!editing || !dragId || el.dataset.id === dragId) return;
+      e.preventDefault();
+      const from = layout.findIndex((c) => c.id === dragId);
+      let to = layout.findIndex((c) => c.id === el.dataset.id);
+      const before = el.classList.contains("drop-before");
+      const [moved] = layout.splice(from, 1);
+      to = layout.findIndex((c) => c.id === el.dataset.id);
+      layout.splice(before ? to : to + 1, 0, moved);
+      saveLayout(); renderGrid(); setEditing(true);
     });
   }
-  document.querySelectorAll('.usage-tab').forEach((tab) =>
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.usage-tab').forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      loadUsage(tab.dataset.period);
+
+  function setEditing(on) {
+    editing = on;
+    grid.classList.toggle("editing", on);
+    $("ov-editbar").hidden = !on;
+    $("ov-edit").hidden = on;
+    grid.querySelectorAll(".dg-card").forEach((el) => el.setAttribute("draggable", on ? "true" : "false"));
+  }
+  $("ov-edit").addEventListener("click", () => setEditing(true));
+  $("ov-done").addEventListener("click", () => { setEditing(false); $("ov-drawer").hidden = true; });
+  $("ov-reset").addEventListener("click", () => {
+    layout = DEFAULT_LAYOUT.map((c) => ({ ...c }));
+    saveLayout(); renderGrid(); setEditing(true);
+  });
+
+  // ── add-card drawer ──────────────────────────────────────────────
+  $("ov-add").addEventListener("click", () => {
+    const list = $("ov-drawer-list");
+    list.innerHTML = "";
+    const inUse = new Set(layout.map((c) => c.id));
+    Object.entries(CARDS).filter(([id]) => !inUse.has(id)).forEach(([id, def]) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-drawer-item";
+      b.innerHTML = `<h4>${esc(def.title)}${def.pro ? '<span class="pro-tag">PRO</span>' : ""}</h4><p>${esc(def.desc)}</p>`;
+      b.addEventListener("click", () => {
+        layout.push({ id, size: def.size });
+        saveLayout(); renderGrid(); setEditing(true);
+        $("ov-drawer").hidden = true;
+      });
+      list.appendChild(b);
+    });
+    if (!list.children.length) list.innerHTML = '<p class="dim" style="grid-column:1/-1">every card is already on the board.</p>';
+    $("ov-drawer").hidden = false;
+  });
+  $("ov-drawer-close").addEventListener("click", () => { $("ov-drawer").hidden = true; });
+
+  // ── key banner ───────────────────────────────────────────────────
+  function refreshKeyBanner() {
+    $("ov-keybanner").hidden = !!apiKey;
+  }
+  $("ov-keysave").addEventListener("click", () => {
+    const k = $("ov-keyinput").value.trim();
+    if (!k) return;
+    apiKey = k;
+    localStorage.setItem("api_key", k);
+    refreshKeyBanner(); renderGrid();
+  });
+  $("ov-keymint").addEventListener("click", async () => {
+    $("ov-keymsg").textContent = "minting…";
+    try {
+      const d = await jwtApi("/auth/api-keys", { method: "POST", body: JSON.stringify({ name: "dashboard" }) });
+      apiKey = d.api_key;
+      localStorage.setItem("api_key", apiKey);
+      $("ov-keymsg").textContent = `key saved to this browser. copy it somewhere safe too: ${apiKey}`;
+      setTimeout(() => { refreshKeyBanner(); renderGrid(); }, 400);
+    } catch (e) {
+      $("ov-keymsg").textContent = "could not mint a key — try the account page.";
+    }
+  });
+
+  // ── card renderers ───────────────────────────────────────────────
+  function renderQuickCheck() {
+    return `
+      <form class="qc-form">
+        <div class="qc-row1">
+          <input type="text" name="asset" value="BTC" aria-label="asset" />
+          <span class="qc-side">
+            <button type="button" data-side="long" class="on-long">long</button>
+            <button type="button" data-side="short">short</button>
+          </span>
+          <button type="submit" class="qc-run">run check</button>
+          <span class="dim mono" style="font-size:0.62rem" data-quota></span>
+        </div>
+        <details class="qc-details"><summary>entry / stop / target / leverage / horizon</summary>
+          <div class="qc-opts">
+            <label>entry<input name="entry" inputmode="decimal" /></label>
+            <label>stop<input name="stop" inputmode="decimal" /></label>
+            <label>target<input name="target" inputmode="decimal" /></label>
+            <label>leverage<input name="leverage" inputmode="decimal" placeholder="5" /></label>
+            <label>horizon h<input name="horizon_hours" inputmode="decimal" placeholder="24" /></label>
+          </div>
+        </details>
+        <div class="qc-result" hidden></div>
+      </form>
+      <div class="dg-foot">grades describe conditions, never a directive — <a href="/proof">calibration on /proof</a> · not financial advice</div>`;
+  }
+
+  function wireQuickCheck(body) {
+    const form = body.querySelector(".qc-form");
+    let side = "long";
+    form.querySelectorAll(".qc-side button").forEach((b) => b.addEventListener("click", () => {
+      side = b.dataset.side;
+      form.querySelectorAll(".qc-side button").forEach((x) => x.classList.remove("on-long", "on-short"));
+      b.classList.add(side === "long" ? "on-long" : "on-short");
     }));
-
-  // ── Credits ─────────────────────────────────────────────────────
-  function fmtDelta(d) {
-    return d > 0 ? `+${d}` : `${d}`;
-  }
-  async function loadCredits() {
-    // balance + history
-    const resp = await api('/credits');
-    const data = await resp.json();
-    $('c-balance').textContent = `${data.balance} credit${data.balance === 1 ? '' : 's'}`;
-
-    const hist = $('credit-history');
-    hist.innerHTML = '';
-    (data.transactions || []).slice(0, 8).forEach((t) => {
-      const row = document.createElement('div');
-      row.className = 'credit-row';
-      const label = t.reason === 'spend' ? (t.endpoint || 'call') : t.reason;
-      const cls = t.delta > 0 ? 'cr-delta-pos' : 'cr-delta-neg';
-      row.innerHTML = `<span>${fmtDate(t.created_at)} · ${label}</span><span class="${cls}">${fmtDelta(t.delta)}</span>`;
-      hist.appendChild(row);
+    if (tier !== "pro") {
+      apiGet("/checks/history").then((h) => {
+        const q = form.querySelector("[data-quota]");
+        if (q && h.free_checks_remaining_today != null) q.textContent = `${h.free_checks_remaining_today}/3 checks left today`;
+      }).catch(() => {});
+    }
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const run = form.querySelector(".qc-run");
+      const out = form.querySelector(".qc-result");
+      const fd = new FormData(form);
+      const bodyObj = { asset: (fd.get("asset") || "BTC").toString().trim().toUpperCase(), side };
+      for (const f of ["entry", "stop", "target", "leverage", "horizon_hours"]) {
+        const v = parseFloat(fd.get(f));
+        if (!isNaN(v)) bodyObj[f] = v;
+      }
+      run.disabled = true; out.hidden = false;
+      out.innerHTML = '<div class="dg-loading">grading…</div>';
+      try {
+        const d = await apiPost("/check", bodyObj);
+        const flags = (d.flags || []).map((f) => {
+          const sev = typeof f === "object" ? (f.severity || "low") : "low";
+          const note = typeof f === "object" ? f.note : f;
+          return `<div class="qc-flag sev-${esc(sev)}"><b>${esc(sev)}</b> ${esc(note)}</div>`;
+        }).join("");
+        const un = (d.unchecked || []).map((u) => `<div class="qc-flag"><b class="dim">unchecked</b> ${esc(u)}</div>`).join("");
+        const gradeCls = ["D", "F"].includes(d.grade) ? "bad" : "";
+        out.innerHTML = `
+          <div class="qc-grade-row">
+            <span class="qc-grade ${gradeCls}">${esc(d.grade || "?")}</span>
+            <span class="dim mono" style="font-size:0.66rem">score ${num(d.score, 2)} · engine ${esc(d.engine_version || "—")} · ${esc(bodyObj.asset)} ${esc(side)}</span>
+          </div>
+          ${flags || '<div class="qc-flag"><b class="dim">flags</b> none raised</div>'}${un}`;
+      } catch (err) {
+        out.innerHTML = `<div class="dg-err">${esc(err.message)}</div>`;
+      }
+      run.disabled = false;
     });
-
-    // buy buttons from configured packs
-    const packsResp = await api('/billing/credit-packs');
-    const packsData = await packsResp.json();
-    const wrap = $('credit-packs');
-    wrap.innerHTML = '';
-    const packs = (packsData.packs || []).sort((a, b) => a.credits - b.credits);
-    if (packs.length === 0) {
-      wrap.innerHTML = '<p class="auth-subtle" style="margin:0;">Credit purchases are not available yet — check back soon.</p>';
-      return;
-    }
-    packs.forEach((p) => {
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-primary credit-pack-btn';
-      btn.innerHTML = `<span class="cp-credits">${p.credits.toLocaleString()} credits</span>`;
-      btn.addEventListener('click', () => buyCredits(p.price_id, btn));
-      wrap.appendChild(btn);
-    });
-  }
-  async function buyCredits(priceId, btn) {
-    btn.disabled = true;
-    const resp = await api('/billing/buy-credits', { method: 'POST', body: JSON.stringify({ price_id: priceId }) });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else { alert(data.detail || 'Could not start checkout'); btn.disabled = false; }
   }
 
-  // ── Terms gate ──────────────────────────────────────────────────
-  $('accept-terms-btn').addEventListener('click', async () => {
-    $('accept-terms-btn').disabled = true;
-    const resp = await api('/auth/accept-terms', { method: 'POST', body: '{}' });
-    if (resp.ok) { $('terms-gate').style.display = 'none'; loadAccount(); }
-    else { $('terms-error').textContent = 'Could not record acceptance — try again.'; $('accept-terms-btn').disabled = false; }
-  });
-
-  // ── Load ────────────────────────────────────────────────────────
-  async function loadAccount() {
-    const resp = await api('/auth/me');
-    const me = await resp.json();
-    $('loading').style.display = 'none';
-
-    if (me.terms_accepted_at == null) {
-      $('terms-gate').style.display = 'block';
-      $('dash-main').style.display = 'none';
-      return;
-    }
-    $('terms-gate').style.display = 'none';
-    $('dash-main').style.display = 'block';
-
-    $('p-email').textContent = me.email;
-    $('p-tier').textContent = (me.tier || 'free') === 'pro' ? 'Pro' : 'Free';
-    renderKeys(me.api_keys || []);
-    renderBilling(me);
-    loadUsage('7d');
-    loadCredits();
+  async function renderMacro() {
+    const d = (await apiGet("/macro")).current || {};
+    const b = d.btc || {}, e = d.eth || {};
+    return `
+      <div class="row"><span class="k">regime</span><span class="v">${dirCh(d.regime === "risk-on" ? "bullish" : d.regime === "risk-off" ? "bearish" : d.regime)} <span class="mono dim" style="font-size:0.66rem">${esc(d.regime || "—")}</span></span></div>
+      <div class="row"><span class="k">btc bias</span><span class="v">${dirCh(b.bias)} <span class="dim">${esc(b.conviction || "")}</span></span></div>
+      <div class="row"><span class="k">eth bias</span><span class="v">${dirCh(e.bias)} <span class="dim">${esc(e.conviction || "")}</span></span></div>
+      <div class="dg-foot">generated ${d.generated_at ? ago(new Date(d.generated_at).getTime() / 1000) + " ago" : "—"}</div>`;
   }
 
-  $('logout-btn').addEventListener('click', logout);
+  async function renderSignals() {
+    const d = await apiGet("/signals?limit=6");
+    const rows = (d.signals || []).map((s) => `
+      <div class="sig-row">
+        <span class="sa">${esc(s.asset)}</span>
+        <span class="st">${esc(s.signal_type)}</span>
+        ${dirCh(s.direction)}
+        <span class="st">${esc(s.conviction || "")}</span>
+        <span class="sage">${ago(s.timestamp)}</span>
+      </div>`).join("");
+    const delayNote = tier === "pro" ? "real-time" : "free tier — delayed 15 min";
+    return (rows || '<div class="dg-loading">no recent signals</div>') +
+      `<div class="dg-foot">${delayNote} · <a href="/signals">full feed →</a></div>`;
+  }
 
-  loadAccount().catch((e) => {
-    if (e.message !== 'unauthorized') {
-      $('loading').textContent = 'Could not load account. Try logging in again.';
-    }
-  });
+  let levelsCoin = "BTC";
+  async function renderLevels() {
+    const d = await apiGet(`/levels/${levelsCoin}`);
+    const s = d.nearest_support || {}, r = d.nearest_resistance || {};
+    const lvl = (o) => o.price ? `${px(o.price)} <span class="dim mono" style="font-size:0.64rem">${esc(o.level_type || "")}${o.bounces != null ? ` · ${o.bounces}/${o.tests} held` : ""}</span>` : "—";
+    const coins = ["BTC", "ETH", "SOL", "XRP", "DOGE"].map((c) =>
+      `<button data-coin="${c}" class="${c === levelsCoin ? "on" : ""}">${c}</button>`).join("");
+    setTimeout(() => {
+      grid.querySelectorAll('[data-id="levels"] .coin-sel button').forEach((b) =>
+        b.addEventListener("click", () => { levelsCoin = b.dataset.coin; loadCard("levels"); }));
+    }, 0);
+    return `
+      <div class="coin-sel">${coins}</div>
+      <div class="row"><span class="k">price</span><span class="v mono">${px(d.current_price)}</span></div>
+      <div class="row"><span class="k">resistance</span><span class="v">${lvl(r)}</span></div>
+      <div class="row"><span class="k">support</span><span class="v">${lvl(s)}</span></div>
+      <div class="dg-foot">trend: ${esc(d.trend_state?.trend || "—")} · zones from live level tracking</div>`;
+  }
+
+  async function renderRegime() {
+    const d = await apiGet("/regime");
+    const pct = Math.round(((+d.risk_score || 0) + 1) * 50);
+    return `
+      <div class="row"><span class="k">appetite</span><span class="v">${dirCh(d.risk_appetite === "risk_on" ? "bullish" : d.risk_appetite === "risk_off" ? "bearish" : "neutral")} <span class="dim mono" style="font-size:0.66rem">${esc(d.risk_appetite || "—")}</span></span></div>
+      <div class="bar" style="margin:8px 0"><i style="width:${pct}%"></i></div>
+      <div class="row"><span class="k">bias</span><span class="v">${esc(d.market_bias || "—")}</span></div>
+      <div class="dg-foot">score ${num(d.risk_score, 2)} · composite of macro + internals + funding</div>`;
+  }
+
+  async function renderProof() {
+    const d = await apiGet("/proof");
+    const proven = (d.types || []).filter((t) => t.n >= 30).sort((a, b) => (b.win_rate || 0) - (a.win_rate || 0));
+    const top = proven[0];
+    return top ? `
+      <div class="big">${Math.round(top.win_rate * 100)}%</div>
+      <div class="dim" style="font-size:0.78rem;margin-top:4px">${esc(top.signal_type)} · n=${top.n} · ${esc(top.horizon || d.horizon)}</div>
+      <div class="dg-foot"><a href="/proof">every call, on the record →</a></div>`
+      : `<div class="dg-loading">no proven type in window</div><div class="dg-foot"><a href="/proof">/proof →</a></div>`;
+  }
+
+  async function renderCalendar() {
+    const d = await apiGet("/calendar");
+    const rows = (d.upcoming || []).filter((e) => !e.released).slice(0, 4).map((e) => `
+      <div class="sig-row">
+        <span class="sa" style="font-size:0.74rem">${esc(e.name)}</span>
+        <span class="ch ${e.impact === "High" ? "warn" : ""}">${esc(e.impact || "—")}</span>
+        <span class="sage">${inTime(e.scheduled_ts)}</span>
+      </div>`).join("");
+    return (rows || '<div class="dg-loading">nothing scheduled</div>') +
+      '<div class="dg-foot">high/medium-impact US macro releases</div>';
+  }
+
+  async function renderRotation() {
+    const d = await apiGet("/rotation");
+    const coins = (d.top_rotating_in || []).slice(0, 3).map((c) => esc(c.coin)).join(" · ");
+    return `
+      <div class="row"><span class="k">regime</span><span class="v">${esc(d.regime || "—")}</span></div>
+      <div class="row"><span class="k">score</span><span class="v mono">${num(d.rotation_score, 2)}</span></div>
+      <div class="row"><span class="k">rotating in</span><span class="v" style="font-size:0.72rem">${coins || "—"}</span></div>
+      <div class="dg-foot">RS-breadth composite, ${esc(d.window || "")}</div>`;
+  }
+
+  async function renderOpens() {
+    const d = (await apiGet("/market-opens")).market_opens || {};
+    const row = (name, list) => {
+      const btc = (list || []).find((x) => x.coin === "BTC");
+      return `<div class="row"><span class="k">${name}</span><span class="v mono">${btc ? px(btc.price_usd) : "—"}</span></div>`;
+    };
+    return row("tokyo", d.tokyo) + row("london", d.london) + row("new york", d.new_york) +
+      '<div class="dg-foot">BTC at session opens (live prices are never delayed)</div>';
+  }
+
+  async function renderPerformance() {
+    const d = await apiGet("/performance");
+    const rows = Object.entries(d.by_type || {})
+      .map(([t, v]) => ({ t, h: (v.horizons || {})["24h"] || {} }))
+      .filter((x) => x.h.n >= 5)
+      .sort((a, b) => (b.h.n || 0) - (a.h.n || 0)).slice(0, 5)
+      .map((x) => {
+        const wr = x.h.win_rate != null ? Math.round(x.h.win_rate * 100) : null;
+        return `<div class="row"><span class="k">${esc(x.t)}</span>
+          <span class="v mono" style="font-size:0.74rem">${wr == null ? "—" : wr + "%"} <span class="dim">n=${x.h.n}</span></span></div>`;
+      }).join("");
+    return (rows || '<div class="dg-loading">not enough samples yet</div>') +
+      '<div class="dg-foot">24h horizon, 30-day window · <a href="/proof">methodology →</a></div>';
+  }
+
+  async function renderMyChecks() {
+    const d = await apiGet("/checks/history");
+    const rows = (d.checks || []).slice(0, 5).map((c) => `
+      <div class="sig-row">
+        <span class="sa">${esc(c.asset)}</span>
+        <span class="st">${esc(c.side)}</span>
+        <span class="ch ${["A", "B+", "B"].includes(c.grade) ? "up" : ["D", "F"].includes(c.grade) ? "down" : ""}">${esc(c.grade || "?")}</span>
+        <span class="sage">${ago(c.created_at)}</span>
+      </div>`).join("");
+    const quota = d.free_checks_remaining_today != null ? ` · ${d.free_checks_remaining_today}/3 left today` : "";
+    return (rows || '<div class="dg-loading">no checks yet — try the card above</div>') +
+      `<div class="dg-foot">resolved at horizon against real candles${quota}</div>`;
+  }
+
+  async function renderAccount() {
+    const me = window.__ME || (window.__ME = await jwtApi("/auth/me"));
+    return `
+      <div class="row"><span class="k">plan</span><span class="v">${me.tier === "pro" ? "Pro" : "Free"}</span></div>
+      <div class="row"><span class="k">email</span><span class="v" style="font-size:0.72rem">${esc(me.email)}</span></div>
+      <div class="row"><span class="k">keys</span><span class="v mono">${(me.api_keys || []).length}</span></div>
+      <div class="dg-foot"><a href="/account">manage account →</a></div>`;
+  }
+
+  async function renderUsage() {
+    const d = await jwtApi("/usage?period=7d");
+    const max = Math.max(1, ...(d.by_day || []).map((x) => x.count));
+    const bars = (d.by_day || []).map((x) =>
+      `<div title="${esc(x.date)}: ${x.count}" style="flex:1;background:${x.count ? "var(--accent-glow)" : "var(--bg-hover)"};border-top:${x.count ? "2px solid var(--accent)" : "none"};height:${Math.max(4, (x.count / max) * 100)}%"></div>`).join("");
+    return `
+      <div class="big">${d.total ?? 0}</div>
+      <div class="dim" style="font-size:0.72rem">requests · 7d</div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:44px;margin-top:8px">${bars}</div>`;
+  }
+
+  let msCoin = "BTC";
+  async function renderMarketState() {
+    const d = await apiGet(`/market-state/${msCoin}`);
+    const coins = ["BTC", "ETH", "SOL"].map((c) =>
+      `<button data-coin="${c}" class="${c === msCoin ? "on" : ""}">${c}</button>`).join("");
+    setTimeout(() => {
+      grid.querySelectorAll('[data-id="marketstate"] .coin-sel button').forEach((b) =>
+        b.addEventListener("click", () => { msCoin = b.dataset.coin; loadCard("marketstate"); }));
+    }, 0);
+    const rows = ["consensus", "atmosphere", "direction", "direction_source", "conviction"]
+      .filter((k) => d[k] != null)
+      .map((k) => `<div class="row"><span class="k">${esc(k.replace("_", " "))}</span><span class="v" style="font-size:0.76rem">${esc(typeof d[k] === "object" ? JSON.stringify(d[k]).slice(0, 60) : d[k])}</span></div>`)
+      .join("");
+    return `<div class="coin-sel">${coins}</div>` +
+      (rows || '<div class="dg-loading">no composite available</div>') +
+      '<div class="dg-foot">pro · real-time market-state composite</div>';
+  }
+
+  // ── boot ─────────────────────────────────────────────────────────
+  async function boot() {
+    try {
+      const me = await jwtApi("/auth/me");
+      window.__ME = me;
+      tier = me.tier || "free";
+      localStorage.setItem("tier", tier);
+      if (me.terms_accepted_at == null) { window.location.href = "/account"; return; }
+    } catch (e) { return; /* jwtApi already redirected on 401 */ }
+    $("ov-tiernote").innerHTML = tier === "pro"
+      ? "<b>pro</b> · real-time"
+      : 'free tier · intel delayed 15 min · <a href="/account#billing" style="color:var(--accent)">go real-time →</a>';
+    refreshKeyBanner();
+    renderGrid();
+  }
+  boot();
+
+  // auto-refresh data cards (not while editing; quick-check keeps its form state)
+  setInterval(() => {
+    if (editing || document.visibilityState !== "visible") return;
+    layout.forEach((c) => { if (!CARDS[c.id].form) loadCard(c.id); });
+  }, 90000);
 </script>
