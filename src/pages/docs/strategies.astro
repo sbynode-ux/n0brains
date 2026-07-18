@@ -1,53 +1,293 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+
+/* /docs/strategies — the rebuilt Strategy Library.
+   Every playbook is bound to the LIVE /proof gate: the stats blocks render
+   from the /proof endpoint (build-time seed + client refresh), and each card
+   carries a PROVEN NOW / STAND DOWN chip driven by proven_horizon. The page
+   can never silently go stale — that's the failure mode that took the old
+   library down. No fixed TP/SL is published: the live exit corpus is still
+   too small (the walk-forward exit tuner reports "waiting"), so the only
+   exits we publish are the ones the record actually measures — hold to the
+   stated horizon. Behavior notes are dated point-in-time findings from the
+   forward ledger (signal_forward_returns, entries since 2026-06-03). */
+
+const KEY = "YOUR_API_KEY";
+
+// Build-time seed from the live record (never breaks the build on failure).
+let proofSeed: any = null;
+try {
+  const r = await fetch("https://api.n0brains.com/proof");
+  if (r.ok) proofSeed = await r.json();
+} catch { /* client JS refreshes anyway */ }
+
+const seedFor = (t: string) =>
+  (proofSeed?.types || []).find((x: any) => x.signal_type === t) || null;
+
+const playbooks = [
+  {
+    id: "pb-hack",
+    type: "hack",
+    dirLabel: "short the named asset",
+    title: "Security-event fade",
+    thesis: "When a hack / exploit signal fires on an asset, the market reprices down over the first day. The measured edge lives in the FIRST 24 HOURS — the forward ledger shows the move more than retraces by day 7, so this is strictly an intraday-to-24h play, never a swing short.",
+    entry: "A hack signal on a named asset with conviction “strong” (free tier sees it 15 min delayed; Pro real-time). Corroborated events (corroborated: true) are the cleaner subset.",
+    horizon: "24h — close at the horizon. The published stats are measured holding exactly that long.",
+    behavior: "Ledger through 2026-07-17 (entries since 2026-06-03): +0.48% avg excess vs BTC at 24h (n=255, t=2.4). Held to 7 days the same entries measure −2.2% excess (n=139), and −4.2% at 14 days — the edge does not just decay, it reverses. Exit discipline is the strategy.",
+    prompt:
+`Watch n0brains for hack signals. API: https://api.n0brains.com, header X-API-Key: ${KEY}
+Every 5 minutes: GET /signals?signal_type=hack&urgency=high&limit=5
+Rules:
+  1. Act only on conviction "strong", and only while /proof lists hack as
+     a proven type (GET /proof, check proven_horizon on the hack row).
+  2. Direction: bearish on the named asset. The measured edge is the FIRST
+     24 HOURS - plan the exit at the 24h mark. NEVER hold past 48h: the
+     forward ledger shows the move retraces and reverses by day 7.
+  3. Frame the stop with GET /levels/<COIN> (nearest resistance zone above).
+  4. Read me the signal, the plan, and the invalidation. Analysis only,
+     not financial advice - I place my own trades.`,
+  },
+  {
+    id: "pb-deleverage",
+    type: "deleverage",
+    dirLabel: "long the flushed asset",
+    title: "Deleverage rebound",
+    thesis: "After a leverage flush (cascade of forced liquidations), price tends to snap back once forced sellers are done. This is the fastest cell in the library — the gate proves it at the 4-hour horizon.",
+    entry: "A deleverage signal with bullish direction and conviction “strong”. These fire after the cascade is measured, not during the knife.",
+    horizon: "4h — this cell is proven at four hours, not a day. Take the bounce and be done.",
+    behavior: "Ledger through 2026-07-17: +0.26% avg excess vs BTC at 4h and 64% win rate (n=59 since 2026-06-03, t≈2.0 at both 4h and 24h). Small but consistent sample — the gate sizes the claim accordingly.",
+    prompt:
+`Watch n0brains for post-cascade rebounds. API: https://api.n0brains.com, header X-API-Key: ${KEY}
+Every 5 minutes: GET /signals?signal_type=deleverage&limit=5
+Rules:
+  1. Act only on bullish direction + conviction "strong", and only while
+     /proof lists deleverage as proven (GET /proof, proven_horizon set).
+  2. The proven horizon is 4 HOURS. Plan entry immediately on signal and
+     the exit at the 4h mark - this is a bounce, not a position.
+  3. Frame the stop below the nearest support zone: GET /levels/<COIN>.
+  4. Report signal, plan, invalidation. Analysis only, not financial
+     advice - I place my own trades.`,
+  },
+  {
+    id: "pb-whale",
+    type: "whale_position",
+    dirLabel: "follow bullish prints only",
+    title: "Whale-position follow",
+    thesis: "Large on-chain / exchange position builds by tracked whales lean the market their way over the next day. The edge is asymmetric: the ledger backs FOLLOWING BULLISH builds. Bearish whale prints measure flat-to-negative as shorts — treat them as context, not entries.",
+    entry: "A whale_position signal, bullish direction, conviction “strong”. Skip bearish prints entirely as trade triggers.",
+    horizon: "24h — proven at the one-day horizon, held to the horizon.",
+    behavior: "Ledger through 2026-07-17: bullish side +0.11% excess at 24h with 57% win rate (n=687, t=2.2); the bearish side measures −0.16% at 24h (t=−2.9) and degrades brutally at swing horizons (−6.6% excess at 7d). Following only the bullish half is what the record supports.",
+    prompt:
+`Track whale positioning with n0brains. API: https://api.n0brains.com, header X-API-Key: ${KEY}
+Every 10 minutes: GET /signals?signal_type=whale_position&limit=10
+Rules:
+  1. Trade triggers = bullish direction + conviction "strong" ONLY, and
+     only while /proof lists whale_position as proven. Bearish prints are
+     context - mention them, never short them (measured anti-edge).
+  2. Horizon: 24 HOURS, exit at the mark.
+  3. Frame stops with GET /levels/<COIN>; sanity-check the whole idea with
+     POST /check before flagging it to me.
+  4. Analysis only, not financial advice - I place my own trades.`,
+  },
+];
 ---
 
 <BaseLayout
-  title="Strategy Library — under revision"
-  description="The n0brains Strategy Library is temporarily offline while we rebuild it on properly forward-tested results. The signal feed and /proof are unaffected."
+  title="Strategy Library — live-gated playbooks"
+  description="Trading playbooks bound to the live n0brains forward record: security-event fade, deleverage rebound, whale-position follow. Every card renders its stats from /proof at view time and stands down automatically when its cell drops out of the proven set. No backtests, no stale numbers."
 >
   <section class="docs-page">
     <h1>Strategy Library</h1>
-    <p class="docs-subtitle">Temporarily offline &middot; under revision</p>
+    <p class="docs-subtitle">
+      Playbooks bound to the live record. Every number on this page is rendered from
+      <a href="/proof">/proof</a> when you load it, and every card stands down automatically
+      the moment its cell drops out of the proven set. Nothing here is a backtest.
+    </p>
 
-    <div class="card legal-card">
-      <h2>This page is being rebuilt.</h2>
+    <div class="card">
+      <h2 id="how-this-works">How this library works now</h2>
       <p>
-        We've taken the reference strategy configurations down. The exit rules we
-        had published (fixed take-profit / stop-loss / horizon per signal type)
-        were derived from a historical backtest that did not hold up under live
-        forward-testing — most positions closed on the time horizon rather than at
-        their target, so the configurations were not a fair representation of how
-        the signals actually perform.
+        The old library published fixed take-profit / stop-loss configurations from a
+        historical backtest. Live forward-testing broke them — most positions closed on
+        time, not at target — so we took the page down rather than stand behind numbers
+        we couldn't defend. This rebuild makes that failure structurally impossible:
       </p>
-      <p>
-        Rather than leave up numbers we no longer stand behind, we're rebuilding
-        this library from <strong>live, forward-tested results only</strong>. We'll
-        republish a configuration here when — and only when — it has proven itself
-        on real, going-forward signals.
-      </p>
+      <ul>
+        <li><strong>Live-gated.</strong> A playbook is tradeable only while its signal cell passes the
+          <a href="/proof">public gate</a> (positive excess vs BTC over the same window, 95% CI lower
+          bound above zero, sufficient sample). Each card checks the gate when the page loads and
+          flips to <em>stand down</em> on its own.</li>
+        <li><strong>Measured exits only.</strong> The published stats are measured holding to the stated
+          horizon — that is the only exit the record supports. We publish no TP/SL ladders: our live
+          exit corpus is still too small to defend one (the walk-forward exit tuner is literally in
+          <code>waiting</code> status). Frame risk with <a href="/docs#get-levels-coin">/levels</a> zones and
+          <a href="/check">/check</a>'s stop-geometry flags instead.</li>
+        <li><strong>Dated behavior notes.</strong> Prose findings below cite the forward ledger through
+          <strong>2026-07-17</strong> (entries since 2026-06-03, the current clean-measurement floor) and say so.
+          Live numbers in the stat blocks supersede them.</li>
+      </ul>
+    </div>
+
+    {playbooks.map((pb) => { const s = seedFor(pb.type); return (
+      <div class="card pb-card" id={pb.id} data-type={pb.type}>
+        <h2>{pb.title} <span class="pb-dir">{pb.dirLabel}</span></h2>
+        <div class="pb-status" data-status>
+          <span class="pb-chip">checking gate…</span>
+        </div>
+        <div class="pb-stats" data-stats>
+          <div class="pb-stat"><b data-f="win">{s ? Math.round(s.win_rate * 100) + "%" : "—"}</b><span>win rate</span></div>
+          <div class="pb-stat"><b data-f="excess">{s && s.excess_pct != null ? (s.excess_pct > 0 ? "+" : "") + s.excess_pct.toFixed(2) + "%" : "—"}</b><span>excess vs BTC</span></div>
+          <div class="pb-stat"><b data-f="n">{s ? s.n : "—"}</b><span>signals · 30d</span></div>
+          <div class="pb-stat"><b data-f="hz">{s ? s.horizon : "—"}</b><span>horizon</span></div>
+        </div>
+        <p><strong>Thesis.</strong> {pb.thesis}</p>
+        <p><strong>Entry.</strong> {pb.entry}</p>
+        <p><strong>Exit.</strong> {pb.horizon}</p>
+        <p class="pb-behavior"><strong>What the ledger measured.</strong> {pb.behavior}</p>
+        <details class="pb-prompt">
+          <summary>agent prompt for this playbook</summary>
+          <div class="prompt-block">
+            <button class="copy-btn" aria-label="copy prompt">copy</button>
+            <pre><code>{pb.prompt}</code></pre>
+          </div>
+        </details>
+      </div>
+    ); })}
+
+    <div class="card">
+      <h2 id="anti-playbooks">What the record says not to do</h2>
+      <p>The same ledger that proves the playbooks above measures these as negative-edge behaviors.
+      Knowing them is worth as much as the playbooks:</p>
+      <ul>
+        <li><strong>Chasing listings.</strong> Buying listing announcements measures ~<code>−0.3%</code> to
+          <code>−0.5%</code> excess at every horizon we track (and worse net of the pop you pay up for).</li>
+        <li><strong>Buying funding squeezes.</strong> Bullish funding signals measure <code>−0.67%</code>
+          excess at 24h (n=476, t=−5.1). Crowded-long funding is a warning, not an invitation.</li>
+        <li><strong>Holding event shorts.</strong> The hack fade's own entries flip to <code>−2.2%</code> excess
+          by day 7. Event edges are measured in hours, not weeks.</li>
+        <li><strong>Shorting whale distribution at swing horizons.</strong> Bearish whale_position held a week
+          measures <code>−6.6%</code> excess. The bullish half of that signal carries the edge.</li>
+      </ul>
+      <p class="docs-tip">Agents can pull the current inverted cells programmatically:
+        <code>get_anti_predictive_cells</code> over <a href="/docs/mcp">MCP</a> — cells where the measured
+        edge points against the signal's own direction.</p>
+      <p class="docs-tip">All figures: forward ledger through 2026-07-17, entries since 2026-06-03,
+        vs same-window BTC baseline.</p>
     </div>
 
     <div class="card">
-      <h2>What's unaffected</h2>
+      <h2 id="methodology">Methodology &amp; what's coming</h2>
       <ul>
-        <li>The <a href="/docs">signal API</a> and live WebSocket feed — fully operational.</li>
-        <li>Our live, ongoing performance numbers at <a href="/proof">/proof</a> — these are the real forward-test, untouched.</li>
-        <li>Per-signal-type forward returns (1h / 4h / 24h) continue to be recorded.</li>
+        <li><strong>Where the numbers come from.</strong> Every directional signal is measured against real
+          post-signal prices at fixed horizons, vs a same-window BTC buy-hold baseline, cost-adjusted —
+          the identical pipeline behind <a href="/proof">/proof</a>. No curation, no survivor bias; weak
+          types are demoted publicly.</li>
+        <li><strong>Why only three playbooks.</strong> The gate currently proves three cells. When another
+          cell earns its way in — and holds — it gets a card. When one drops out, its card stands down
+          automatically rather than lying to you.</li>
+        <li><strong>Swing horizons (7d / 14d / 30d)</strong> are being measured now, but they are not yet
+          gate-eligible: the corpus spans a single market regime and overlapping windows inflate
+          significance. They'll graduate here when a fair test exists — not before.</li>
+        <li><strong>Exit ladders.</strong> A live walk-forward exit tuner (MAE/MFE on real fills) is
+          accumulating data. If it ever produces an exit rule that beats hold-to-horizon out of sample,
+          it will be published here with its record — until then, hold-to-horizon is the honest exit.</li>
       </ul>
-      <p>
-        Questions or want to be notified when the library returns?
-        <a href="mailto:support@n0brains.com">Email support</a>.
-      </p>
+      <p class="docs-tip">Everything on this page is analytical market data on public markets — not financial
+        advice, not a recommendation, and not tailored to you. Signals can and will be wrong. Size for
+        survival; keep a human on the trigger. See <a href="/terms">terms</a> §8.</p>
     </div>
   </section>
 </BaseLayout>
 
-<style>
-  .legal-card {
-    border-left: 3px solid #b13838;
-    background: rgba(177, 56, 56, 0.06);
+<style is:global>
+  .pb-dir {
+    margin-left: 10px; vertical-align: 2px;
+    font-family: var(--font-mono); font-size: 0.56rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 2px 9px;
   }
-  .legal-card h2 { color: #ef4444; }
-  .legal-card strong { color: var(--text-heading); }
+  .pb-status { margin: 4px 0 12px; }
+  .pb-chip {
+    display: inline-block; padding: 3px 11px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .pb-chip.on { color: #000; background: var(--accent); border-color: var(--accent); }
+  .pb-chip.off { color: var(--accent-secondary); border-color: rgba(255,0,85,0.35); }
+  .pb-stats {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
+    margin: 0 0 14px; padding: 12px; background: var(--bg-code);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  @media (max-width: 560px) { .pb-stats { grid-template-columns: repeat(2, 1fr); } }
+  .pb-stat { display: flex; flex-direction: column; gap: 2px; }
+  .pb-stat b { font-family: var(--font-display); font-size: 1.6rem; line-height: 1; color: var(--text-heading); font-weight: 400; }
+  .pb-stat span { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+  .pb-behavior { border-left: 2px solid var(--accent-dim); padding-left: 12px; }
+  .pb-prompt summary {
+    font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted); cursor: pointer;
+  }
+  .pb-prompt[open] summary { color: var(--accent); margin-bottom: 8px; }
+  .prompt-block { position: relative; }
+  .prompt-block pre { margin: 0; padding-right: 76px; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    font-family: var(--font-mono); font-size: 0.62rem; color: var(--text);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    background: var(--bg-alt); border: 1px solid var(--border);
+    border-radius: 3px; padding: 4px 9px; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
 </style>
+
+<script>
+  // Copy buttons
+  document.querySelectorAll(".copy-btn").forEach((b) => {
+    b.addEventListener("click", async () => {
+      const pre = b.parentElement?.querySelector("pre");
+      if (!pre) return;
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        const o = b.textContent; b.textContent = "copied";
+        setTimeout(() => { b.textContent = o; }, 1500);
+      } catch { /* ignore */ }
+    });
+  });
+
+  // Live gate: refresh stats + PROVEN chip from /proof on load.
+  (async () => {
+    let d;
+    try {
+      const r = await fetch("https://api.n0brains.com/proof");
+      if (!r.ok) throw new Error();
+      d = await r.json();
+    } catch { markUnknown(); return; }
+    const types = new Map((d.types || []).map((t) => [t.signal_type, t]));
+    document.querySelectorAll(".pb-card").forEach((card) => {
+      const t = types.get(card.dataset.type);
+      const chipWrap = card.querySelector("[data-status]");
+      if (!t) {
+        chipWrap.innerHTML = '<span class="pb-chip off">not in the current window — stand down</span>';
+        return;
+      }
+      const proven = !!t.proven_horizon;
+      chipWrap.innerHTML = proven
+        ? `<span class="pb-chip on">proven now · ${t.proven_horizon} · gate passing</span>`
+        : '<span class="pb-chip off">not currently proven — stand down</span>';
+      const set = (f, v) => { const el = card.querySelector(`[data-f="${f}"]`); if (el) el.textContent = v; };
+      set("win", Math.round(t.win_rate * 100) + "%");
+      set("excess", t.excess_pct != null ? (t.excess_pct > 0 ? "+" : "") + t.excess_pct.toFixed(2) + "%" : "—");
+      set("n", t.n);
+      set("hz", t.horizon || "24h");
+    });
+  })();
+  function markUnknown() {
+    document.querySelectorAll(".pb-card [data-status]").forEach((w) => {
+      w.innerHTML = '<span class="pb-chip">gate unreachable — verify on /proof before acting</span>';
+    });
+  }
+</script>
