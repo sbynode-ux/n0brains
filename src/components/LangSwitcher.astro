@@ -1,0 +1,175 @@
+---
+/* Language switcher — top-right dropdown. The active locale is rendered as a
+   non-interactive item (not a link), so the current language is unclickable.
+   Native <details> = works with no JS; the script only adds outside-click /
+   Esc close. `variant` = "header" (in the sticky rail) or "cover" (fixed on
+   the cinematic root page). */
+import {
+  LOCALES,
+  LOCALE_LABELS,
+  LOCALE_NAMES,
+  localizePath,
+  toLocale,
+  useTranslations,
+} from "../i18n/ui";
+
+interface Props {
+  variant?: "header" | "cover";
+}
+const { variant = "header" } = Astro.props;
+const current = toLocale(Astro.currentLocale);
+const path = Astro.url.pathname;
+const t = useTranslations(current);
+---
+
+<details class:list={["lang-switch", `lang-${variant}`]} data-lang-switch>
+  <summary aria-label={t("Language")} title={t("Language")}>
+    <svg class="ls-globe" viewBox="0 0 24 24" width="14" height="14" fill="none"
+      stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"></path>
+    </svg>
+    <span class="ls-code">{LOCALE_LABELS[current]}</span>
+    <svg class="ls-chev" viewBox="0 0 24 24" width="12" height="12" fill="none"
+      stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M6 9l6 6 6-6"></path>
+    </svg>
+  </summary>
+  <div class="ls-menu" role="menu">
+    {LOCALES.map((loc) =>
+      loc === current ? (
+        <span class="ls-item ls-current" role="menuitem" aria-current="true" aria-disabled="true">
+          <b>{LOCALE_LABELS[loc]}</b>
+          <span class="ls-name">{LOCALE_NAMES[loc]}</span>
+          <span class="ls-tick" aria-hidden="true">✓</span>
+        </span>
+      ) : (
+        <a class="ls-item" href={localizePath(path, loc)} hreflang={loc} lang={loc} role="menuitem">
+          <b>{LOCALE_LABELS[loc]}</b>
+          <span class="ls-name">{LOCALE_NAMES[loc]}</span>
+        </a>
+      )
+    )}
+  </div>
+</details>
+
+<style>
+  .lang-switch {
+    position: relative;
+    font-family: var(--font-mono, "Space Mono", ui-monospace, monospace);
+  }
+  .lang-switch > summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border: 1px solid var(--border, #262626);
+    border-radius: var(--radius-sm, 5px);
+    color: var(--text, #cfd6d1);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1;
+    background: transparent;
+    transition: border-color 0.18s ease, color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lang-switch > summary::-webkit-details-marker { display: none; }
+  .lang-switch > summary:hover,
+  .lang-switch[open] > summary {
+    color: var(--accent, #00ff5a);
+    border-color: var(--accent, #00ff5a);
+  }
+  .ls-globe { opacity: 0.85; flex: none; }
+  .ls-chev { transition: transform 0.2s ease; flex: none; opacity: 0.7; }
+  .lang-switch[open] .ls-chev { transform: rotate(180deg); }
+
+  .ls-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 168px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--surface, #0b0d0c);
+    border: 1px solid var(--border, #262626);
+    border-radius: 8px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    z-index: 1200;
+  }
+  .ls-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    text-decoration: none;
+    color: var(--text, #cfd6d1);
+    white-space: nowrap;
+  }
+  .ls-item b {
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    color: var(--muted, #8a8a8a);
+    min-width: 20px;
+  }
+  a.ls-item:hover {
+    background: rgba(0, 255, 90, 0.08);
+    color: var(--accent, #00ff5a);
+  }
+  a.ls-item:hover b { color: var(--accent, #00ff5a); }
+  .ls-name { flex: 1; }
+  .ls-current {
+    cursor: default;
+    background: rgba(0, 255, 90, 0.06);
+    color: var(--accent, #00ff5a);
+  }
+  .ls-current b { color: var(--accent, #00ff5a); }
+  .ls-tick { color: var(--accent, #00ff5a); font-size: 0.7rem; }
+
+  /* Cover variant: fixed top-right over the cinematic page. */
+  .lang-cover {
+    position: fixed;
+    top: 18px;
+    right: 20px;
+    z-index: 11;
+    pointer-events: auto;
+  }
+  .lang-cover > summary {
+    background: rgba(6, 10, 8, 0.6);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border-color: #0a5a2c;
+    color: #00ff5a;
+    opacity: 0.9;
+  }
+  .lang-cover .ls-menu { background: rgba(6, 10, 8, 0.96); border-color: #0a5a2c; }
+  @media (max-width: 640px) {
+    .lang-cover { top: 12px; right: 12px; }
+    .lang-cover > summary { padding: 5px 8px; font-size: 0.6rem; }
+  }
+</style>
+
+<script>
+  /* Close any open switcher on outside click or Escape. */
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll<HTMLDetailsElement>("details[data-lang-switch][open]").forEach((d) => {
+      if (!d.contains(e.target as Node)) d.open = false;
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      document.querySelectorAll<HTMLDetailsElement>("details[data-lang-switch][open]").forEach(
+        (d) => (d.open = false),
+      );
+    }
+  });
+</script>

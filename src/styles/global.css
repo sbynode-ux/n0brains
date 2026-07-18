@@ -242,7 +242,9 @@ header .inner {
   padding: 0 24px;
   height: var(--header-height);
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  /* logo | rail | lang-switcher | burger */
+  grid-template-columns: 1fr auto auto auto;
+  column-gap: 16px;
   align-items: center;
 }
 
