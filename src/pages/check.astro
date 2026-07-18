@@ -14,7 +14,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         About to take a trade? Tell us what you're planning. We check the market
         around it — who's crowded on your side, what news is coming, whether your
         leverage survives a normal day — and give it a grade from A to F.
-        Every verdict is logged before its outcome and resolved at the selected horizon. Cross-grade performance stays withheld while calibration accrues.
+        Every verdict is logged before its outcome and resolved at the selected horizon — grade performance publishes on <a href="/proof">/proof</a> once it meets the same verification standard as everything else we publish.
       </p>
       <div class="ck-status" id="ck-status">
         <span class="ck-live-dot"></span>
@@ -186,7 +186,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <ol class="ck-list">
         <li>Type in the trade you're thinking about. Only the coin and long/short are required.</li>
         <li>We grade the conditions around it, A to F, and show every reason.</li>
-        <li>Come back after the horizon — the verdict resolves against what actually happened and stays logged. Grade-performance calibration remains withheld until its release gate passes.</li>
+        <li>Come back after the horizon — the verdict resolves against what actually happened and stays logged, permanently.</li>
       </ol>
     </div>
     <p class="ck-signoff">// every verdict is logged before the outcome</p>
@@ -573,8 +573,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       } else if (d.check_grade_status && d.check_grade_status.claims_published === false) {
         // API withholds cross-grade performance while calibration accrues —
         // say so plainly instead of implying a published record.
-        $("ck-trust").textContent = "grade calibration in progress — every verdict is " +
-          "logged and resolved, but grade-performance claims are withheld until the truth gate passes.";
+        $("ck-trust").textContent = "every verdict is logged and resolved against real prices; " +
+          "grade performance publishes on /proof once it clears our verification standard.";
         $("ck-trust").hidden = false;
       }
     }).catch(() => {});

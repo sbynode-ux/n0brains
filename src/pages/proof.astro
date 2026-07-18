@@ -177,15 +177,15 @@ try {
     </div>
     <p class="meta" id="equity-meta"></p>
 
-    <h2 class="proof-h2">Pre-trade calibration is in progress</h2>
+    <h2 class="proof-h2">Grade performance: published only once proven</h2>
     <p class="proof-sub">
-      Every <a href="/check">pre-trade check</a> verdict we hand out is logged the
-      moment we give it and resolved at its stated horizon against real prices.
-      Cross-grade performance is deliberately withheld until the deployed engine
-      clears the full weekly truth gate twice. Candidate-model results do not
-      unlock this section.
+      Every <a href="/check">pre-trade check</a> verdict is logged the moment it
+      is issued and resolved at its stated horizon against real prices. Grade-level
+      performance publishes here under the same standard as every other number on
+      this page: only after the deployed engine clears our weekly verification bar
+      on consecutive weeks. Nothing less unlocks this section.
     </p>
-    <p class="meta">No grade-performance claim is being made while calibration accrues.</p>
+    <p class="meta">Until that standard is met, no grade-performance claim is made — by design.</p>
 
     <p class="legal-updated" style="margin-top: 32px;">
       A type is shown as <strong>forward-return proven</strong> only when its
@@ -485,7 +485,7 @@ try {
       if (!cg || !cg.grades || !cg.grades.length) {
         const st = d.check_grade_status || {};
         wrap.innerHTML = (st.claims_published === false || st.status === "calibration_in_progress")
-          ? "<span class='meta'>grade calibration in progress — every check is logged and resolved, but grade-performance claims are withheld until the deployed truth gate passes</span>"
+          ? "<span class='meta'>every check is logged and resolved against real prices; grade performance publishes here once the deployed engine clears the verification standard</span>"
           : "<span class='meta'>no checks logged yet</span>";
         if (meta) meta.textContent = "";
         return;

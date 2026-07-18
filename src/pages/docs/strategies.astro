@@ -105,25 +105,25 @@ Rules:
     </p>
 
     <div class="card">
-      <h2 id="how-this-works">How this library works now</h2>
+      <h2 id="how-this-works">How this library works</h2>
       <p>
-        The old library published fixed take-profit / stop-loss configurations from a
-        historical backtest. Live forward-testing broke them — most positions closed on
-        time, not at target — so we took the page down rather than stand behind numbers
-        we couldn't defend. This rebuild makes that failure structurally impossible:
+        Every playbook is bound to the live forward record. Nothing on this page is a
+        backtest, a static configuration, or an opinion — a card exists only because
+        the measured record supports it, and it withdraws itself the moment the
+        record stops doing so:
       </p>
       <ul>
         <li><strong>Live-gated.</strong> A playbook is tradeable only while its signal cell passes the
           <a href="/proof">public gate</a> (positive excess vs BTC over the same window, 95% CI lower
           bound above zero, sufficient sample). Each card checks the gate when the page loads and
           flips to <em>stand down</em> on its own.</li>
-        <li><strong>Measured exits only.</strong> The published stats are measured holding to the stated
-          horizon — that is the only exit the record supports. We publish no TP/SL ladders: our live
-          exit corpus is still too small to defend one (the walk-forward exit tuner is literally in
-          <code>waiting</code> status). Frame risk with <a href="/docs#get-levels-coin">/levels</a> zones and
-          <a href="/check">/check</a>'s stop-geometry flags instead.</li>
-        <li><strong>Dated behavior notes.</strong> Prose findings below cite the forward ledger through
-          <strong>2026-07-17</strong> (entries since 2026-06-03, the current clean-measurement floor) and say so.
+        <li><strong>Measured exits only.</strong> Published stats are measured holding to the stated
+          horizon — the only exit the record currently supports. TP/SL ladders publish when the
+          live exit corpus is large enough to defend them, and not before. Frame risk with
+          <a href="/docs#get-levels-coin">/levels</a> zones and
+          <a href="/check">/check</a>'s stop-geometry flags.</li>
+        <li><strong>Dated behavior notes.</strong> Prose findings cite the forward ledger through
+          <strong>2026-07-17</strong> (entries since 2026-06-03, the current clean-measurement floor).
           Live numbers in the stat blocks supersede them.</li>
       </ul>
     </div>
