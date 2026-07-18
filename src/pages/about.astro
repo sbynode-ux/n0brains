@@ -3,8 +3,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 const steps = [
   {
-    n: "01", title: "Collect", tag: "30+ sources",
-    desc: "Over 30 active data sources scrape Telegram, RSS, blockchains, exchanges, government filings, and social media around the clock.",
+    n: "01", title: "Collect", tag: "live data lanes",
+    desc: "Dozens of active lanes monitor Telegram, RSS, blockchains, exchanges, official filings, market data, and social sources around the clock.",
   },
   {
     n: "02", title: "Classify", tag: "llm classify pool",
@@ -15,19 +15,19 @@ const steps = [
     desc: "The signal processor cross-references multiple sources. A whale alert backed by a funding rate spike and a news headline scores higher than any single source alone.",
   },
   {
-    n: "04", title: "Anchor", tag: "macro pulse · 07:00 utc",
-    desc: "Macro Pulse runs daily. It ingests the upcoming USD high-impact calendar — FOMC, CPI, NFP, PPI — plus 7 days of intel signals, and emits a directional bias for BTC and ETH. Trades that contradict a high-conviction macro call are downgraded or vetoed.",
+    n: "04", title: "Anchor", tag: "macro conditions",
+    desc: "The macro layer combines deterministic liquidity, dollar, rates, curve and volatility inputs with the USD high-impact calendar. Per-asset bias is emitted only when its supporting model is available; otherwise it is explicitly withheld.",
   },
   {
     n: "05", title: "Deliver", tag: "rest · ws · webhook · mcp",
-    desc: "Signals hit your system via REST API, WebSocket, or Webhook — within seconds of detection. Free tier gets a 15-minute delay. Pro gets real-time + Macro Pulse access.",
+    desc: "Signals hit your system via REST API, WebSocket, or Webhook. Free tier gets a delayed feed. Pro gets the full real-time surface.",
   },
 ];
 ---
 
 <BaseLayout
   title="about"
-  description="n0brains is a crypto signal API. 30+ watchers monitor Telegram, blockchains, exchanges, filings, and social around the clock; an LLM pipeline classifies, corroborates, and scores every event. You get the signal. You decide what to do with it."
+  description="n0brains is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, filings, market data, and social sources; an LLM pipeline classifies, corroborates, and scores each event."
 >
   <section class="about-page">
     <!-- Hero -->
@@ -36,7 +36,7 @@ const steps = [
       <p class="ab-kicker"><span class="ab-dash"></span><span data-scramble>about · the audit desk</span></p>
       <h1 class="ab-h1">RAW DATA IN.<br /><span class="accent">SIGNALS OUT.</span></h1>
       <p class="ab-lede">
-        <strong>n0brains</strong> is a crypto signal API. Over 30 watchers
+        <strong>n0brains</strong> is a market-intelligence API. Dozens of live lanes
         monitor Telegram, blockchains, exchanges, government filings, and social
         media around the clock. An LLM classification pool tags every event,
         cross-references across sources, and scores it for confidence — before
@@ -78,10 +78,10 @@ const steps = [
         <div class="ab-label">02 · why this exists</div>
       </div>
       <div class="ab-body ab-prose">
-        <p>The best crypto signals aren't locked behind $500/month paywalls or exclusive Discord groups. They're hiding in plain sight: on-chain flows, whale wallets, funding rates, government filings, a dozen free data sources.</p>
+        <p>Useful market context is often hiding in plain sight: on-chain flows, positioning, funding rates, scheduled events, and government filings.</p>
         <blockquote class="ab-quote">The edge isn't the data — it's connecting it fast enough to act.</blockquote>
-        <p>Most people can't watch a dozen feeds at once. Most people can't cross-reference a whale alert against a funding rate spike and a Senate committee vote in the 90 seconds before the market moves. A machine can — and then it scores the result, so you act on one number, not twelve tabs.</p>
-        <p><strong>Free-tier first.</strong> The pipeline is built on free and public data wherever possible — Alchemy, Etherscan, mempool.space, RSS, Telegram, exchange WebSockets, government filings. If a source goes down or starts charging, we replace it. The product is the synthesis, not the data.</p>
+        <p>Most people can't continuously cross-reference positioning, funding, liquidity, and an upcoming policy event. A machine can organize that context into one inspectable pre-trade conditions assessment.</p>
+        <p><strong>Free-tier first.</strong> The pipeline uses verified public data wherever practical — including Alchemy, Etherscan, RSS, exchange APIs, and government filings. Sources are monitored and retired when they stop contributing. The product is the synthesis, not any single feed.</p>
       </div>
     </div>
 

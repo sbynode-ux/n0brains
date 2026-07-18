@@ -5,12 +5,12 @@ import MonoChip from "../components/MonoChip.astro";
 /* ---------- Source taxonomy (lives here so it's editable in one place) ---------- */
 /* Ordered by market-signaling significance — strongest directional / timing edge first. */
 const sources = [
-  { chip: "MP",  title: "Macro Pulse",            desc: "Daily BTC + ETH directional bias. A deterministic macro composite — net liquidity, dollar (DXY), real yields, the curve, VIX (FRED data) — anchors the regime, synthesised with the CPI/FOMC/NFP/PPI calendar and 7d intel signals: regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive." },
+  { chip: "MP",  title: "Macro Conditions",         desc: "A daily deterministic macro composite — net liquidity, dollar (DXY), real yields, the curve and VIX — anchors the regime alongside the CPI/FOMC/NFP/PPI calendar. Per-asset bias is shown only when the supporting model is available; otherwise it is explicitly withheld." },
   { chip: "WH",  title: "Whale Tracking",         desc: "Hyperliquid leaderboard consensus. When top traders pile into the same side, we detect it — and like every signal here, its live track record is published on /proof." },
-  { chip: "$",   title: "Funding & Liquidations", desc: "Binance funding extremes and real-time liquidation cascades via WebSocket, plus multi-venue open-interest momentum from Coinglass snapshots. Timing signal for reversals and continuations." },
+  { chip: "$",   title: "Funding & Liquidations", desc: "Multi-venue funding and open-interest positioning plus OKX public liquidation prints. Timing context for reversals and continuations." },
   { chip: "DLV", title: "Deleverage Capitulation", desc: "A mechanical, non-directional edge: when price and open interest fall together, positions are being force-unwound — not informed selling. The fire-sale exhausts and price bounces. We measure the price + OI deltas (data most feeds collect but never combine) and flag the capitulation low. Validated on our own forward returns, not folklore — track record on /proof." },
   { chip: "LIQ", title: "DEX Liquidation Map",    desc: "Our own liquidation map built from real on-chain DEX perp positions (Hyperliquid + GMX) — exact liquidation prices, not estimates. Clusters near price mark magnet / cascade levels; we use them to place stops and targets, not to pick a direction (liquidity predicts volatility, not which way)." },
-  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH/BTC transfers to/from exchanges via Alchemy + mempool.space WebSockets. Positioning context and capital-concentration tracking — directional whale reads come from Hyperliquid leaderboard positions." },
+  { chip: "ETH", title: "On-Chain Flows",         desc: "Large ETH exchange-wallet transfers via Alchemy, alongside live whale-positioning sources. Positioning context and capital-concentration tracking — directional whale reads come from Hyperliquid leaderboard positions." },
   { chip: "L/S", title: "L/S Ratios",             desc: "Bybit, Binance, and Gate.io positioning data. Detect extreme crowding before the reversal." },
   { chip: "OPT", title: "Options Flow",           desc: "Deribit options positioning — put/call open-interest ratio, max-pain magnets, and large smart-money block trades on BTC + ETH. Surfaces institutional positioning the crowd-sentiment feeds miss." },
   { chip: "ETF", title: "ETF Flows",              desc: "US spot BTC + ETH + SOL ETF daily net flows (SoSoValue). Institutional capital context — we publish it as context, not a directional call: our own backtest found ETF net flow is a coincident/lagging demand print, not a leading signal (SOL inflows were even contrarian)." },
@@ -22,7 +22,7 @@ const sources = [
   { chip: "FC",  title: "Farcaster",              desc: "Crypto-native social monitoring on Farcaster channels — our highest trades-per-signal social source in the live source audit." },
   { chip: "CMC", title: "CMC & Macro",            desc: "CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL shifts. Regime context rather than a direct trade trigger." },
   { chip: "LP",  title: "Exchange Listings",      desc: "Real CEX listing catalysts — Binance & Bybit launchpads plus new spot-market detection on Binance, Upbit (Korea / kimchi-premium), and OKX. Tracks coins getting actual exchange access, not memecoin launch spam." },
-  { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves — plus congressional stock-trade disclosures. No paid APIs." },
+  { chip: "GOV", title: "Policy & Regulatory",    desc: "Official government and regulatory RSS — SEC, Treasury, congressional, and agency sources monitored for crypto-relevant policy moves. No paid APIs." },
   { chip: "DEX", title: "DEX Screener",           desc: "DexScreener trending and boosted-token feed — early on-chain discovery and token activity. Discovery context, non-directional." },
   { chip: "X",   title: "X / Curated Accounts",   desc: "A budget-capped X (Twitter) feed of research-vetted directional analysts and on-chain trackers — Arthur Hayes, Ki Young Ju, Pentoshi, EmberCN, Lookonchain, WuBlockchain, and more — plus official exchange listing and hack feeds." },
   { chip: "MVRV", title: "On-Chain Valuation",    desc: "MVRV, exchange in/outflows + reserves, and active addresses from Coin Metrics (BTC + ETH). Net outflow / falling exchange reserves = self-custody accumulation; MVRV maps cycle profit vs froth. Feeds the macro composite's on-chain leg." },
@@ -36,11 +36,11 @@ const proFeatures = [
   "600 requests / minute",
   "<strong>Real-time</strong> signals — no delay",
   "REST + WebSocket + Webhooks + <strong><a href=\"/docs/mcp\">MCP server</a></strong>",
-  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (19 tools, Bearer auth)",
+  "<strong>MCP endpoint</strong> — drop into Claude Desktop, Cursor, Cline (Bearer auth)",
   "Full source &amp; channel detail",
   "Whale tracking &amp; on-chain flows",
   "Corroboration scoring",
-  "<strong>Macro Pulse</strong> — daily + weekly BTC/ETH bias",
+  "<strong>Macro conditions</strong> — daily regime + calendar risk",
   "<strong>Narrative heatmap</strong> — 1h/4h/24h signal momentum per asset",
   "<strong>Semantic search</strong> — find similar signals by meaning",
   "<strong>Trust scoring</strong> — contract risk + rug probability per token",
@@ -651,29 +651,25 @@ const computeLayers = [
         <div class="hero-glow hero-glow-b"></div>
       </div>
       <p class="hero-eyebrow-line">
-        <span class="live-dot"></span><span data-scramble>Live Signal Feed Active</span>
+        <span class="live-dot"></span><span data-scramble>Pre-trade conditions engine live</span>
       </p>
       <h1>
-        <span class="hl"><span class="hli">SIGNALS THAT</span></span>
-        <span class="hl"><span class="hli accent">PROVE</span></span>
-        <span class="hl"><span class="hli">THEIR EDGE</span></span>
+        <span class="hl"><span class="hli">CHECK THE TRADE</span></span>
+        <span class="hl"><span class="hli accent">BEFORE</span></span>
+        <span class="hl"><span class="hli">YOU TAKE IT</span></span>
       </h1>
       <p class="lede">
-        We measure every signal type against real post-signal price action and flag a call <code>trade_signal</code> only when that type's <a href="/proof">live forward-return record beats BTC over the same window (excess return / alpha) AND is profitable on its own (95% CI lower bound above zero)</a>, judged per direction — and we publicly demote our own weak signals. Every event is machine-classified, cross-corroborated, and scored with a <strong>calibrated</strong> confidence, anchored by <strong>Macro Pulse</strong>, our daily BTC + ETH directional bias. Pipe it into your agent or alert system via <strong>REST API</strong>, <strong>WebSocket</strong>, <strong>Webhook</strong>, <strong>MCP</strong>, or pay-per-call <strong>x402</strong>.
+        Submit the trade you are considering. n0brains checks positioning crowding,
+        scheduled event risk, liquidity, volatility, market structure, stop geometry
+        and conflicts across the live evidence stack, then returns a graded conditions
+        assessment with explicit flags and falsifiers. It is context for your decision,
+        not a recommendation or an automated trade instruction.
       </p>
       <div class="cta-row">
-        <a href="/signup" class="btn btn-primary">Start Free →</a>
-        <a href="/proof" class="btn btn-secondary">See the proof ↗</a>
+        <a href="/check" class="btn btn-primary">Check a trade →</a>
+        <a href="/signup" class="btn btn-secondary">Create free account ↗</a>
         <a href="/docs/" class="btn btn-secondary">API Docs ↗</a>
       </div>
-
-      <!-- Live proof strip — pulls the same /proof endpoint the scoreboard renders,
-           so the above-the-fold claim can never exceed what we actually prove. -->
-      <a id="proof-strip" class="proof-strip" href="/proof" aria-label="See the live win-rate scoreboard">
-        <span class="proof-strip-dot"></span>
-        <span class="proof-strip-text">loading live win-rate…</span>
-        <span class="proof-strip-cta">live scoreboard →</span>
-      </a>
 
       <div id="scroll-hint" class="scroll-hint" aria-hidden="true">
         <span class="sh-label">scroll</span>
@@ -686,7 +682,7 @@ const computeLayers = [
       <div class="ticker-track">
         {[0, 1].map(() => (
           <span class="ticker-seq">
-            {["whale", "whale_position", "funding", "liquidation", "hack", "listing", "sentiment", "regulatory", "price", "macro", "macro_flow", "macro_pulse", "30+ sources", "10 intel layers", "live forward-returns", "REST · WS · MCP · x402"].map((t) => (
+            {["whale", "whale_position", "funding", "liquidation", "hack", "listing", "sentiment", "regulatory", "price", "macro", "macro_flow", "live data lanes", "cross-asset context", "live forward-returns", "REST · WS · MCP · x402"].map((t) => (
               <span class="ticker-item"><span class="ticker-dot"></span>{t}</span>
             ))}
           </span>
@@ -935,7 +931,7 @@ const computeLayers = [
         "name": "What is n0brains?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "n0brains is an AI-powered crypto intelligence platform. It ingests from 30+ sources — whales, funding, liquidations, on-chain flows, options flow, ETF + stablecoin flows, security feeds, news, macro calendar — classifies every event, cross-corroborates across sources, and delivers scored signals via REST API, WebSocket, Webhook, or MCP server (for Claude Desktop, Cursor, Cline). Built for autonomous trading agents."
+          "text": "n0brains is an AI-powered market-intelligence platform. Dozens of live lanes cover whales, funding, liquidations, on-chain flows, options, ETF and stablecoin flows, security feeds, news and the macro calendar. Events are classified, cross-referenced, and delivered through REST, WebSocket, Webhook, MCP, and x402 surfaces."
         }
       },
       {
@@ -951,7 +947,7 @@ const computeLayers = [
         "name": "What does the Pro tier include?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Pro is $39.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server (19 read-only tools for Claude Desktop / Cursor / Cline), full source and channel detail, whale tracking, on-chain flows, Macro Pulse daily BTC/ETH bias, narrative heatmap, semantic search, trust scoring, manipulation detection, wallet DNA classification, the BTC/ETH market-state consensus endpoint, and a real-position DEX liquidation map (Hyperliquid + GMX)."
+          "text": "Pro is $39.99/month. It includes 600 requests per minute, real-time signals with no delay, REST + WebSocket + Webhooks + MCP server access, full source and channel detail, whale tracking, on-chain flows, daily macro conditions, narrative heatmap, semantic search, trust scoring, manipulation detection, wallet DNA classification, market-state context, and a real-position DEX liquidation map (Hyperliquid + GMX)."
         }
       },
       {
@@ -964,10 +960,10 @@ const computeLayers = [
       },
       {
         "@type": "Question",
-        "name": "What is Macro Pulse?",
+        "name": "What are macro conditions?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Macro Pulse is n0brains' daily directional bias for BTC and ETH. Generated at 07:00 UTC daily, it synthesises the upcoming high-impact macro calendar (FOMC, CPI, NFP, PPI) with the last 7 days of intel signals into a single regime call — plus per-asset bias, conviction score, key levels, and invalidation condition. A deeper 30-day review runs every Sunday."
+          "text": "The daily macro report combines a deterministic liquidity/rates/volatility composite with the upcoming high-impact calendar and recent intel into a regime and risk-context read. Per-asset bias is shown only when the supporting model is available; otherwise it is explicitly withheld."
         }
       },
       {

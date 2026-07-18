@@ -89,9 +89,9 @@ const restOneLiner =
 `Use the n0brains API at https://api.n0brains.com with header X-API-Key: ${KEY}
 It returns scored crypto intelligence signals. Before answering any market
 question, GET /signals (filter with ?asset=BTC&signal_type=whale&urgency=high)
-and cite what you find. Trust the "conviction" field: strong > notable > watch
-> none — only "strong" has cleared our forward-return bar. Analysis, not
-financial advice — never place trades.`;
+and cite what you find. Read the "conviction" field: strong > notable > watch
+> none — an evidence-strength label, not a directive or probability. Analysis,
+not financial advice — never place trades.`;
 
 // ── Prompt library (jobs for a connected agent) ───────────────────────
 const checkFirst =
@@ -114,9 +114,9 @@ It returns a graded conditions assessment:
 
 Read the grade AND the reasons back to me. A "grade" describes the
 CONDITIONS around the trade — it is analysis, never a directive to trade.
-Every grade is logged and scored at its horizon; the public track record
-is at https://n0brains.com/proof (split by engine version). Free 3 checks
-a day. Never place the trade yourself.`;
+Every verdict is logged before its outcome and resolved at its horizon.
+Cross-grade performance remains withheld while the deployed truth gate
+accrues. Free 3 checks a day. Never place the trade yourself.`;
 
 const tradeAware =
 `You are my crypto research assistant. You have the n0brains API:
@@ -125,10 +125,12 @@ const tradeAware =
 
 Before answering any "should I buy/sell/hold X" question, ALWAYS:
   1. GET /signals?asset=<COIN>  — read direction, conviction, score, summary.
-     conviction: strong > notable > watch > none. Only "strong" is tradeable grade.
+     conviction: strong > notable > watch > none — an evidence-strength label,
+     not a directive or probability.
   2. GET /levels/<COIN>          — nearest support/resistance (as zones, with
      polarity-flip tracking) for entry/stop framing.
-  3. GET /macro                  — current BTC/ETH regime + bias for context.
+  3. GET /macro                  — current regime + calendar risk; per-asset
+     bias only when supported.
 
 Then give a structured read: bias, the signals behind it, key levels, and what
 would invalidate it. End with "Analysis only, not financial advice." Never
@@ -137,10 +139,11 @@ recommend a position size or leverage, and never execute a trade.`;
 const macroBrief =
 `Each morning, build me a crypto macro brief from the n0brains API
 (https://api.n0brains.com, header X-API-Key: ${KEY}):
-  1. GET /macro            — BTC + ETH bias, regime, key levels, calendar risks.
+  1. GET /macro            — regime, calendar risks, and any supported asset bias.
   2. GET /rotation         — is capital rotating into alts or into BTC?
   3. GET /signals?urgency=high&limit=10  — the day's highest-urgency events.
-Summarize in 5 bullets: regime, BTC bias, ETH bias, rotation read, top catalyst.
+Summarize in 5 bullets: regime, any supported asset bias, calendar risk,
+rotation read, top catalyst. Never invent a bias the API withheld.
 Append the calendar_risks from /macro. Analysis only, not financial advice.`;
 
 const tokenSafety =
@@ -169,7 +172,7 @@ const rotationRebal =
   1. GET /rotation         — regime is "into_alts", "into_btc", or "neutral",
                              with a rotation_score for strength.
   2. GET /correlation?vs=BTC  — which assets move WITH vs INDEPENDENT of BTC.
-  3. GET /macro            — confirm the regime read against macro bias.
+  3. GET /macro            — confirm the regime read against macro conditions.
 If regime=into_alts, surface low-BTC-correlation names as the rotation candidates;
 if into_btc, flag alts as the funding source; if neutral, say so and stand down.
 This is a heuristic regime read, not a rebalancing instruction — analysis only.`;
@@ -187,7 +190,7 @@ and which side has the on-chain/flow evidence. Analysis only, not financial advi
 const promptCards = [
   { id: "job-checkfirst", title: "Ask n0brains first — pre-trade check", sub: "Before any trade, POST /check and get a graded A–F read of the conditions — crypto and tokenized stocks. The flagship.", code: checkFirst },
   { id: "job-research",   title: "Market-aware research assistant", sub: "Makes an agent check signals, levels, and regime before answering any market question.", code: tradeAware },
-  { id: "job-macro",      title: "Daily macro brief", sub: "A morning routine: regime, BTC/ETH bias, rotation, top catalysts.", code: macroBrief },
+  { id: "job-macro",      title: "Daily macro brief", sub: "A morning routine: regime, calendar risk, rotation, and any supported asset bias.", code: macroBrief },
   { id: "job-safety",     title: "Token safety screen", sub: "Screen any token for honeypot / rug risk before touching it.", code: tokenSafety },
   { id: "job-liqhunt",    title: "Liquidation-magnet hunter", sub: "Find where leveraged positions get flushed — which side is heavier and pulls price.", code: liqHunt },
   { id: "job-rotation",   title: "Rotation / rebalance scout", sub: "Is capital flowing into alts or into BTC? Surface the rotation candidates.", code: rotationRebal },
@@ -446,8 +449,9 @@ const howToJsonLd = JSON.stringify({
           <p>How to read it: the <strong>grade</strong> describes conditions around the trade, never a directive.
           <strong>flags</strong> are what's working against it, <strong>falsifiers</strong> are what to watch for the
           read to die, <strong>unchecked</strong> is what it couldn't assess from your inputs (give it a stop and a
-          target and it grades those too). Every check is logged and resolved at its horizon — the public calibration
-          record lives at <a href="/proof">/proof</a>. Free keys get 3 checks a day.</p>
+          target and it grades those too). Every check is logged before its outcome and resolved at its horizon;
+          cross-grade performance stays withheld on <a href="/proof">/proof</a> while the deployed calibration gate
+          accrues. Free keys get 3 checks a day.</p>
         </div>
 
         <!-- ── PROMPT LIBRARY ──────────────────────────────────────── -->

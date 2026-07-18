@@ -27,7 +27,7 @@ const {
 const url        = canonicalURL ?? Astro.url;
 const navPath    = Astro.url.pathname;
 const siteUrl    = "https://n0brains.com";
-const fullTitle  = homepage ? "n0brains — Crypto signals that prove their own edge" : `${title} — n0brains`;
+const fullTitle  = homepage ? "n0brains — Check the trade before you take it" : `${title} — n0brains`;
 const absoluteOg = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
 const year       = new Date().getFullYear();
 
@@ -47,7 +47,7 @@ const orgLd = {
     "https://github.com/sbynode-ux/n0brains-mcp",
   ],
   description:
-    "Crypto signal API for autonomous trading agents. 10+ sources, machine-classified, delivered via REST, WebSocket, or webhook.",
+    "Pre-trade conditions intelligence for people and agents, delivered via web, REST, WebSocket, webhook, MCP, and x402.",
 };
 
 const breadcrumbLd = {
@@ -66,7 +66,7 @@ const softwareAppLd = homepage ? {
   "@type": "SoftwareApplication",
   name: "n0brains",
   url: siteUrl,
-  description: "AI-powered crypto intelligence platform. Real-time signals from whales, funding, on-chain flows, news, macro, and congress trades — fused, scored, and delivered via REST, WebSocket, or Webhook API.",
+  description: "Pre-trade conditions assessment covering crowding, event risk, liquidity, volatility, market structure, and stop geometry, delivered through web and agent APIs.",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   offers: [
@@ -77,12 +77,11 @@ const softwareAppLd = homepage ? {
     "Real-time whale tracking",
     "Funding and liquidation alerts",
     "On-chain flows",
-    "Macro Pulse daily BTC and ETH directional bias",
+    "Daily macro conditions and event-risk context",
     "Manipulation detection",
     "Narrative heatmap",
     "Trust and rug scoring",
     "Semantic signal search",
-    "Congress trades signal",
     "Wallet DNA classification",
     "Market-state consensus endpoint (BTC + ETH)",
     "Real-position DEX liquidation map (Hyperliquid + GMX)",
@@ -143,6 +142,32 @@ const softwareAppLd = homepage ? {
     <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
     <script type="application/ld+json" set:html={JSON.stringify(breadcrumbLd)} />
     {softwareAppLd && <script type="application/ld+json" set:html={JSON.stringify(softwareAppLd)} />}
+    <script is:inline>
+      (() => {
+        const KEY = "n0brains_first_touch_v1";
+        const TTL = 30 * 24 * 60 * 60 * 1000;
+        try {
+          const prior = JSON.parse(localStorage.getItem(KEY) || "null");
+          if (prior && Date.now() - Number(prior.captured_at || 0) < TTL) return;
+          const q = new URLSearchParams(location.search);
+          let referrer = null;
+          if (document.referrer) {
+            const ref = new URL(document.referrer);
+            if (ref.hostname !== location.hostname) referrer = ref.origin;
+          }
+          localStorage.setItem(KEY, JSON.stringify({
+            utm_source: q.get("utm_source"),
+            utm_medium: q.get("utm_medium"),
+            utm_campaign: q.get("utm_campaign"),
+            utm_content: q.get("utm_content"),
+            utm_term: q.get("utm_term"),
+            signup_referrer: referrer,
+            landing_path: location.pathname,
+            captured_at: Date.now(),
+          }));
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <a href="#main" class="skip-link">Skip to content</a>

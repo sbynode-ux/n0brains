@@ -1,6 +1,6 @@
 ---
 name: n0brains-signals
-description: Use this skill to give your agent live crypto market intelligence — corroborated trading signals, support/resistance levels, and session opens — from the n0brains Signals API (https://api.n0brains.com). Invoke it whenever an agent needs to make a market-aware decision: before opening a position, sizing a trade, exiting on news, or reacting to whale flows. Requires an n0brains API key.
+description: Use this skill to check a proposed trade against live crowding, event risk, liquidity, volatility, levels and stop geometry before acting, then inspect supporting market intelligence from the n0brains API. Requires an n0brains API key.
 user-invocable: true
 ---
 
@@ -28,7 +28,7 @@ Get a free key at https://n0brains.com/signup — free tier is 60 req/min, 15-mi
 
 Reach for these tools whenever the user — or the task you've been given — needs to make a *market-aware* decision:
 
-- Before opening or closing a position → `get_signals` filtered to the asset
+- Before opening a position → MCP `check_trade` or REST `POST /check` first
 - When monitoring news / regulatory risk → `get_signals` with `signal_type=regulatory`
 - When deciding entry / stop levels → `get_levels` for nearest S/R
 - When timing entries to liquidity → `get_market_opens` for session prices
@@ -58,11 +58,25 @@ curl https://api.n0brains.com/signals -H "X-API-Key: $NB_API_KEY"
 | Free | 60 req/min | 15 min | ❌ | summary only — no `sources`, `source`, `channel` |
 | Pro  | 600 req/min | real-time | ✅ | full detail incl. corroboration trail |
 
-If the user appears to be running real-time trades on the Free tier, **say something** — it's a trading hazard, not a feature gap. Pricing: https://n0brains.com/#pricing. If `stream_signals` returns `403`, they need to upgrade — don't retry.
+If the user appears to be running real-time trades on the Free tier, **say something** — it's a trading hazard, not a feature gap. Pricing: https://n0brains.com/pricing. If `stream_signals` returns `403`, they need to upgrade — don't retry.
 
 ---
 
-## The five tools
+## Start with the pre-trade check
+
+For a proposed trade, send the actual intent before opening it:
+
+```bash
+curl -X POST https://api.n0brains.com/check \
+  -H "X-API-Key: $NB_API_KEY" -H "Content-Type: application/json" \
+  -d '{"asset":"BTC","side":"long","entry":65000,"stop":63500,"target":68000,"leverage":3,"horizon_hours":24}'
+```
+
+On MCP, call `check_trade` with the same fields. Treat the grade as a conditions
+assessment, not permission to trade. Read the flags and falsifiers; the user or
+their execution agent keeps the decision.
+
+## Core REST calls
 
 All are HTTP calls to `https://api.n0brains.com`. Responses are JSON. Timestamps are Unix epoch (seconds).
 

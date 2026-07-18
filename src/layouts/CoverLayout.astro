@@ -20,7 +20,7 @@ const orgLd = {
     "https://bsky.app/profile/n0brains.com",
     "https://github.com/sbynode-ux/n0brains-mcp",
   ],
-  description: "AI-powered crypto intelligence — corroborated, scored signals for autonomous trading agents over REST, WebSocket, Webhooks, MCP, x402 and CLI.",
+  description: "Pre-trade conditions intelligence for people and agents, delivered via web, REST, WebSocket, webhook, MCP, and x402.",
 };
 const siteLd = {
   "@context": "https://schema.org",
@@ -58,6 +58,32 @@ const siteLd = {
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
     <script type="application/ld+json" set:html={JSON.stringify(orgLd)} />
     <script type="application/ld+json" set:html={JSON.stringify(siteLd)} />
+    <script is:inline>
+      (() => {
+        const KEY = "n0brains_first_touch_v1";
+        const TTL = 30 * 24 * 60 * 60 * 1000;
+        try {
+          const prior = JSON.parse(localStorage.getItem(KEY) || "null");
+          if (prior && Date.now() - Number(prior.captured_at || 0) < TTL) return;
+          const q = new URLSearchParams(location.search);
+          let referrer = null;
+          if (document.referrer) {
+            const ref = new URL(document.referrer);
+            if (ref.hostname !== location.hostname) referrer = ref.origin;
+          }
+          localStorage.setItem(KEY, JSON.stringify({
+            utm_source: q.get("utm_source"),
+            utm_medium: q.get("utm_medium"),
+            utm_campaign: q.get("utm_campaign"),
+            utm_content: q.get("utm_content"),
+            utm_term: q.get("utm_term"),
+            signup_referrer: referrer,
+            landing_path: location.pathname,
+            captured_at: Date.now(),
+          }));
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <slot />

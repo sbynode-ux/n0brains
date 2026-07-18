@@ -1,6 +1,6 @@
 # n0brains — Full Reference
 
-> AI-powered crypto intelligence platform. Machine-classified signals from 30+ sources — whales, funding, liquidations, on-chain flows, options/ETF/stablecoin flows, news, macro, congress trades — fused, scored, and delivered via one REST/WebSocket/Webhook/MCP/x402 API. Built for autonomous trading agents.
+> Pre-trade conditions intelligence for people and agents — crowding, event risk, liquidity, volatility, structure, levels and stop geometry over REST, WebSocket, Webhook, MCP and x402.
 
 ## What it is
 
@@ -20,10 +20,6 @@ Most crypto signal services ask you to trust a backtest. n0brains publishes its 
 - **Market-state gauge** (/charts/market-state) — a live bull/bear/neutral directional consensus per coin, built from the proven signal voters and regime-vetoed. BTC + ETH free; Pro unlocks the drivers, invalidation level, and liquidation-map target.
 - **Liquidation heatmap** (/charts/liqmap) — REAL on-chain DEX positions (Hyperliquid + GMX) binned into liquidation clusters over time, plus a modeled CEX estimate from open-interest history, with price candles overlaid. Real on-chain data, free — versus other tools charging hundreds a month.
 - **Support/resistance** (/charts/levels) — order-book + pivot levels overlaid on live price; BTC/ETH free.
-
-## The Agent Race — https://n0brains.com (live 24/7 stream)
-
-20 trading bots, each a distinct strategy (contrarian, momentum, hack-sniper, macro-bias, etc.), compete live around the clock paper-trading the same real n0brains signal stream. The leaderboard, equity curves, and a live commentator run continuously on a public stream. It's an always-on transparency layer — a public proof the signals work, and a way to surface which rule sets actually win before recommending anything.
 
 ## Delivery channels for agents
 
@@ -49,20 +45,19 @@ Sign up: https://n0brains.com/signup
 
 ## Data Sources
 
-30+ watchers run continuously across the categories below (a representative selection — whales, funding, liquidations, on-chain flows, options/ETF/stablecoin flows, congress + 13F filings, security/hack feeds, social, news, macro):
+30+ watchers run continuously across the categories below (a representative selection — whales, funding, liquidations, on-chain flows, options/ETF/stablecoin flows, official policy/regulatory feeds + 13F filings, security/hack feeds, social, news, macro):
 
 | Code | Source | Description |
 |------|--------|-------------|
-| MP | Macro Pulse | Daily BTC + ETH directional bias. CPI, FOMC, NFP, PPI calendar synthesised with 7d intel signals — regime call, conviction, key levels, invalidation. Sunday weekly 30d deep-dive. |
+| MP | Macro Conditions | Daily deterministic regime and calendar-risk context. Per-asset bias is withheld when its supporting model is unavailable. |
 | WH | Whale Tracking | Hyperliquid leaderboard consensus — when top traders pile into the same side, we detect it. |
-| $ | Funding & Liquidations | Binance funding extremes + real-time liquidation cascades via WebSocket. |
+| $ | Funding & Liquidations | Multi-venue funding/open-interest positioning plus OKX public liquidation prints. |
 | ETH | On-Chain Flows | Large ETH/BTC transfers to/from exchanges. |
 | L/S | L/S Ratios | Bybit, Binance, Gate.io positioning data. |
 | SR | S/R Levels | Real-time support/resistance from the Hyperliquid order book. |
 | TG | Telegram | WatcherGuru, ZachXBT Investigations, and others. |
 | RSS | News & RSS | CoinDesk, Decrypt, CoinTelegraph, Reddit, Trump's Truth Social. |
 | CMC | CMC & Macro | CoinMarketCap price alerts, trending coins, Fear & Greed Index, DeFi TVL. |
-| 🏛️ | Congress Trades | CapitolExposed API — every crypto trade disclosed by US Congress members, conflict-scored. |
 
 ---
 
@@ -116,7 +111,7 @@ Sign up: https://n0brains.com/signup
 | GET | /state | Pro | Unified market state — regime + composite, macro pack, proven types, per-coin rollup |
 | GET | /state/{coin} | Pro | One-call per-coin view — price, market-state, levels, indicators, liqmap target |
 | GET | /state/{coin}/brief | Pro | LLM-written prose analysis over /state, grounded only in our data |
-| GET | /macro | API Key | Macro Pulse — latest BTC + ETH directional bias |
+| GET | /macro | API Key | Daily macro conditions/regime; per-asset bias when available |
 | GET | /macro?history=N | Pro | Last N macro reports (max 30) |
 | GET | /performance | None | Public win rate / PnL stats |
 | GET | /proof | None | Forward-return scoreboard — per-type win rate, excess vs BTC, CI, proven flag |
@@ -147,7 +142,7 @@ Sign up: https://n0brains.com/signup
 | Param | Type | Values |
 |-------|------|--------|
 | asset | string | Ticker, e.g. BTC, ETH, SOL |
-| signal_type | string | regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, other. (unlock and research are returned but NOT filterable here — filtering on them returns 400.) |
+| signal_type | string | regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, unlock, research, other |
 | direction | string | bullish, bearish, neutral |
 | urgency | string | high, medium, low |
 | limit | int | 1–200 (default 50) |
@@ -160,7 +155,7 @@ Sign up: https://n0brains.com/signup
 |-------|------|-------------|
 | id | int | Unique signal ID |
 | asset | string\|null | Ticker or null if market-wide |
-| signal_type | string | One of the signal_type values above, plus `unlock` and `research` (returned but not filterable via /signals) |
+| signal_type | string | One of the filterable signal_type values above |
 | direction | string | bullish / bearish / neutral |
 | urgency | string | high / medium / low |
 | summary | string | ≤100 char description |
@@ -188,21 +183,24 @@ Sign up: https://n0brains.com/signup
 | source | string | Pro only — primary source name |
 | channel | string | Pro only — specific channel/feed |
 
-### GET /macro — Macro Pulse Fields
+### GET /macro — Macro Conditions
+
+The response is wrapped as `{"current": {...}}`; Pro callers may request
+`?history=N`. Per-asset direction is explicitly null when supporting samples
+are insufficient.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| regime | string | risk-on / risk-off / range / squeeze |
-| regime_reason | string | ≤120 char rationale |
-| btc.bias / eth.bias | string | bullish / bearish / neutral |
-| btc.conviction / eth.conviction | float | 0.0–1.0. ≥0.7 = very high. ≥0.85 = veto-grade. |
-| btc.reason / eth.reason | string | Primary driver, ≤140 chars |
-| btc.key_levels / eth.key_levels | string | Macro pivots |
-| btc.invalidation / eth.invalidation | string | What flips the call |
-| calendar_risks | array | Top 1–3 upcoming events that could flip bias |
-| window_days | int | Lookback window (7 daily / 30 weekly) |
-| horizon | string | Forward horizon label |
-| generated_at | string | ISO-8601 UTC. Stale after 36h — refetch. |
+| current.regime | string | risk-on / risk-off / range / squeeze |
+| current.regime_reason | string | Rationale when available |
+| current.btc.bias / current.eth.bias | string\|null | bullish / bearish / neutral, or null when withheld |
+| current.btc.conviction / current.eth.conviction | float\|null | Model-stated 0.0–1.0 confidence, or null; not calibrated realized probability |
+| current.btc.status / current.eth.status | string | available / insufficient data / model unavailable |
+| current.btc.sample_size / current.eth.sample_size | int | Supporting live sample count |
+| current.calendar_risks | array | Upcoming scheduled event risks |
+| current.window_days | int | Lookback window |
+| current.horizon | string | Forward horizon label |
+| current.generated_at | string | ISO-8601 UTC. Stale after 36h — refetch. |
 
 Generated: 07:00 UTC daily. Deep-dive: Sundays 22:00 UTC.
 

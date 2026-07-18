@@ -29,7 +29,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # ── Config ────────────────────────────────────────────────────────────────────
-API_KEY = "intel_sk_8bfa886016e4bf144002c9df2aa7d67a713ef75a98bbb184fdc071bad9c4fef8"
+API_KEY = os.environ.get("N0BRAINS_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit(
+        "N0BRAINS_API_KEY is required to generate authenticated intel content."
+    )
 BASE_URL = "https://api.n0brains.com"
 CONTENT_DIR = Path(__file__).resolve().parent.parent / "src" / "content" / "intel"
 SITE_DIR = Path(__file__).resolve().parent.parent
@@ -74,7 +78,11 @@ def fetch_market_opens() -> dict:
 
 def fetch_macro() -> dict:
     """Fetch latest Macro Pulse."""
-    return api_get("/macro/latest")
+    data = api_get("/macro")
+    current = data.get("current") if isinstance(data, dict) else None
+    if not isinstance(current, dict):
+        raise RuntimeError("Macro API response is missing a valid current report.")
+    return current
 
 
 def fetch_performance() -> dict:
@@ -202,7 +210,7 @@ chr(10).join(f"{i+1}. **{s['signal_type'].title()}**: {s['summary'][:100]}" for 
 
 ## Get Real-Time Signals
 
-This data is sourced from **n0brains.com Signals Pro**, which ingests from 10+ sources (Telegram, Twitter/X, news RSS, government feeds, CoinMarketCap, Binance funding & liquidations, Hyperliquid order books, whale tracking, and more) and fuses them into scored, corroborated signals with entry, stop-loss, and take-profit levels.
+This data is sourced from **n0brains.com Signals Pro**, which connects live Telegram, X, news RSS, official policy feeds, market data, multi-venue funding/liquidations, Hyperliquid order books and on-chain flows, then fuses the evidence into scored signals.
 
 ```bash
 curl -H "X-API-Key: your_key" https://api.n0brains.com/signals
@@ -286,10 +294,10 @@ Key support and resistance levels for the three majors, computed from Hyperliqui
 
 ## How to Use These Levels
 
-- **Strength 1.0**: The most reliable level — the market has consistently respected it. High-probability reversal zone.
-- **Strength 0.6-0.8**: Moderately reliable — use as secondary confirmation.
-- **Strength 0.2-0.4**: Weak level — may break easily. Use as a warning, not a trade trigger.
-- **Touches**: Each touch reinforces the level. A level with 5+ touches is battle-tested.
+- **Strength 1.0**: Highest score in this level model; it is not a reversal probability.
+- **Strength 0.6-0.8**: Mid-to-high modeled structure score.
+- **Strength 0.2-0.4**: Lower modeled structure score; the level may be less established.
+- **Touches**: Historical interactions with the level, reported as context rather than a guarantee it will hold.
 
 ## Get Real-Time S/R Levels
 
@@ -423,13 +431,15 @@ def generate_macro_pulse() -> str:
     regime = macro.get("regime", "unknown")
     btc = macro.get("btc", {})
     eth = macro.get("eth", {})
+    btc_bias = btc.get("bias") if btc.get("bias") not in (None, "", "?", "N/A") else "withheld"
+    eth_bias = eth.get("bias") if eth.get("bias") not in (None, "", "?", "N/A") else "withheld"
     risks = macro.get("calendar_risks", [])
     generated = macro.get("generated_at", "unknown")
 
     slug = f"macro-pulse-{TODAY_ISO}"
     title = f"Macro Pulse — {TODAY}"
     question = "What is the macro outlook for Bitcoin and Ethereum right now?"
-    description = f"Regime: {regime}. BTC bias: {btc.get('bias','?')} ({btc.get('conviction',0)} conviction). ETH bias: {eth.get('bias','?')} ({eth.get('conviction',0)} conviction). {len(risks)} calendar risks to watch. Data from n0brains.com Signals Pro."
+    description = f"Regime: {regime}. BTC bias: {btc_bias}. ETH bias: {eth_bias}. {len(risks)} calendar risks to watch. Unsupported asset bias is explicitly withheld."
 
     content = f"""---
 title: "{title}"
@@ -443,7 +453,7 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse — which synthesizes the USD high-impact macro calendar (FOMC, CPI, NFP, PPI) with 7 days of intel signals — calls the current regime **{regime}**. BTC carries a **{btc.get('bias','?')}** bias at **{btc.get('conviction',0)} conviction**, while ETH is **{eth.get('bias','?')}** at **{eth.get('conviction',0)} conviction**.
+The n0brains macro read combines the USD high-impact calendar (FOMC, CPI, NFP, PPI) with deterministic liquidity, rates and volatility inputs. The current regime is **{regime}**. BTC bias is **{btc_bias}** and ETH bias is **{eth_bias}**; a withheld value means the supporting asset model is unavailable, not neutral.
 
 ## Regime Analysis
 
@@ -460,7 +470,7 @@ The n0brains Macro Pulse — which synthesizes the USD high-impact macro calenda
 
 | Metric | Value |
 |--------|-------|
-| **Bias** | **{btc.get('bias', 'N/A')}** |
+| **Bias** | **{btc_bias}** |
 | **Conviction** | **{btc.get('conviction', 0)}** |
 | **Key Levels** | {btc.get('key_levels', 'N/A')} |
 | **Invalidation** | {btc.get('invalidation', 'N/A')} |
@@ -471,7 +481,7 @@ The n0brains Macro Pulse — which synthesizes the USD high-impact macro calenda
 
 | Metric | Value |
 |--------|-------|
-| **Bias** | **{eth.get('bias', 'N/A')}** |
+| **Bias** | **{eth_bias}** |
 | **Conviction** | **{eth.get('conviction', 0)}** |
 | **Key Levels** | {eth.get('key_levels', 'N/A')} |
 | **Invalidation** | {eth.get('invalidation', 'N/A')} |
@@ -486,24 +496,24 @@ chr(10).join(f"- {r}" for r in risks) if risks else "- No major calendar risks f
 
 ## How to Use the Macro Pulse
 
-- **Conviction ≥ 0.85**: Veto-grade signal. Contradicting this bias requires exceptional evidence.
-- **Conviction 0.70-0.84**: Strong signal. Trade in this direction unless you have a specific edge.
-- **Conviction < 0.70**: Moderate signal. Use as context, not as a trade trigger.
-- **Invalidation**: The specific event or data point that would flip the bias. Watch for it.
+- Treat the regime, calendar and any available asset bias as context, not a directive.
+- A withheld asset bias must stay withheld; do not reinterpret it as neutral.
+- Conviction describes the strength of available model evidence, not win probability.
+- Invalidation identifies what would make the current context stale.
 
 ## Get the Macro Pulse Daily
 
 The Macro Pulse is generated daily at 07:00 UTC by **n0brains.com Signals Pro**, synthesizing the macro calendar with 7 days of intel signals. Available on all tiers:
 
 ```bash
-curl -H "X-API-Key: your_key" https://api.n0brains.com/macro/latest
+curl -H "X-API-Key: your_key" https://api.n0brains.com/macro
 ```
 
 Pro tier adds historical snapshots, full reasoning, and calendar risk details. Start free at [n0brains.com](https://n0brains.com).
 
 ## Methodology
 
-Macro Pulse sourced from the n0brains.com Signals Pro Macro API (`/macro/latest`). Synthesizes USD high-impact calendar events (FOMC, CPI, NFP, PPI, Retail Sales) with the last 7 days of intel signals. Sunday editions include a 30-day deep-dive. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
+Macro conditions sourced from the n0brains.com Signals Pro Macro API (`/macro`). It combines a deterministic cross-asset composite with USD high-impact calendar events and recent intel; per-asset bias appears only when its supporting model is available. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
 """
     return slug, content
 
@@ -518,7 +528,7 @@ def generate_smart_money() -> str:
     high_conviction = [s for s in signals if s.get("confidence", 0) >= 0.85]
 
     # Macro context
-    btc_bias = macro.get("btc", {}).get("bias", "neutral")
+    btc_bias = macro.get("btc", {}).get("bias") or "withheld"
     btc_conviction = macro.get("btc", {}).get("conviction", 0)
     regime = macro.get("regime", "unknown")
 
@@ -550,10 +560,10 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse calls the regime **{regime}** with BTC bias **{btc_bias}** at **{btc_conviction} conviction**. {
-"Smart money is defensive — favoring BTC over altcoins in this risk-off environment." if regime == "risk-off"
-else "Smart money is risk-on — capital flowing to altcoins and high-beta plays." if regime == "risk-on"
-else "Smart money is range-bound — waiting for a catalyst before committing directionally."
+The n0brains macro read reports regime **{regime}** with BTC bias **{btc_bias}** at **{btc_conviction} conviction**. {
+"The measured context is risk-off; this is context, not a portfolio instruction." if regime == "risk-off"
+else "The measured context is risk-on; this is context, not a portfolio instruction." if regime == "risk-on"
+else "The measured context is range-like or unresolved."
 }
 
 ## Whale & Sentiment Signals
@@ -584,7 +594,7 @@ else "1. No whale or sentiment signals active — smart money is sitting on its 
 
 ## Track Smart Money in Real-Time
 
-**n0brains.com Signals Pro** tracks whale movements across the Hyperliquid leaderboard, SOL whale wallets (110+ curated addresses), and on-chain flows. Whale signals are cross-corroborated with other sources before being scored and delivered.
+**n0brains.com Signals Pro** tracks Hyperliquid leaderboard consensus and live EVM/XRPL on-chain flows. Whale evidence is cross-referenced with other live lanes before it is scored.
 
 ```bash
 curl -H "X-API-Key: your_key" "https://api.n0brains.com/signals?signal_type=whale"
@@ -594,7 +604,7 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus and live EVM/XRPL flow detection. Macro context comes from `/macro`. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
 """
     return slug, content
 
@@ -658,7 +668,7 @@ dataSources:
 
 ## The Short Answer
 
-Over the last **{period} days**, n0brains Signals Pro has generated **{total_signals} signals** with **{directional_wins} wins out of {directional_total} directional trades** — a **{directional_wr:.0f}% win rate**. {
+Over the last **{period} days**, n0brains Signals Pro has generated **{total_signals} signals** with **{directional_wins} positive outcomes out of {directional_total} directional signals** — a **{directional_wr:.0f}% raw hit rate**. {
 f"The best-performing signal type is **{by_type[0]['signal_type']}** at {fmt_pnl(by_type[0].get('avg_pnl'))} average PnL." if by_type else ""
 }
 
@@ -699,9 +709,9 @@ chr(10).join([
     f"1. **Best signal type**: {by_type[0]['signal_type']} at {fmt_pnl(by_type[0].get('avg_pnl'))} avg PnL — {by_type[0].get('wins',0)}/{by_type[0].get('total',0)} wins." if by_type else "",
     f"2. **Best coin**: {by_coin[0]['asset']} at {fmt_pnl(by_coin[0].get('avg_pnl'))} avg PnL — {by_coin[0].get('wins',0)}/{by_coin[0].get('total',0)} wins." if by_coin else "",
     f"3. **Best source**: {by_source[0]['source']} at {fmt_pnl(by_source[0].get('avg_pnl'))} avg PnL." if by_source else "",
-    f"4. **Worst signal type**: {by_type[-1]['signal_type']} at {fmt_pnl(by_type[-1].get('avg_pnl'))} — avoid or fade." if len(by_type) > 1 else "",
+    f"4. **Lowest measured signal type**: {by_type[-1]['signal_type']} at {fmt_pnl(by_type[-1].get('avg_pnl'))}; this is descriptive, not a fade instruction." if len(by_type) > 1 else "",
     f"5. Directional win rate of {directional_wr:.0f}% means {
-        'the signals have an edge over random' if directional_wr > 50 else 'there is room for improvement in signal accuracy'
+        'the raw hit rate is above 50%; baseline return and confidence bounds still decide whether it is proven' if directional_wr > 50 else 'the raw hit rate is at or below 50%'
     }.",
 ])
 }
@@ -817,28 +827,28 @@ chr(10).join(f"- {r}" for r in macro.get('calendar_risks', [])) if macro.get('ca
 ## Key Takeaways
 
 1. **Regime is {regime}** — {
-    "position defensively, favor BTC over altcoins" if regime == "risk-off"
-    else "position aggressively, altcoins may outperform" if regime == "risk-on"
-    else "trade the range, wait for a breakout"
+    "the measured context is risk-off" if regime == "risk-off"
+    else "the measured context is risk-on" if regime == "risk-on"
+    else "the measured context is range-like or unresolved"
 }.
 2. **{by_coin[0]['asset'] if by_coin else 'BTC'} is the best-performing coin** by signal PnL — {
-    f"consider overweighting it in your portfolio" if by_coin and by_coin[0].get('avg_pnl', 0) > 0 else "but signal PnL is negative, so trade with caution"
+    "this is a historical cohort result, not a portfolio instruction" if by_coin and by_coin[0].get('avg_pnl', 0) > 0 else "the measured cohort is negative"
 }.
-3. **{by_type[0]['signal_type'] if by_type else 'N/A'} signals are the most reliable** — prioritize these over other signal types.
+3. **{by_type[0]['signal_type'] if by_type else 'N/A'} signals lead the measured table** — sample size and regime still govern interpretation.
 4. **Calendar risks**: {len(macro.get('calendar_risks', []))} events flagged — {
-    "position size accordingly" if macro.get('calendar_risks') else "no major events, but stay alert"
+    "scheduled event risk is present" if macro.get('calendar_risks') else "no major events are currently flagged"
 }.
 
 ## Get the Full Picture
 
-All data in this brief is sourced from **n0brains.com Signals Pro** — the crypto intelligence platform that ingests from 10+ sources, machine-classifies every event, cross-corroborates, and scores into one signal with entry, stop, and take. Delivered via REST API, WebSocket, or Webhook.
+All data in this brief is sourced from **n0brains.com Signals Pro** — the multi-source market-intelligence platform that machine-classifies events, cross-corroborates them, and scores the resulting record. Delivered via REST API, WebSocket, or Webhook.
 
 ```bash
 # Signals
 curl -H "X-API-Key: your_key" https://api.n0brains.com/signals
 
 # Macro Pulse
-curl -H "X-API-Key: your_key" https://api.n0brains.com/macro/latest
+curl -H "X-API-Key: your_key" https://api.n0brains.com/macro
 
 # Performance (no auth)
 curl https://api.n0brains.com/performance
@@ -848,7 +858,7 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) for 
 
 ## Methodology
 
-All data sourced from n0brains.com Signals Pro APIs: `/signals`, `/macro/latest`, `/performance`, `/market-opens`. Signal performance covers a {perf.get('period_days', 30)}-day rolling window. Macro Pulse generated daily at 07:00 UTC. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
+All data sourced from n0brains.com Signals Pro APIs: `/signals`, `/macro`, `/performance`, `/market-opens`. Signal performance covers a {perf.get('period_days', 30)}-day rolling window. Data pulled at approximately {NOW.strftime('%H:%M UTC')} on {TODAY}.
 """
     return slug, content
 

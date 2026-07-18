@@ -252,12 +252,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const termsAccepted = document.getElementById('terms').checked;
+    let attribution = {};
+    try {
+      attribution = JSON.parse(localStorage.getItem('n0brains_first_touch_v1') || '{}');
+    } catch (_) {}
 
     try {
       const resp = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, terms_accepted: termsAccepted }),
+        body: JSON.stringify({ email, password, terms_accepted: termsAccepted, attribution }),
       });
 
       const data = await resp.json();

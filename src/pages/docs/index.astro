@@ -237,29 +237,31 @@ send: "ping"
 recv: {"type": "pong", "timestamp": 1778555605}`;
 
 const macroPulseResponse = JSON.stringify({
-  generated_at: "2026-05-13T07:00:00+00:00",
-  window_days: 7,
-  horizon: "week",
-  regime: "risk-off",
-  regime_reason: "Hotter-than-expected CPI/PPI driving inflation fears and heavy long de-leveraging.",
-  btc: {
-    bias: "bearish",
-    conviction: 0.85,
-    reason: "Macro bearishness triggered by PPI surge and heavy long liquidations.",
-    key_levels: "$80,000 (psychological), $76,500 (structural)",
-    invalidation: "Retail Sales print materially below forecast, sparking risk-on rotation."
-  },
-  eth: {
-    bias: "bearish",
-    conviction: 0.90,
-    reason: "Extreme long squeeze risk; 97% long liquidations on key venues.",
-    key_levels: "$3,200 (immediate support), $2,850 (major pivot)",
-    invalidation: "Unexpected dovish turn from new Fed chair."
-  },
-  calendar_risks: [
-    "Core Retail Sales m/m (2026-05-14) — potential further downside if hot",
-    "Fed Chair Nomination Vote (2026-05-13) — policy uncertainty"
-  ]
+  current: {
+    generated_at: "2026-07-16T07:00:00+00:00",
+    window_days: 7,
+    horizon: "week",
+    regime: "range",
+    calibration: "uncalibrated",
+    btc: {
+      bias: null,
+      conviction: null,
+      status: "insufficient data",
+      sample_size: 3,
+      sufficient_data: false,
+      reason: "Per-asset directional bias withheld until live sample coverage is sufficient."
+    },
+    eth: {
+      bias: null,
+      conviction: null,
+      status: "insufficient data",
+      sample_size: 2,
+      sufficient_data: false,
+      reason: "Per-asset directional bias withheld until live sample coverage is sufficient."
+    },
+    calendar_risks: [],
+    disclaimer: "AI-generated macro commentary; directional conviction is not calibrated. Not financial advice."
+  }
 }, null, 2);
 ---
 <BaseLayout title="n0brains Documentation" description="n0brains documentation — REST API, MCP server, CLI, x402 pay-per-call, endpoints, authentication, rate limits, and response formats.">
@@ -278,7 +280,7 @@ const macroPulseResponse = JSON.stringify({
     },
     "offers": [
       { "@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free tier — 60 req/min, REST only, 15-min delay" },
-      { "@type": "Offer", "price": "39.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks + MCP server (19 tools, Claude Desktop / Cursor / Cline)" }
+      { "@type": "Offer", "price": "39.99", "priceCurrency": "USD", "description": "Pro tier — 600 req/min, real-time, REST + WebSocket + Webhooks + MCP server" }
     ],
     "potentialAction": {
       "@type": "SearchAction",
@@ -294,7 +296,7 @@ const macroPulseResponse = JSON.stringify({
       <h2 id="not-advice">This is analysis. It is not financial advice.</h2>
       <p>
         <strong>Everything n0brains publishes — signals, scores, reference prices,
-        invalidation levels, target levels, paper-trading results, the
+        invalidation levels, target levels, measured forward-return results, the
         <code>trade_signal</code> action hint, the <a href="/proof">/proof</a>
         page, all of it — is n0brains' own algorithmic analysis of public
         market data.</strong> It is provided for informational purposes only.
@@ -450,13 +452,13 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><span class="method method-get">GET</span></td><td><code>/state/{'{coin}'}</code></td><td>Pro</td><td>One-call per-coin view — price, market-state, regime + composite, levels, technical indicators, liqmap target</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/plan/{'{coin}'}</code></td><td>Pro</td><td>Assembled trade plan — direction, entry, strongest target (strength-weighted, not nearest), stop, risk/reward, sizing hint, options context (put/call + skew), and warnings (max-pain timing against the trade, entry near a liq cluster). The synthesis layer over /state + /levels + /options</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/rank?coins=BTC,ETH,SOL</code></td><td>Pro</td><td>Cross-asset ranking — assembled trade plans for the given coins sorted by setup_score (best first). Answers "which coin is the better trade right now?"</td></tr>
-          <tr><td><span class="method method-post">POST</span></td><td><code>/check</code></td><td>API Key</td><td><strong>Ask n0brains First — pre-trade check.</strong> Submit a trade (<code>asset</code>, <code>side</code>, optional <code>entry</code>/<code>stop</code>/<code>target</code>/<code>leverage</code>/<code>horizon_hours</code>) → a graded <strong>A–F conditions assessment</strong> with every reason: crowding, event risk, liquidation distance vs volatility, momentum extension, positioning, and a structural fatal-stop check. Returns <code>grade</code>, <code>score</code>, <code>engine_version</code>, <code>asset_class</code>, <code>flags</code>, <code>supports</code>, <code>falsifiers</code>, <code>terrain</code>, <code>unchecked</code>. Works for crypto <em>and</em> the tokenized stock market (NVDA, SP500, XYZ100, GOLD…). Every grade is logged and scored at its horizon — calibration is public on <a href="/proof">/proof</a>, split by engine version. Free 3/day, Pro unlimited. Pass <code>"chart": true</code> for a branded PNG.</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/check</code></td><td>API Key</td><td><strong>Ask n0brains First — pre-trade check.</strong> Submit a trade (<code>asset</code>, <code>side</code>, optional <code>entry</code>/<code>stop</code>/<code>target</code>/<code>leverage</code>/<code>horizon_hours</code>) → a graded <strong>A–F conditions assessment</strong> with every reason: crowding, event risk, liquidation distance vs volatility, momentum extension, positioning, and a structural fatal-stop check. Returns <code>grade</code>, <code>score</code>, <code>engine_version</code>, <code>asset_class</code>, <code>flags</code>, <code>supports</code>, <code>falsifiers</code>, <code>terrain</code>, <code>unchecked</code>. Works for crypto <em>and</em> the tokenized stock market (NVDA, SP500, XYZ100, GOLD…). Every verdict is durably logged and resolved at its horizon. Cross-grade performance stays withheld while the deployed calibration gate accrues. Free 3/day, Pro unlimited. Pass <code>"chart": true</code> for a branded PNG.</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/check/anon</code></td><td>None</td><td>One anonymous pre-trade check per day per IP (Turnstile-gated). Same graded response as <code>/check</code>.</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/checks/history</code></td><td>API Key</td><td>Your past checks + resolved outcomes (side-adjusted return at horizon, or the stop if it was hit first).</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/check/assets</code></td><td>None</td><td>The checkable asset universe — crypto perps + tokenized stocks/metals/indices.</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/check/chart-parse</code></td><td>API Key</td><td>Read the ticker + timeframe from a chart screenshot (vision) so an agent can hand a check a raw image. Identity only — never prices from pixels.</td></tr>
           <tr><td><span class="method method-post">POST</span></td><td><code>/check/levels</code></td><td>API Key</td><td>Grade your own drawn horizontal levels against our S/R zones + on-chain liquidation clusters (at-line magnet / beyond-line wick risk).</td></tr>
-          <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Macro Pulse — latest BTC + ETH directional bias</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/macro</code></td><td>API Key</td><td>Daily macro conditions/regime; per-asset bias when available</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/macro?history=N</code></td><td>Pro</td><td>Macro Pulse historical snapshots (last N reports, max 30)</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/regime</code></td><td>API Key</td><td>Market-wide risk appetite — risk-on / risk-off / squeeze + a signed risk score and directional <code>market_bias</code>, blended from the macro composite, cross-sectional breadth, funding regime and volatility. Answers "do conditions favor risk right now?" Descriptive, candidate.</td></tr>
           <tr><td><span class="method method-get">GET</span></td><td><code>/liquidity</code></td><td>API Key</td><td>Net cross-asset liquidity map — Fed net liquidity, multi-chain stablecoin dry-powder (DefiLlama), total perp OI, cross-venue leverage concentration (cascade-fragility), liquidation pressure, net taker flow. Answers "where is liquidity?"</td></tr>
@@ -501,7 +503,7 @@ const macroPulseResponse = JSON.stringify({
         <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
         <tbody>
           <tr><td><code>asset</code></td><td>string</td><td>Filter by ticker (e.g. BTC)</td></tr>
-          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, deleverage, other. (<code>unlock</code> and <code>research</code> can be <em>returned</em> but are not filterable here — filtering on them 400s.)</td></tr>
+          <tr><td><code>signal_type</code></td><td>string</td><td>regulatory, whale, whale_position, sentiment, price, hack, listing, macro, macro_flow, macro_pulse, liquidation, funding, deleverage, unlock, research, other.</td></tr>
           <tr><td><code>direction</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>limit</code></td><td>int</td><td>1-200 (default 50)</td></tr>
@@ -534,7 +536,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>urgency</code></td><td>string</td><td>high, medium, low</td></tr>
           <tr><td><code>summary</code></td><td>string</td><td>Max 100 char description</td></tr>
           <tr><td><code>confidence</code></td><td>float</td><td>0.0-1.0, calibrated P(win) — per-signal-type binned empirical win rate from closed-trade outcomes (not a raw LLM score). Updated weekly.</td></tr>
-          <tr><td><code>conviction</code></td><td>string</td><td><code>strong</code>, <code>notable</code>, <code>watch</code>, <code>none</code> — our analytical rating of a signal's strength (not a trade instruction). <strong>strong</strong> is data-driven: it applies only to signal types whose forward-return record clears our statistical bar in paper-trading (see <a href="/proof">/proof</a>), at the top of that type's score distribution, and only when the expected move clears round-trip trading cost (a move too small to beat fees + slippage is downgraded to <code>notable</code>). Use this field.</td></tr>
+          <tr><td><code>conviction</code></td><td>string</td><td><code>strong</code>, <code>notable</code>, <code>watch</code>, <code>none</code> — our analytical rating of a signal's strength (not a trade instruction). <strong>strong</strong> is data-driven: it applies only to signal types whose measured forward-return record clears our statistical bar (see <a href="/proof">/proof</a>), at the top of that type's score distribution, and only when the expected move clears round-trip trading cost (a move too small to beat fees + slippage is downgraded to <code>notable</code>). Use this field.</td></tr>
           <tr><td><code>action_hint</code></td><td>string</td><td><em>Deprecated</em> — the prior name for <code>conviction</code> (<code>trade_signal</code>↔strong, <code>alert</code>↔notable, <code>monitor</code>↔watch, <code>ignore</code>↔none). Still emitted this release for backward compatibility; will be removed. Migrate to <code>conviction</code>.</td></tr>
           <tr><td><code>corroborated</code></td><td>bool</td><td>True when multiple sources confirm the asset AND recent reads don't net-contradict the direction (direction-aware — a bullish call isn't confirmed by bearish chatter on the same coin)</td></tr>
           <tr><td><code>score</code></td><td>float</td><td>IC-weighted composite: source_weight x urgency x calibrated_confidence x signal-type information coefficient</td></tr>
@@ -561,7 +563,7 @@ const macroPulseResponse = JSON.stringify({
           <tr><td><code>trust_score</code></td><td>float|null</td><td>Launchpad/token signals — composite contract trust (0.0–1.0)</td></tr>
           <tr><td><code>rug_probability</code></td><td>float|null</td><td>Launchpad/token signals — estimated rug/scam probability (0.0–1.0)</td></tr>
           <tr><td><code>is_honeypot</code></td><td>bool|null</td><td>Launchpad/token signals — GoPlus honeypot flag</td></tr>
-          <tr><td><code>historical_edge</code></td><td>object|null</td><td>Descriptive stats for this signal's <code>(signal_type × direction × regime_at_signal)</code> cell from closed paper trades. Object: <code>{'{'}cell, sample_n, win_rate, avg_pnl_pct, median_pnl_pct, as_of{'}'}</code>. Refreshed weekly. Null when regime or type is missing.</td></tr>
+          <tr><td><code>historical_edge</code></td><td>object|null</td><td>Descriptive stats for this signal's <code>(signal_type × direction × regime_at_signal)</code> cell from measured signal forward returns. Object: <code>{'{'}cell, sample_n, win_rate, avg_pnl_pct, median_pnl_pct, as_of{'}'}</code>. Refreshed weekly. Null when regime or type is missing.</td></tr>
           <tr><td><code>paired_inverse</code></td><td>object|null</td><td>Contrarian-direction advisory. Present only when the historical cell is empirically anti-predictive (n ≥ 30, win_rate ≤ 30%, avg_pnl ≤ -2%). Object: <code>{'{'}direction, basis, implied_avg_pnl_pct, flipped_cell_stats, advisory_text, citation{'}'}</code>. Cites peer-reviewed short-term reversal literature (De Bondt &amp; Thaler 1985, Tetlock 2007, Chan 2003, PLOS One 2024). Informational; never a trade recommendation.</td></tr>
         </tbody>
       </table>
@@ -569,7 +571,7 @@ const macroPulseResponse = JSON.stringify({
 
     <div class="card">
       <h2 id="historical-edge">Historical Edge &amp; Paired Inverse</h2>
-      <p>Every signal carries a <code>historical_edge</code> object describing the closed-paper-trade outcomes of past signals in the same <code>(signal_type × direction × regime_at_signal)</code> cell. Stats are refreshed weekly. The fields are descriptive — they do not gate, size, or recommend.</p>
+      <p>Every signal carries a <code>historical_edge</code> object describing measured forward returns of past signals in the same <code>(signal_type × direction × regime_at_signal)</code> cell. Stats are refreshed weekly. The fields are descriptive — they do not gate, size, or recommend.</p>
       <p>When a cell is empirically anti-predictive (n ≥ 30 closed trades, win rate ≤ 30%, average PnL ≤ -2%), the signal also carries a <code>paired_inverse</code> object. It surfaces the contrarian-direction reading of the same event alongside a citation to peer-reviewed short-term reversal literature (De Bondt &amp; Thaler 1985, Tetlock 2007, Chan 2003, PLOS One 2024). It is presented as data, not a recommendation: the <code>flipped_cell_stats</code> field shows how the opposite-direction cell has actually performed historically, which is often weaker than the <code>implied_avg_pnl_pct</code> would suggest in pure-inversion terms.</p>
       <p>Use these fields to interpret signal quality in context. A signal with a strong <code>historical_edge</code> (high win_rate, large avg_pnl_pct, large sample_n) is more reliable than the same signal in a cell where the edge is weak or inverted. The cell stats and any paired-inverse advisory are intended for your own analysis — they are not trade recommendations, and we do not suggest position sizes or leverage.</p>
     </div>
@@ -588,8 +590,8 @@ const macroPulseResponse = JSON.stringify({
 
     <div class="card">
       <h2 id="macro-pulse">GET /macro</h2>
-      <p><strong>Macro Pulse</strong> — our daily directional bias for BTC and ETH. Generated at 07:00 UTC daily (with a deeper 30-day review every Sunday 22:00 UTC). A deterministic macro composite — net liquidity (Fed balance sheet − TGA − RRP), the dollar index, real yields, the 2s10s curve, M2 and VIX, all from FRED — anchors the regime call. That composite is synthesised with the upcoming USD high-impact macro calendar (FOMC, CPI, NFP, PPI, Retail Sales) and the last 7 days of intel signals into a single regime call plus per-asset bias, conviction, key levels, and invalidation. The <code>/macro</code> response carries the raw composite + drivers alongside the narrative read.</p>
-      <p>Free tier: latest report only, generated_at + regime + bias/conviction. Pro tier: full payload including reasoning, key levels, invalidation, and calendar_risks. Add <code>?history=N</code> (Pro, max 30) to include the last N snapshots alongside the current report.</p>
+      <p><strong>Macro conditions</strong> — a daily deterministic composite of net liquidity (Fed balance sheet − TGA − RRP), the dollar index, real yields, the 2s10s curve, M2 and VIX, combined with the upcoming high-impact calendar and recent intel. The <code>/macro</code> response always carries the composite and drivers; per-asset bias is included only when its supporting model is available and is otherwise explicitly withheld.</p>
+      <p>The top-level <code>current</code> object contains the latest report. Add <code>?history=N</code> (Pro, max 30) to include prior snapshots; free accounts receive the current report only. Bias and conviction are nullable and explicitly withheld when supporting data is insufficient.</p>
       <pre><code set:html={macroPulseResponse} /></pre>
       <h3>Field Reference</h3>
       <table>
@@ -597,8 +599,8 @@ const macroPulseResponse = JSON.stringify({
         <tbody>
           <tr><td><code>regime</code></td><td>string</td><td>risk-on, risk-off, range, squeeze</td></tr>
           <tr><td><code>regime_reason</code></td><td>string</td><td>≤120 char rationale</td></tr>
-          <tr><td><code>btc.bias</code> / <code>eth.bias</code></td><td>string</td><td>bullish, bearish, neutral</td></tr>
-          <tr><td><code>btc.conviction</code> / <code>eth.conviction</code></td><td>float</td><td>0.0–1.0. ≥0.7 = very high. ≥0.85 = veto-grade contradictions.</td></tr>
+          <tr><td><code>current.btc.bias</code> / <code>current.eth.bias</code></td><td>string | null</td><td>bullish, bearish, neutral, or null when withheld for insufficient data</td></tr>
+          <tr><td><code>current.btc.conviction</code> / <code>current.eth.conviction</code></td><td>float | null</td><td>Model-stated 0.0–1.0 confidence, or null when withheld; not calibrated realized probability</td></tr>
           <tr><td><code>btc.reason</code> / <code>eth.reason</code></td><td>string</td><td>Primary driver, ≤140 chars</td></tr>
           <tr><td><code>btc.key_levels</code> / <code>eth.key_levels</code></td><td>string</td><td>Relevant macro pivots</td></tr>
           <tr><td><code>btc.invalidation</code> / <code>eth.invalidation</code></td><td>string</td><td>What flips the call</td></tr>
@@ -650,7 +652,7 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>Government RSS</strong> - 11 feeds (White House, SEC, CFTC, Fed, Kremlin, Xinhua, TASS, EU, etc.)</li>
         <li><strong>CoinMarketCap</strong> - Price alerts, trending coins</li>
         <li><strong>Macro</strong> - Fear and Greed Index, DeFi TVL</li>
-        <li><strong>Binance</strong> - Funding rates, liquidation cascades (WebSocket)</li>
+        <li><strong>Derivatives</strong> - Multi-venue funding/open-interest positioning and OKX public liquidation prints</li>
         <li><strong>Market Opens</strong> - BTC/ETH/SOL prices at Tokyo, Shanghai, Hong Kong, London, NY session opens</li>
         <li><strong>Exchange Listings</strong> - Real CEX listing catalysts: Binance &amp; Bybit launchpad/launchpool, plus new spot-market detection (symbol-list diff) on Binance, Upbit (Korea / kimchi premium), and OKX. Pump.fun / Raydium memecoin launches were dropped — they were ~98% of the old listing feed with no tradeable edge.</li>
         <li><strong>ETF Flows</strong> - US spot BTC + ETH + SOL ETF daily net flows via SoSoValue (free public API). Emitted as <strong>context</strong> (macro_flow, non-directional): a backtest found ETF net inflow does not predict forward returns — it is a coincident/lagging demand print (SOL inflows were contrarian).</li>
@@ -660,11 +662,11 @@ const macroPulseResponse = JSON.stringify({
         <li><strong>TradFi & CME</strong> - Yahoo Finance (free): CME BTC/ETH futures gap (weekend gaps tend to fill — a recurring level read) plus SPX/gold cross-asset correlation context.</li>
         <li><strong>Smart Money</strong> - Alchemy ETH WebSocket (alchemy_pendingTransactions) on 408 curated wallets + Etherscan V2 confirmed-tx fallback. 700+ verified labeled addresses (CEX hot/cold, market maker, institutional, smart trader) auto-refreshed weekly from Etherscan label cloud + Alchemy top-volume sweep. MEV bots filtered.</li>
         <li><strong>Stealth Accumulation</strong> - Background scanner pulls Etherscan V2 <code>tokentx</code> per tracked wallet every 30 min. Flags wallet receiving same ERC20 in ≥3 fragmented buys totaling ≥$500K within 24 h — catches quiet accumulation before whale-alert feeds.</li>
-        <li><strong>On-Chain Whale Tracking</strong> - Large ETH transfers to/from exchanges via Alchemy WebSocket (threshold 1000 ETH); large BTC transfers via mempool.space WebSocket on tracked cold wallets (threshold 100 BTC). Hyperliquid leaderboard consensus from top traders. SOL CEX flow via Alchemy Solana <code>accountSubscribe</code> on 12 hot/cold wallets (threshold 10000 SOL).</li>
+        <li><strong>On-Chain Whale Tracking</strong> - Large ETH transfers to/from exchanges via Alchemy WebSocket, plus Hyperliquid leaderboard consensus from top traders.</li>
         <li><strong>L/S Ratios</strong> - Bybit, Binance, Gate.io positioning data</li>
         <li><strong>S/R Levels</strong> - Real-time support/resistance from Hyperliquid order book</li>
-        <li><strong>Macro Pulse</strong> - Daily BTC + ETH directional bias. Deterministic FRED macro composite (net liquidity, DXY, real yields, curve, VIX, M2) anchors the regime, synthesised with the USD high-impact calendar (FOMC, CPI, NFP, PPI) and 7d intel signals. Sunday weekly 30d deep-dive.</li>
-        <li><strong>X (Twitter) API</strong> - Curated 11-account feed via official X API v2. Onchain primary (@lookonchain, @spotonchain, @arkham, @whale_alert), official exchange announcements (@binance, @coinbase, @CoinbaseAssets, @upbit_global), and newswire-speed macro (@DeItaone, @FirstSquawk, @DBdaily). 20s polling, retweets and replies filtered.</li>
+        <li><strong>Macro Conditions</strong> - Daily deterministic FRED macro composite and high-impact calendar context; per-asset bias only when available.</li>
+        <li><strong>X (Twitter) API</strong> - Verified live lanes via official X API v2: on-chain research (@lookonchain, @spotonchain, @arkham), official exchange announcements (@binance, @coinbase, @CoinbaseAssets, @upbit_global), and active macro/news context (@DBdaily). Retired or silent accounts are excluded from health expectations and public source claims. Retweets and replies are filtered.</li>
       </ol>
 
       <h3>Source Weights</h3>
@@ -675,19 +677,15 @@ const macroPulseResponse = JSON.stringify({
           <tr><td>smart_money</td><td>1.2</td><td>On-chain address tracking (Alchemy + Etherscan, 408 wallets)</td></tr>
           <tr><td>stealth_accumulation</td><td>1.4</td><td>Fragmented quiet buys (≥3 tx, ≥$500K, 24h window)</td></tr>
           <tr><td>whale_eth</td><td>1.1</td><td>Large ETH transfers (Alchemy WS, ≥1000 ETH)</td></tr>
-          <tr><td>whale_btc</td><td>1.0</td><td>Large BTC transfers (mempool.space WS, ≥100 BTC)</td></tr>
           <tr><td>telegram:investigations</td><td>1.2</td><td>High-signal hack/exploit intel</td></tr>
           <tr><td>x:lookonchain</td><td>1.5</td><td>Onchain wallet moves with tx hashes — leading indicator</td></tr>
           <tr><td>x:binance / x:coinbase</td><td>1.5</td><td>Official exchange listing announcements</td></tr>
           <tr><td>x:spotonchain / x:arkham</td><td>1.4</td><td>Onchain analytics, labelled wallets</td></tr>
           <tr><td>x:CoinbaseAssets</td><td>1.4</td><td>Coinbase listing roadmap leaks</td></tr>
-          <tr><td>x:DeItaone</td><td>1.3</td><td>Newswire-speed macro headlines</td></tr>
           <tr><td>x:upbit_global</td><td>1.3</td><td>Korea listings, kimchi premium catalyst</td></tr>
-          <tr><td>x:FirstSquawk</td><td>1.2</td><td>Headline wire, fast macro</td></tr>
           <tr><td>x:DBdaily</td><td>0.9</td><td>Corporate adoption tracking</td></tr>
-          <tr><td>x:whale_alert</td><td>0.7</td><td>Auto-bot, mostly exchange↔cold storage noise</td></tr>
           <tr><td>binance_funding</td><td>1.0</td><td>Primary exchange data</td></tr>
-          <tr><td>binance_liq</td><td>1.0</td><td>Liquidation data</td></tr>
+          <tr><td>liquidation</td><td>1.0</td><td>Multi-venue liquidation data</td></tr>
           <tr><td>cmc_price</td><td>0.9</td><td>CoinMarketCap price alerts</td></tr>
           <tr><td>telegram:WatcherGuru</td><td>0.9</td><td>Fast breaking news</td></tr>
           <tr><td>rss:trumpstruth</td><td>0.9</td><td>Market-moving but noisy</td></tr>
