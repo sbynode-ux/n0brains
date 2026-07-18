@@ -648,7 +648,7 @@ import DashShell from "../components/DashShell.astro";
 
   async function renderCalendar() {
     const d = await apiGet("/calendar");
-    const rows = (d.upcoming || []).filter((e) => !e.released).slice(0, 4).map((e) => `
+    const rows = (d.upcoming || []).filter((e) => !e.released && e.scheduled_ts > Date.now() / 1000 - 900).slice(0, 4).map((e) => `
       <div class="sig-row">
         <span class="sa" style="font-size:0.74rem">${esc(e.name)}</span>
         <span class="ch ${e.impact === "High" ? "warn" : ""}">${esc(e.impact || "—")}</span>
