@@ -1,3 +1,7 @@
+/* Spanish — /proof page. Keys are the English source string. Numbers, %, dates,
+   grades, tickers, endpoints and signal_type tokens stay literal. Win-rate /
+   "proven" / methodology / calibration-withheld / disclaimer lines are
+   translated literally at exact claim strength — flagged for human review. */
 export const es: Record<string, string> = {
   // ── head ──
   "proof": "prueba",
@@ -75,12 +79,14 @@ export const es: Record<string, string> = {
   "Illustrative of edge accumulation on measured returns, not a live-traded or guaranteed account.":
     "Ilustrativo de la acumulación de ventaja sobre retornos medidos, no una cuenta operada en real ni garantizada.",
 
-  // ── we grade our own grades ──
-  "We grade our own grades": "Calificamos nuestras propias calificaciones",
+  // ── grade performance: published only once proven (calibration withheld) ──
+  "Grade performance: published only once proven": "Rendimiento por nota: se publica solo una vez probado",
   "Every": "Cada veredicto de",
   "pre-trade check": "comprobación previa a la operación",
-  "verdict we hand out is logged the moment we give it and scored at its horizon against real prices. If our grades mean anything, A-graded setups outperform F-graded ones. Small sample for now — we show it anyway, from day one.":
-    "que emitimos se registra en el momento en que la damos y se puntúa en su horizonte contra precios reales. Si nuestras notas significan algo, las configuraciones con nota A superan a las de nota F. Muestra pequeña por ahora — la mostramos igualmente, desde el primer día.",
+  "verdict is logged the moment it is issued and resolved at its stated horizon against real prices. Grade-level performance publishes here under the same standard as every other number on this page: only after the deployed engine clears our weekly verification bar on consecutive weeks. Nothing less unlocks this section.":
+    "se registra en el momento en que se emite y se resuelve en su horizonte establecido frente a precios reales. El rendimiento a nivel de nota se publica aquí bajo el mismo estándar que cualquier otro número de esta página: solo después de que el motor desplegado supere nuestra barra de verificación semanal en semanas consecutivas. Nada menos desbloquea esta sección.",
+  "Until that standard is met, no grade-performance claim is made — by design.":
+    "Hasta que se cumpla ese estándar, no se hace ninguna afirmación de rendimiento por nota — por diseño.",
 
   // ── legal ──
   "A type is shown as": "Un tipo se muestra como",
@@ -89,7 +95,6 @@ export const es: Record<string, string> = {
     "solo cuando su registro de precios en vivo posterior a la señal supera 30+ señales medidas Y a la vez supera a BTC y es rentable por sí mismo — evaluado por (tipo, dirección) y régimen, con un intervalo de confianza del 95% por encima de cero. Estos son los tipos que marcamos como",
   "in the API. Measured on real prices for informational purposes only — not financial advice, and past performance does not guarantee future results. See":
     "en la API. Medido sobre precios reales solo con fines informativos — no es asesoramiento financiero, y el rendimiento pasado no garantiza resultados futuros. Consulta los",
-  "terms": "términos",
 
   // ── cta ──
   "These numbers update whether they flatter us or not.": "Estos números se actualizan nos favorezcan o no.",
@@ -110,8 +115,8 @@ export const es: Record<string, string> = {
   "coin-flip line": "línea de cara o cruz",
   "proof unavailable": "prueba no disponible",
   "fetch failed": "fallo al obtener",
-  "signal type": "tipo de señal",
-  "signal types": "tipos de señal",
+  "signal type forward-return proven": "tipo de señal probado en retorno futuro",
+  "signal types forward-return proven": "tipos de señal probados en retorno futuro",
   "type": "tipo",
   "signals": "señales",
   "win rate": "tasa de acierto",
@@ -125,6 +130,8 @@ export const es: Record<string, string> = {
   "95% confidence lower bound on excess return — the conservative edge":
     "límite inferior de confianza del 95% sobre el retorno en exceso — la ventaja conservadora",
   "Last updated": "Última actualización",
+  "every check is logged and resolved against real prices; grade performance publishes here once the deployed engine clears the verification standard":
+    "cada comprobación se registra y se resuelve frente a precios reales; el rendimiento por nota se publica aquí una vez que el motor desplegado supera el estándar de verificación",
   "no checks logged yet": "aún no hay comprobaciones registradas",
   "pending": "pendientes",
   "rows are split by origin — <b>probe</b> = our own automated calibration account (hits the same public /check around the clock so every grade accumulates a scoreable record; disclosed, never blended into the customer rows) · <b>real</b> = customer checks":

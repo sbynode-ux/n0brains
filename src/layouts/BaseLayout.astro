@@ -1,6 +1,17 @@
 ---
 import "../styles/global.css";
 import DocsSidebar from "../components/DocsSidebar.astro";
+import LangSwitcher from "../components/LangSwitcher.astro";
+import {
+  useTranslations,
+  toLocale,
+  navHref,
+  localizePath,
+  stripLocale,
+  LOCALES,
+  DEFAULT_LOCALE,
+  TRANSLATED_PATHS,
+} from "../i18n/ui";
 
 export interface Props {
   title: string;
@@ -27,6 +38,14 @@ const {
 const url        = canonicalURL ?? Astro.url;
 const navPath    = Astro.url.pathname;
 const siteUrl    = "https://n0brains.com";
+
+// ── i18n ──
+const locale       = toLocale(Astro.currentLocale);
+const navBase      = stripLocale(navPath);
+const t            = useTranslations(locale);
+const nav          = (p: string) => navHref(p, locale);
+const baseNoSlash  = navBase !== "/" ? navBase.replace(/\/$/, "") : "/";
+const isTranslated = TRANSLATED_PATHS.has(baseNoSlash);
 const fullTitle  = homepage ? "n0brains — Check the trade before you take it" : `${title} — n0brains`;
 const absoluteOg = ogImage.startsWith("http") ? ogImage : `${siteUrl}${ogImage}`;
 const year       = new Date().getFullYear();
@@ -96,7 +115,7 @@ const softwareAppLd = homepage ? {
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -107,6 +126,12 @@ const softwareAppLd = homepage ? {
     {noIndex && <meta name="robots" content="noindex,nofollow" />}
 
     <link rel="canonical" href={url} />
+    {isTranslated && LOCALES.map((loc) => (
+      <link rel="alternate" hreflang={loc} href={`${siteUrl}${localizePath(navPath, loc)}`} />
+    ))}
+    {isTranslated && (
+      <link rel="alternate" hreflang="x-default" href={`${siteUrl}${localizePath(navPath, DEFAULT_LOCALE)}`} />
+    )}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="alternate" type="application/rss+xml" title="n0brains RSS"     href="/rss.xml" />
     <link rel="alternate" type="application/rss+xml" title="n0brains podcast" href="/podcast.xml" />
@@ -170,58 +195,59 @@ const softwareAppLd = homepage ? {
     </script>
   </head>
   <body>
-    <a href="#main" class="skip-link">Skip to content</a>
+    <a href="#main" class="skip-link">{t("Skip to content")}</a>
     <div id="scroll-progress" aria-hidden="true"></div>
 
     <!-- Rotating announcement bar: alternates the Founding-20 promo and the
          Coinbase-Bazaar / agentic.market listing. One bar (no stacking); the two
          slides cross-fade on a CSS timer. -->
     <div class="founding-banner banner-rotator" role="region" aria-label="Announcements">
-      <a class="br-slide br-slide-1" href="/pricing?utm_source=site&utm_medium=banner&utm_campaign=founding20">
-        🏁 <strong>Founding&nbsp;20</strong> — code <span class="fb-code">RACE</span> at checkout = 1&nbsp;month Pro free, in exchange for honest feedback. 20 seats, then it's gone&nbsp;→
+      <a class="br-slide br-slide-1" href={`${nav("/pricing")}?utm_source=site&utm_medium=banner&utm_campaign=founding20`}>
+        🏁 <strong>Founding&nbsp;20</strong> {t("— code")} <span class="fb-code">RACE</span> {t("at checkout = 1 month Pro free, in exchange for honest feedback. 20 seats, then it's gone →")}
       </a>
       <a class="br-slide br-slide-2" href="/docs/x402?utm_source=site&utm_medium=banner&utm_campaign=x402_bazaar">
-        🤖 n0brains is live on the <strong>Coinbase x402 Bazaar</strong> &amp; <strong>agentic.market</strong> — your AI agent can pay-per-call in USDC, no signup&nbsp;→
+        🤖 {t("n0brains is live on the")} <strong>Coinbase x402 Bazaar</strong> &amp; <strong>agentic.market</strong> — {t("your AI agent can pay-per-call in USDC, no signup →")}
       </a>
     </div>
 
     <header id="site-header">
       <div class="inner">
-        <a href="/home" class="logo" id="header-logo" aria-label="n0brains home">
+        <a href={nav("/home")} class="logo" id="header-logo" aria-label="n0brains home">
           &lt;<span>n0</span>brains /&gt;
         </a>
         {homepage && (
           <span class="header-hero-text" id="header-hero-text" aria-hidden="true">
-            // Every call. On the record.
+            {t("// Every call. On the record.")}
           </span>
         )}
         <nav class="rail" aria-label="Primary">
           <div class="rail-cluster">
-            <span class="rail-label">product</span>
+            <span class="rail-label">{t("product")}</span>
             <div class="rail-links">
-              <a href="/check" class={navPath.startsWith("/check") ? "active" : ""}>check</a>
-              <a href="/docs/" class={navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart") ? "active" : ""}>docs</a>
-              <a href="/docs/quickstart" class={navPath.startsWith("/docs/quickstart") ? "active" : ""}>quickstart</a>
-              <a href="/proof" class={navPath.startsWith("/proof") ? "active" : ""}>proof</a>
-              <a href="/charts" class={navPath.startsWith("/charts") ? "active" : ""}>charts</a>
-              <a href="/pricing" class={navPath.startsWith("/pricing") ? "active" : ""}>pricing</a>
+              <a href={nav("/check")} class={navBase.startsWith("/check") ? "active" : ""}>check</a>
+              <a href={nav("/docs/")} class={navBase.startsWith("/docs") && !navBase.startsWith("/docs/quickstart") ? "active" : ""}>docs</a>
+              <a href={nav("/docs/quickstart")} class={navBase.startsWith("/docs/quickstart") ? "active" : ""}>quickstart</a>
+              <a href={nav("/proof")} class={navBase.startsWith("/proof") ? "active" : ""}>proof</a>
+              <a href={nav("/charts")} class={navBase.startsWith("/charts") ? "active" : ""}>charts</a>
+              <a href={nav("/pricing")} class={navBase.startsWith("/pricing") ? "active" : ""}>pricing</a>
             </div>
           </div>
           <span class="rail-divider" aria-hidden="true"></span>
           <div class="rail-cluster">
-            <span class="rail-label">research</span>
+            <span class="rail-label">{t("research")}</span>
             <div class="rail-links">
-              <a href="/intel" class={navPath.startsWith("/intel") ? "active" : ""}>intel</a>
-              <a href="/blog" class={navPath.startsWith("/blog") ? "active" : ""}>blog</a>
-              <a href="/podcast" class={navPath.startsWith("/podcast") ? "active" : ""}>podcast</a>
+              <a href={nav("/intel")} class={navBase.startsWith("/intel") ? "active" : ""}>intel</a>
+              <a href={nav("/blog")} class={navBase.startsWith("/blog") ? "active" : ""}>blog</a>
+              <a href={nav("/podcast")} class={navBase.startsWith("/podcast") ? "active" : ""}>podcast</a>
             </div>
           </div>
           <span class="rail-divider" aria-hidden="true"></span>
           <div class="rail-auth">
-            <a href="/login" class={navPath.startsWith("/login") ? "active" : ""}>login</a>
-            <a href="/signup" class="rail-cta">start free →</a>
+            <a href={nav("/login")} class={navBase.startsWith("/login") ? "active" : ""}>{t("login")}</a>
+            <a href="/signup" class="rail-cta">{t("start free →")}</a>
           </div>
         </nav>
+        <LangSwitcher variant="header" />
         <button id="nav-burger" class="nav-burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-sheet">
           <span></span><span></span><span></span>
         </button>
@@ -242,20 +268,20 @@ const softwareAppLd = homepage ? {
           ["/podcast", "podcast", "09"],
         ].map(([href, label, idx]) => {
           const active = href === "/docs/"
-            ? navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart")
-            : navPath.startsWith(href);
+            ? navBase.startsWith("/docs") && !navBase.startsWith("/docs/quickstart")
+            : navBase.startsWith(href);
           return (
-            <a href={href} class={`sheet-link ${active ? "active" : ""}`}>
-              <span class="sheet-name">{label}{active && <span class="sheet-here"> · here</span>}</span>
+            <a href={nav(href)} class={`sheet-link ${active ? "active" : ""}`}>
+              <span class="sheet-name">{label}{active && <span class="sheet-here"> {t("· here")}</span>}</span>
               <span class="sheet-idx">{idx}</span>
             </a>
           );
         })}
         <div class="sheet-actions">
-          <a href="/login" class="sheet-btn sheet-btn-ghost">login</a>
-          <a href="/signup" class="sheet-btn sheet-btn-solid">start free →</a>
+          <a href={nav("/login")} class="sheet-btn sheet-btn-ghost">{t("login")}</a>
+          <a href="/signup" class="sheet-btn sheet-btn-solid">{t("start free →")}</a>
         </div>
-        <p class="sheet-signoff" aria-hidden="true">// every call. on the record.</p>
+        <p class="sheet-signoff" aria-hidden="true">{t("// every call. on the record.")}</p>
       </nav>
     </div>
 
@@ -268,7 +294,7 @@ const softwareAppLd = homepage ? {
 
     <footer>
       <div class="inner">
-        <p>© {year} <a href="https://n0brains.com">n0brains.com</a> — Every call. On the record.</p>
+        <p>© {year} <a href="https://n0brains.com">n0brains.com</a> — {t("Every call. On the record.")}</p>
         <div class="footer-socials">
           <a href="https://x.com/n0brainsai" target="_blank" rel="noopener noreferrer" aria-label="n0brains on X" title="X / Twitter">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z"/></svg>
@@ -284,19 +310,17 @@ const softwareAppLd = homepage ? {
           </a>
         </div>
         <p class="footer-links">
-          <a href="/about">about</a>
-          <a href="/status">status</a>
-          <a href="/changelog">changelog</a>
-          <a href="/privacy">privacy</a>
-          <a href="/terms">terms</a>
-          <a href="/rss.xml">rss</a>
-          <a href="/contact">contact</a>
+          <a href={nav("/about")}>{t("about")}</a>
+          <a href="/status">{t("status")}</a>
+          <a href="/changelog">{t("changelog")}</a>
+          <a href="/privacy">{t("privacy")}</a>
+          <a href="/terms">{t("terms")}</a>
+          <a href="/rss.xml">{t("rss")}</a>
+          <a href={nav("/contact")}>{t("contact")}</a>
         </p>
         <p class="footer-disclaimer">
-          n0brains provides analytical market data and intelligence for informational
-          purposes only. It is not financial, investment, or trading advice, is not
-          personalized to you, and is not a recommendation to buy, sell, hold, or size
-          any position. See <a href="/terms">terms</a> §8.
+          {t("n0brains provides analytical market data and intelligence for informational purposes only. It is not financial, investment, or trading advice, is not personalized to you, and is not a recommendation to buy, sell, hold, or size any position.")}
+          {" "}{t("See")} <a href="/terms">{t("terms")}</a> §8.
         </p>
       </div>
     </footer>

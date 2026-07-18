@@ -121,4 +121,24 @@ export const ru: Record<string, string> = {
     "60 запр/мин · задержка 15 мин · сначала оцените данные",
   "600 req/min · real-time · $39.99/mo · no tiers above it":
     "600 запр/мин · реальное время · 39,99 $/мес · выше тарифов нет",
+
+  // ── about page — 2026-07-18 pivot copy ──
+  "live data lanes": "живые линии данных",
+  "Dozens of active lanes monitor Telegram, RSS, blockchains, exchanges, official filings, market data, and social sources around the clock.":
+    "Десятки активных линий круглосуточно отслеживают Telegram, RSS, блокчейны, биржи, официальные документы, рыночные данные и социальные источники.",
+  "macro conditions": "макроусловия",
+  "The macro layer combines deterministic liquidity, dollar, rates, curve and volatility inputs with the USD high-impact calendar. Per-asset bias is emitted only when its supporting model is available; otherwise it is explicitly withheld.":
+    "Макрослой сочетает детерминированные входные данные по ликвидности, доллару, ставкам, кривой и волатильности с календарём высокого влияния по USD. Уклон по активу выдаётся только когда доступна поддерживающая модель; иначе он явно не публикуется.",
+  "Signals hit your system via REST API, WebSocket, or Webhook. Free tier gets a delayed feed. Pro gets the full real-time surface.":
+    "Сигналы поступают в вашу систему через REST API, WebSocket или Webhook. Бесплатный тариф получает ленту с задержкой. Pro получает полную поверхность в реальном времени.",
+  "n0brains is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, filings, market data, and social sources; an LLM pipeline classifies, corroborates, and scores each event.":
+    "n0brains — это API рыночной аналитики. Десятки живых линий отслеживают Telegram, блокчейны, биржи, документы, рыночные данные и социальные источники; конвейер на базе LLM классифицирует, подтверждает и оценивает каждое событие.",
+  "is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, government filings, and social media around the clock. An LLM classification pool tags every event, cross-references across sources, and scores it for confidence — before the opportunity disappears.":
+    "— это API рыночной аналитики. Десятки живых линий круглосуточно отслеживают Telegram, блокчейны, биржи, государственные документы и соцсети. Пул классификации на базе LLM размечает каждое событие, сверяет его между источниками и оценивает уверенность — прежде чем возможность исчезнет.",
+  "Useful market context is often hiding in plain sight: on-chain flows, positioning, funding rates, scheduled events, and government filings.":
+    "Полезный рыночный контекст часто на виду: он-чейн потоки, позиционирование, ставки финансирования, запланированные события и государственные документы.",
+  "Most people can't continuously cross-reference positioning, funding, liquidity, and an upcoming policy event. A machine can organize that context into one inspectable pre-trade conditions assessment.":
+    "Большинство не может непрерывно сверять позиционирование, финансирование, ликвидность и предстоящее политическое событие. Машина может организовать этот контекст в одну проверяемую оценку предторговых условий.",
+  "The pipeline uses verified public data wherever practical — including Alchemy, Etherscan, RSS, exchange APIs, and government filings. Sources are monitored and retired when they stop contributing. The product is the synthesis, not any single feed.":
+    "Конвейер использует проверенные открытые данные везде, где это практично — включая Alchemy, Etherscan, RSS, API бирж и государственные документы. Источники отслеживаются и выводятся из использования, когда перестают приносить пользу. Продукт — это синтез, а не один источник.",
 };

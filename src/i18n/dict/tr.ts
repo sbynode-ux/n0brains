@@ -121,4 +121,24 @@ export const tr: Record<string, string> = {
     "60 istek/dk · 15 dk gecikme · önce veriyi değerlendir",
   "600 req/min · real-time · $39.99/mo · no tiers above it":
     "600 istek/dk · gerçek zamanlı · 39,99 $/ay · üstünde kademe yok",
+
+  // ── about page — 2026-07-18 pivot copy ──
+  "live data lanes": "canlı veri hatları",
+  "Dozens of active lanes monitor Telegram, RSS, blockchains, exchanges, official filings, market data, and social sources around the clock.":
+    "Onlarca aktif hat Telegram'ı, RSS'i, blok zincirlerini, borsaları, resmi kayıtları, piyasa verilerini ve sosyal kaynakları 7/24 izler.",
+  "macro conditions": "makro koşullar",
+  "The macro layer combines deterministic liquidity, dollar, rates, curve and volatility inputs with the USD high-impact calendar. Per-asset bias is emitted only when its supporting model is available; otherwise it is explicitly withheld.":
+    "Makro katman; deterministik likidite, dolar, faiz, verim eğrisi ve volatilite girdilerini yüksek etkili USD takvimiyle birleştirir. Varlık başına eğilim yalnızca destekleyen model mevcut olduğunda yayınlanır; aksi hâlde açıkça geri tutulur.",
+  "Signals hit your system via REST API, WebSocket, or Webhook. Free tier gets a delayed feed. Pro gets the full real-time surface.":
+    "Sinyaller sistemine REST API, WebSocket veya Webhook üzerinden ulaşır. Ücretsiz kademe gecikmeli bir akış alır. Pro, tam gerçek zamanlı yüzeyi verir.",
+  "n0brains is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, filings, market data, and social sources; an LLM pipeline classifies, corroborates, and scores each event.":
+    "n0brains bir piyasa istihbaratı API'sidir. Onlarca canlı hat Telegram'ı, blok zincirlerini, borsaları, kayıtları, piyasa verilerini ve sosyal kaynakları izler; bir LLM hattı her olayı sınıflandırır, doğrular ve puanlar.",
+  "is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, government filings, and social media around the clock. An LLM classification pool tags every event, cross-references across sources, and scores it for confidence — before the opportunity disappears.":
+    "bir piyasa istihbaratı API'sidir. Onlarca canlı hat Telegram'ı, blok zincirlerini, borsaları, resmi kayıtları ve sosyal medyayı 7/24 izler. Bir LLM sınıflandırma havuzu her olayı etiketler, kaynaklar arasında çapraz kontrol eder ve fırsat kaybolmadan önce güven için puanlar.",
+  "Useful market context is often hiding in plain sight: on-chain flows, positioning, funding rates, scheduled events, and government filings.":
+    "Faydalı piyasa bağlamı çoğu zaman göz önündedir: zincir üstü akışlar, konumlanma, fonlama oranları, planlı olaylar ve resmi kayıtlar.",
+  "Most people can't continuously cross-reference positioning, funding, liquidity, and an upcoming policy event. A machine can organize that context into one inspectable pre-trade conditions assessment.":
+    "Çoğu kişi konumlanmayı, fonlamayı, likiditeyi ve yaklaşan bir politika olayını sürekli çapraz kontrol edemez. Bir makine bu bağlamı tek ve incelenebilir bir işlem öncesi koşul değerlendirmesinde düzenleyebilir.",
+  "The pipeline uses verified public data wherever practical — including Alchemy, Etherscan, RSS, exchange APIs, and government filings. Sources are monitored and retired when they stop contributing. The product is the synthesis, not any single feed.":
+    "Hat, pratik olan her yerde doğrulanmış açık verileri kullanır — Alchemy, Etherscan, RSS, borsa API'leri ve resmi kayıtlar dâhil. Kaynaklar izlenir ve katkı sağlamayı bıraktıklarında emekliye ayrılır. Ürün sentezdir, tek bir kaynak değil.",
 };

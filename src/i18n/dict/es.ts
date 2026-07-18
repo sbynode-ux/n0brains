@@ -121,4 +121,24 @@ export const es: Record<string, string> = {
     "60 req/min · 15 min de retraso · evalúa los datos primero",
   "600 req/min · real-time · $39.99/mo · no tiers above it":
     "600 req/min · tiempo real · 39,99 $/mes · sin planes por encima",
+
+  // ── about page — 2026-07-18 pivot copy ──
+  "live data lanes": "carriles de datos en vivo",
+  "Dozens of active lanes monitor Telegram, RSS, blockchains, exchanges, official filings, market data, and social sources around the clock.":
+    "Decenas de carriles activos monitorizan Telegram, RSS, blockchains, exchanges, registros oficiales, datos de mercado y fuentes sociales las 24 horas.",
+  "macro conditions": "condiciones macro",
+  "The macro layer combines deterministic liquidity, dollar, rates, curve and volatility inputs with the USD high-impact calendar. Per-asset bias is emitted only when its supporting model is available; otherwise it is explicitly withheld.":
+    "La capa macro combina insumos deterministas de liquidez, dólar, tipos, curva y volatilidad con el calendario USD de alto impacto. El sesgo por activo se emite solo cuando su modelo de soporte está disponible; de lo contrario se retiene de forma explícita.",
+  "Signals hit your system via REST API, WebSocket, or Webhook. Free tier gets a delayed feed. Pro gets the full real-time surface.":
+    "Las señales llegan a tu sistema por API REST, WebSocket o Webhook. El plan gratuito recibe un feed con retraso. Pro obtiene toda la superficie en tiempo real.",
+  "n0brains is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, filings, market data, and social sources; an LLM pipeline classifies, corroborates, and scores each event.":
+    "n0brains es una API de inteligencia de mercado. Decenas de carriles en vivo monitorizan Telegram, blockchains, exchanges, registros, datos de mercado y fuentes sociales; una canalización con LLM clasifica, contrasta y puntúa cada evento.",
+  "is a market-intelligence API. Dozens of live lanes monitor Telegram, blockchains, exchanges, government filings, and social media around the clock. An LLM classification pool tags every event, cross-references across sources, and scores it for confidence — before the opportunity disappears.":
+    "es una API de inteligencia de mercado. Decenas de carriles en vivo monitorizan Telegram, blockchains, exchanges, registros gubernamentales y redes sociales las 24 horas. Un grupo de clasificación con LLM etiqueta cada evento, lo contrasta entre fuentes y lo puntúa por confianza — antes de que la oportunidad desaparezca.",
+  "Useful market context is often hiding in plain sight: on-chain flows, positioning, funding rates, scheduled events, and government filings.":
+    "El contexto de mercado útil suele estar a plena vista: flujos on-chain, posicionamiento, tasas de financiación, eventos programados y registros gubernamentales.",
+  "Most people can't continuously cross-reference positioning, funding, liquidity, and an upcoming policy event. A machine can organize that context into one inspectable pre-trade conditions assessment.":
+    "La mayoría no puede contrastar continuamente posicionamiento, financiación, liquidez y un evento de política próximo. Una máquina puede organizar ese contexto en una única evaluación de condiciones previa a la operación e inspeccionable.",
+  "The pipeline uses verified public data wherever practical — including Alchemy, Etherscan, RSS, exchange APIs, and government filings. Sources are monitored and retired when they stop contributing. The product is the synthesis, not any single feed.":
+    "La canalización usa datos públicos verificados siempre que es práctico — incluyendo Alchemy, Etherscan, RSS, APIs de exchanges y registros gubernamentales. Las fuentes se supervisan y se retiran cuando dejan de aportar. El producto es la síntesis, no una única fuente.",
 };

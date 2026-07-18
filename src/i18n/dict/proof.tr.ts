@@ -1,3 +1,7 @@
+/* Turkish — /proof page. Keys are the English source string. Numbers, %, dates,
+   grades, tickers, endpoints and signal_type tokens stay literal. Win-rate /
+   "proven" / methodology / calibration-withheld / disclaimer lines are
+   translated literally at exact claim strength — flagged for human review. */
 export const tr: Record<string, string> = {
   // ── head ──
   "proof": "kanıt",
@@ -75,12 +79,14 @@ export const tr: Record<string, string> = {
   "Illustrative of edge accumulation on measured returns, not a live-traded or guaranteed account.":
     "Ölçülmüş getiriler üzerinde üstünlük birikiminin bir örneğidir, canlı işlem gören veya garantili bir hesap değildir.",
 
-  // ── we grade our own grades ──
-  "We grade our own grades": "Kendi notlarımızı notlandırıyoruz",
-  "Every": "Verdiğimiz her",
+  // ── grade performance: published only once proven (calibration withheld) ──
+  "Grade performance: published only once proven": "Not performansı: yalnızca kanıtlandığında yayımlanır",
+  "Every": "Her",
   "pre-trade check": "işlem öncesi kontrol",
-  "verdict we hand out is logged the moment we give it and scored at its horizon against real prices. If our grades mean anything, A-graded setups outperform F-graded ones. Small sample for now — we show it anyway, from day one.":
-    "kararı, onu verdiğimiz anda kaydedilir ve ufkunda gerçek fiyatlara karşı puanlanır. Notlarımız bir şey ifade ediyorsa, A notlu kurulumlar F notlu olanlardan daha iyi performans gösterir. Şimdilik küçük bir örneklem — yine de ilk günden itibaren gösteriyoruz.",
+  "verdict is logged the moment it is issued and resolved at its stated horizon against real prices. Grade-level performance publishes here under the same standard as every other number on this page: only after the deployed engine clears our weekly verification bar on consecutive weeks. Nothing less unlocks this section.":
+    "kararı, verildiği anda kaydedilir ve belirtilen ufkunda gerçek fiyatlara karşı sonuçlandırılır. Not düzeyindeki performans burada, bu sayfadaki diğer her sayıyla aynı standartta yayımlanır: yalnızca dağıtılan motor, art arda haftalarda haftalık doğrulama çıtamızı geçtikten sonra. Bundan azı bu bölümü açmaz.",
+  "Until that standard is met, no grade-performance claim is made — by design.":
+    "Bu standart karşılanana kadar, not performansına dair hiçbir iddiada bulunulmaz — tasarım gereği.",
 
   // ── legal ──
   "A type is shown as": "Bir tür şu şekilde gösterilir:",
@@ -89,7 +95,6 @@ export const tr: Record<string, string> = {
     "yalnızca, sinyal sonrası canlı fiyat kaydı 30+ ölçülmüş sinyali geçtiğinde VE hem BTC'yi geçip hem de kendi başına kârlı olduğunda — (tür, yön) ve rejim bazında, sıfırın üzerinde %95 güven aralığıyla değerlendirilir. API'de şu türleri işaretleriz —",
   "in the API. Measured on real prices for informational purposes only — not financial advice, and past performance does not guarantee future results. See":
     "— gerçek fiyatlar üzerinde yalnızca bilgilendirme amacıyla ölçülür — finansal tavsiye değildir ve geçmiş performans gelecekteki sonuçları garanti etmez. Bkz.",
-  "terms": "şartlar",
 
   // ── cta ──
   "These numbers update whether they flatter us or not.": "Bu sayılar bizi övse de övmese de güncellenir.",
@@ -110,8 +115,8 @@ export const tr: Record<string, string> = {
   "coin-flip line": "yazı-tura çizgisi",
   "proof unavailable": "kanıt kullanılamıyor",
   "fetch failed": "getirme başarısız",
-  "signal type": "sinyal türü",
-  "signal types": "sinyal türü",
+  "signal type forward-return proven": "sinyal türü ileri getiride kanıtlandı",
+  "signal types forward-return proven": "sinyal türü ileri getiride kanıtlandı",
   "type": "tür",
   "signals": "sinyaller",
   "win rate": "isabet oranı",
@@ -125,6 +130,8 @@ export const tr: Record<string, string> = {
   "95% confidence lower bound on excess return — the conservative edge":
     "fazla getiri üzerinde %95 güven alt sınırı — muhafazakâr üstünlük",
   "Last updated": "Son güncelleme",
+  "every check is logged and resolved against real prices; grade performance publishes here once the deployed engine clears the verification standard":
+    "her kontrol kaydedilir ve gerçek fiyatlara karşı sonuçlandırılır; not performansı, dağıtılan motor doğrulama standardını geçtiğinde burada yayımlanır",
   "no checks logged yet": "henüz kayıtlı kontrol yok",
   "pending": "beklemede",
   "rows are split by origin — <b>probe</b> = our own automated calibration account (hits the same public /check around the clock so every grade accumulates a scoreable record; disclosed, never blended into the customer rows) · <b>real</b> = customer checks":

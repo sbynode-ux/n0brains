@@ -1,3 +1,7 @@
+/* Russian — /proof page. Keys are the English source string. Numbers, %, dates,
+   grades, tickers, endpoints and signal_type tokens stay literal. Win-rate /
+   "proven" / methodology / calibration-withheld / disclaimer lines are
+   translated literally at exact claim strength — flagged for human review. */
 export const ru: Record<string, string> = {
   // ── head ──
   "proof": "доказательство",
@@ -75,12 +79,14 @@ export const ru: Record<string, string> = {
   "Illustrative of edge accumulation on measured returns, not a live-traded or guaranteed account.":
     "Иллюстрация накопления преимущества на измеренных доходностях, а не реально торгуемый или гарантированный счёт.",
 
-  // ── we grade our own grades ──
-  "We grade our own grades": "Мы оцениваем свои собственные оценки",
-  "Every": "Каждый вынесенный нами вердикт по",
+  // ── grade performance: published only once proven (calibration withheld) ──
+  "Grade performance: published only once proven": "Производительность по оценкам: публикуется только после подтверждения",
+  "Every": "Каждый вердикт по",
   "pre-trade check": "предторговой проверке",
-  "verdict we hand out is logged the moment we give it and scored at its horizon against real prices. If our grades mean anything, A-graded setups outperform F-graded ones. Small sample for now — we show it anyway, from day one.":
-    "регистрируется в момент, когда мы его выдаём, и оценивается на своём горизонте по реальным ценам. Если наши оценки что-то значат, сетапы с оценкой A превосходят сетапы с оценкой F. Пока выборка небольшая — мы всё равно показываем это, с первого дня.",
+  "verdict is logged the moment it is issued and resolved at its stated horizon against real prices. Grade-level performance publishes here under the same standard as every other number on this page: only after the deployed engine clears our weekly verification bar on consecutive weeks. Nothing less unlocks this section.":
+    "фиксируется в момент выдачи и разрешается на заявленном горизонте по реальным ценам. Производительность на уровне оценок публикуется здесь по тому же стандарту, что и любое другое число на этой странице: только после того, как развёрнутый движок преодолеет нашу еженедельную планку проверки несколько недель подряд. Ничто меньшее не открывает этот раздел.",
+  "Until that standard is met, no grade-performance claim is made — by design.":
+    "Пока этот стандарт не выполнен, никаких заявлений о производительности по оценкам не делается — так задумано.",
 
   // ── legal ──
   "A type is shown as": "Тип показывается как",
@@ -89,7 +95,6 @@ export const ru: Record<string, string> = {
     "только когда его живой ценовой рекорд после сигнала преодолевает 30+ измеренных сигналов И одновременно превосходит BTC и прибылен сам по себе — оценивается по (тип, направление) и режиму, с 95% доверительным интервалом выше нуля. Это те типы, которые мы помечаем как",
   "in the API. Measured on real prices for informational purposes only — not financial advice, and past performance does not guarantee future results. See":
     "в API. Измеряется на реальных ценах исключительно в информационных целях — не является финансовым советом, и прошлые результаты не гарантируют будущих. См.",
-  "terms": "условия",
 
   // ── cta ──
   "These numbers update whether they flatter us or not.": "Эти цифры обновляются, льстят они нам или нет.",
@@ -110,8 +115,8 @@ export const ru: Record<string, string> = {
   "coin-flip line": "линия орла или решки",
   "proof unavailable": "доказательство недоступно",
   "fetch failed": "ошибка загрузки",
-  "signal type": "тип сигнала",
-  "signal types": "типа сигнала",
+  "signal type forward-return proven": "тип сигнала подтверждён по форвардной доходности",
+  "signal types forward-return proven": "типов сигналов подтверждено по форвардной доходности",
   "type": "тип",
   "signals": "сигналы",
   "win rate": "доля прибыльных",
@@ -125,6 +130,8 @@ export const ru: Record<string, string> = {
   "95% confidence lower bound on excess return — the conservative edge":
     "нижняя 95% доверительная граница избыточной доходности — консервативное преимущество",
   "Last updated": "Обновлено",
+  "every check is logged and resolved against real prices; grade performance publishes here once the deployed engine clears the verification standard":
+    "каждая проверка фиксируется и разрешается по реальным ценам; производительность по оценкам публикуется здесь после того, как развёрнутый движок преодолевает стандарт проверки",
   "no checks logged yet": "проверок пока не зафиксировано",
   "pending": "в ожидании",
   "rows are split by origin — <b>probe</b> = our own automated calibration account (hits the same public /check around the clock so every grade accumulates a scoreable record; disclosed, never blended into the customer rows) · <b>real</b> = customer checks":

@@ -1,5 +1,6 @@
 ---
 import CoverLayout from "../layouts/CoverLayout.astro";
+import LangSwitcher from "../components/LangSwitcher.astro";
 ---
 <CoverLayout
   title="n0brains — Ask before you trade"
@@ -74,7 +75,7 @@ import CoverLayout from "../layouts/CoverLayout.astro";
     #tr{display:none}                         /* "item #.. LIVE" — drop on mobile */
     #bl{font-size:.5rem;left:14px;bottom:12px}
     #br{font-size:.7rem;right:14px;bottom:12px}
-    #cover-skip{top:12px;right:12px;font-size:.56rem;padding:6px 11px}
+    #cover-skip{top:52px;right:12px;font-size:.56rem;padding:6px 11px}
     /* rail pips smaller, tucked */
     #rail{left:10px;height:38vh;gap:0}
     .pip{width:7px;height:7px}
@@ -108,7 +109,7 @@ import CoverLayout from "../layouts/CoverLayout.astro";
 <!-- additional cover-only chrome -->
 <style>
   /* skip pill — always-visible escape to the real homepage */
-  #cover-skip{position:fixed;top:20px;right:22px;z-index:10;pointer-events:auto;
+  #cover-skip{position:fixed;top:62px;right:20px;z-index:10;pointer-events:auto;
     font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
     color:var(--accent);border:1px solid #0a5a2c;background:rgba(6,10,8,.6);backdrop-filter:blur(8px);
     padding:8px 14px;border-radius:5px;text-decoration:none;opacity:.72;transition:opacity .2s,background .2s}
@@ -176,6 +177,8 @@ import CoverLayout from "../layouts/CoverLayout.astro";
   </div>
 
   <div id="scroll"></div>
+  <!-- language switcher (top-right) -->
+  <LangSwitcher variant="cover" />
   <!-- escape hatch -->
   <a id="cover-skip" href="/check">check a trade →</a>
   <!-- crawlable text for the indexed root -->
