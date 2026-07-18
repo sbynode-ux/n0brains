@@ -183,5 +183,15 @@ import CoverLayout from "../layouts/CoverLayout.astro";
     n0brains — AI-powered crypto intelligence. One signal survives the full pipeline: 30+ watchers fetch raw items, relevance + dedup gates drop noise, an LLM pool classifies asset/type/direction, enrichment adds confidence decay, corroboration, manipulation, wallet DNA and regime, scoring assigns a quality band, and a proven gate earns conviction. Delivered over REST, WebSocket, Webhooks, MCP server, x402 (Agentic.Market) and a pip-installable CLI. Free tier and Pro at $39.99/mo.
     <nav><a href="/home">Home</a> <a href="/docs/">Docs</a> <a href="/docs/quickstart">Quickstart</a> <a href="/proof">Proof</a> <a href="/charts">Charts</a> <a href="/pricing">Pricing</a> <a href="/intel">Intel</a> <a href="/blog">Blog</a> <a href="/podcast">Podcast</a> <a href="/login">Login</a> <a href="/signup">Sign up</a></nav>
   </div>
+  <script>
+    try {
+      if (localStorage.getItem("auth_token")) {
+        document.querySelectorAll('#cover-nav a[href="/login"]').forEach((a) => {
+          a.textContent = "dashboard";
+          a.setAttribute("href", "/dashboard");
+        });
+      }
+    } catch { /* storage blocked */ }
+  </script>
   <script>import "../scripts/cover/cover.js";</script>
 </CoverLayout>

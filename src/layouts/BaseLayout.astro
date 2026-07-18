@@ -274,6 +274,18 @@ const softwareAppLd = homepage ? {
 
     <script>
       (() => {
+        /* Logged-in nav: login → dashboard (desktop rail + mobile sheet).
+           auth_token may be expired — /dashboard itself re-validates. */
+        try {
+          if (localStorage.getItem("auth_token")) {
+            document.querySelectorAll('a[href="/login"]').forEach((a) => {
+              a.textContent = "dashboard";
+              a.setAttribute("href", "/dashboard");
+              a.classList.toggle("active", window.location.pathname.startsWith("/dashboard"));
+            });
+          }
+        } catch { /* storage blocked — leave login link */ }
+
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         const header = document.getElementById("site-header");
         const hero   = document.getElementById("hero");
