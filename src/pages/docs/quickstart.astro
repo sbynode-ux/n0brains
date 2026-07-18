@@ -229,6 +229,12 @@ const toc = [
     { href: "#troubleshoot", label: "troubleshooting" },
     { href: "#more",         label: "going further" },
   ]},
+  { group: "more docs", items: [
+    { href: "/docs/",    label: "api reference" },
+    { href: "/docs/mcp", label: "mcp server" },
+    { href: "/docs/cli", label: "cli" },
+    { href: "/docs/x402", label: "x402" },
+  ]},
 ];
 
 const howToJsonLd = JSON.stringify({
@@ -283,7 +289,7 @@ const howToJsonLd = JSON.stringify({
           <h2>Get your key</h2>
           <ol>
             <li><a href="/signup">Create a free account</a> — no card, ~30 seconds.</li>
-            <li>Your API key is shown <strong>once</strong>, right after signup — copy it now. Lost it? <a href="/account#keys">Regenerate from your account</a>; the old key stops working immediately.</li>
+            <li>Your API key is shown <strong>once</strong>, right after signup — copy it now. Lost it? <a href="/dashboard">Regenerate from the dashboard</a>; the old key stops working immediately.</li>
           </ol>
           <div class="qs-keybar">
             <label for="qs-key">Paste your key here and every snippet on this page personalizes itself:</label>
@@ -334,7 +340,7 @@ const howToJsonLd = JSON.stringify({
           <p class="docs-tip"><strong>Why the key is in the URL:</strong> claude.ai custom connectors can't yet attach
           auth headers on self-serve accounts (Anthropic's request-header option is still in beta), so the n0brains
           server also accepts <code>?api_key=</code> on the URL. Treat that URL like a password — anyone holding it can
-          spend your quota. If it ever leaks, <a href="/account#keys">regenerate the key</a> and update the connector.
+          spend your quota. If it ever leaks, <a href="/dashboard">regenerate the key</a> and update the connector.
           If your Claude account has the beta "Request headers" section, prefer it: header <code>x-api-key</code>,
           value = your bare key, and drop the query string from the URL.</p>
         </div>

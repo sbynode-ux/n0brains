@@ -1,0 +1,127 @@
+---
+/* Fixed-left docs navigation: every docs page + an auto-built
+   "on this page" section list (h2 scan, ids generated when missing,
+   scrollspy). Rendered by BaseLayout on /docs/* except /docs/quickstart,
+   which ships its own right-rail TOC. Hidden under 1300px — the docs
+   column needs the room. */
+interface Props { current: string }
+const { current } = Astro.props;
+
+const pages = [
+  { href: "/docs/", label: "api reference" },
+  { href: "/docs/quickstart", label: "quickstart" },
+  { href: "/docs/mcp", label: "mcp server" },
+  { href: "/docs/cli", label: "cli" },
+  { href: "/docs/strategies", label: "strategies" },
+  { href: "/docs/x402", label: "x402" },
+];
+const isActive = (href: string) =>
+  href === "/docs/" ? current.replace(/\/$/, "") === "/docs" : current.startsWith(href);
+---
+
+<aside class="docsnav" aria-label="Documentation">
+  <p class="docsnav-head">docs</p>
+  <nav class="docsnav-pages">
+    {pages.map((p) => (
+      <a href={p.href} class={isActive(p.href) ? "active" : ""}>{p.label}</a>
+    ))}
+  </nav>
+  <div class="docsnav-sections" id="docsnav-sections" hidden>
+    <p class="docsnav-head">on this page</p>
+    <nav class="docsnav-toc" id="docsnav-toc"></nav>
+  </div>
+</aside>
+
+<style is:global>
+  .docsnav { display: none; }
+  @media (min-width: 1300px) {
+    .docsnav {
+      display: block; position: fixed; z-index: 30;
+      top: calc(var(--header-height) + 40px);
+      left: max(16px, calc(50vw - 646px));
+      width: 200px;
+      max-height: calc(100vh - var(--header-height) - 70px);
+      overflow-y: auto; scrollbar-width: none;
+      padding-right: 14px; border-right: 1px solid var(--border);
+    }
+  }
+  .docsnav::-webkit-scrollbar { display: none; }
+  .docsnav-head {
+    font-family: var(--font-mono); font-size: 0.56rem;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--text-faint); margin: 0 0 10px;
+  }
+  .docsnav-pages { display: flex; flex-direction: column; gap: 1px; margin-bottom: 20px; }
+  .docsnav-pages a {
+    padding: 5px 8px; border-radius: var(--radius-sm);
+    font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .docsnav-pages a:hover { color: var(--text-heading); background: var(--bg-hover); }
+  .docsnav-pages a.active { color: var(--accent); background: var(--accent-glow); }
+  .docsnav-toc { display: flex; flex-direction: column; }
+  .docsnav-toc a {
+    position: relative; padding: 3px 0 3px 12px;
+    font-family: var(--font-mono); font-size: 0.6rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none; line-height: 1.5;
+    transition: color 0.15s ease;
+  }
+  .docsnav-toc a::before {
+    content: ""; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--text-dim); transition: background 0.15s ease;
+  }
+  .docsnav-toc a:hover { color: var(--text-heading); }
+  .docsnav-toc a.active { color: var(--accent); }
+  .docsnav-toc a.active::before { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow-strong); }
+</style>
+
+<script>
+  (() => {
+    const wrap = document.getElementById("docsnav-sections");
+    const toc = document.getElementById("docsnav-toc");
+    if (!wrap || !toc) return;
+
+    const heads = Array.from(document.querySelectorAll(".docs-page h2"))
+      .filter((h) => (h.textContent || "").trim().length > 0);
+    if (!heads.length) return;
+
+    const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "section";
+    heads.forEach((h) => {
+      if (!h.id) {
+        let s = slug(h.textContent.trim());
+        let base = s, i = 2;
+        while (document.getElementById(s)) s = `${base}-${i++}`;
+        h.id = s;
+      }
+    });
+
+    const links = new Map();
+    heads.forEach((h) => {
+      const a = document.createElement("a");
+      a.href = `#${h.id}`;
+      a.textContent = (h.textContent || "").trim().replace(/\s+/g, " ").slice(0, 44);
+      toc.appendChild(a);
+      links.set(h.id, a);
+    });
+    wrap.hidden = false;
+
+    let activeId = null;
+    const setActive = (id) => {
+      if (id === activeId) return;
+      activeId = id;
+      links.forEach((a, key) => a.classList.toggle("active", key === id));
+    };
+    const spy = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting).map((e) => e.target);
+      if (visible.length) {
+        const top = visible.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top)[0];
+        setActive(top.id);
+      }
+    }, { rootMargin: "-80px 0px -60% 0px", threshold: 0 });
+    heads.forEach((h) => spy.observe(h));
+  })();
+</script>

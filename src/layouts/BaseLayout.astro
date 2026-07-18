@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import DocsSidebar from "../components/DocsSidebar.astro";
 
 export interface Props {
   title: string;
@@ -233,6 +234,9 @@ const softwareAppLd = homepage ? {
       </nav>
     </div>
 
+    {navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart") && (
+      <DocsSidebar current={navPath} />
+    )}
     <main id="main">
       <slot />
     </main>
