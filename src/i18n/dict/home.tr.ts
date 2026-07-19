@@ -9,9 +9,9 @@ export const tr: Record<string, string> = {
 
   // ── hero — CRAFTED, headline reordered, review ──
   "Pre-trade conditions engine live": "İşlem öncesi koşul motoru canlı",
-  "CHECK THE TRADE": "İŞLEMİ KONTROL ET",
-  "BEFORE": "ALMADAN",
-  "YOU TAKE IT": "ÖNCE",
+  "CHECK THE TRADE": "İŞLEMİ",
+  "BEFORE": "ALMADAN ÖNCE",
+  "YOU TAKE IT": "KONTROL ET",
   "Submit the trade you are considering. n0brains checks positioning crowding, scheduled event risk, liquidity, volatility, market structure, stop geometry and conflicts across the live evidence stack, then returns a graded conditions assessment with explicit flags and falsifiers. It is context for your decision, not a recommendation or an automated trade instruction.":
     "Düşündüğün işlemi gönder. n0brains; pozisyon kalabalıklığını, planlı olay riskini, likiditeyi, oynaklığı, piyasa yapısını, stop geometrisini ve canlı kanıt yığınındaki çelişkileri kontrol eder, ardından açık uyarılar ve çürütücülerle notlandırılmış bir koşul değerlendirmesi döndürür. Bu, kararın için bağlamdır; bir öneri ya da otomatik işlem talimatı değildir.",
   "Check a trade →": "Bir işlemi kontrol et →",
