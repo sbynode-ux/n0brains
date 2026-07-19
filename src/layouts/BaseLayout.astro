@@ -285,8 +285,8 @@ const softwareAppLd = homepage ? {
       </nav>
     </div>
 
-    {navPath.startsWith("/docs") && !navPath.startsWith("/docs/quickstart") && (
-      <DocsSidebar current={navPath} />
+    {navBase.startsWith("/docs") && !navBase.startsWith("/docs/quickstart") && (
+      <DocsSidebar current={navBase} locale={locale} />
     )}
     <main id="main">
       <slot />

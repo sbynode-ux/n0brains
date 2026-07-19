@@ -1,0 +1,78 @@
+---
+/* Shared body for /blog and /{es,tr,ru}/blog — the /blog landing page that
+   lists blog posts. Blog post titles, summaries, slugs and dates come from the
+   content collection (cron-generated English) and are intentionally NOT
+   translated. The "think / less. / Ship More." hero tagline stays English as a
+   brand mark, matching the /about sign-off. */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { useTranslations, toLocale } from "../../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const canonicalURL = new URL(Astro.url.pathname, "https://n0brains.com").href;
+
+const posts = await getCollection("blog");
+posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const siteUrl = "https://n0brains.com";
+const blogLd = {
+  "@context": "https://schema.org",
+  "@type": "Blog",
+  name: "n0brains blog",
+  description: "n0brains blog — Think Less, Ship More. Articles about building, AI agents, and crypto.",
+  url: `${siteUrl}/blog/`,
+  publisher: {
+    "@type": "Organization",
+    name: "n0brains",
+    url: siteUrl,
+    logo: { "@type": "ImageObject", url: `${siteUrl}/og-default.png` },
+  },
+  blogPost: posts.slice(0, 10).map((p) => ({
+    "@type": "BlogPosting",
+    headline: p.data.title,
+    description: p.data.description,
+    datePublished: p.data.pubDate.toISOString(),
+    url: `${siteUrl}/blog/${p.id}/`,
+  })),
+};
+---
+
+<BaseLayout
+  title={t("blog")}
+  description={t("n0brains blog — Think Less, Ship More. Articles about building, AI agents, and crypto.")}
+  canonicalURL={canonicalURL}
+  homepage={true}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(blogLd)} />
+  <section class="hero" id="hero">
+    <p class="hero-eyebrow">{t("n0brains // build mode")}</p>
+    <h1>
+      think<br />
+      less.<br />
+      <span class="highlight">Ship More.</span>
+    </h1>
+    <p class="hero-desc">
+      {t("Building things without overthinking them. No grand theories. No analysis paralysis.")}
+    </p>
+  </section>
+
+  <section>
+    <p class="section-label">{t("// latest posts")}</p>
+    <div class="post-list">
+      {
+        posts.map((post, i) => (
+          <a href={`/blog/${post.id}/`} class="post-card">
+            <div class="post-meta">
+              <span class="post-index">0{i + 1}</span>
+              <span class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+            </div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            <span class="read-more">{t("read")}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

@@ -18,6 +18,33 @@ import { ru as ruPricing } from "./dict/pricing.ru";
 import { es as esProof } from "./dict/proof.es";
 import { tr as trProof } from "./dict/proof.tr";
 import { ru as ruProof } from "./dict/proof.ru";
+import { es as esCheck } from "./dict/check.es";
+import { tr as trCheck } from "./dict/check.tr";
+import { ru as ruCheck } from "./dict/check.ru";
+import { es as esDocs } from "./dict/docs.es";
+import { tr as trDocs } from "./dict/docs.tr";
+import { ru as ruDocs } from "./dict/docs.ru";
+import { es as esQuickstart } from "./dict/quickstart.es";
+import { tr as trQuickstart } from "./dict/quickstart.tr";
+import { ru as ruQuickstart } from "./dict/quickstart.ru";
+import { es as esCharts } from "./dict/charts.es";
+import { tr as trCharts } from "./dict/charts.tr";
+import { ru as ruCharts } from "./dict/charts.ru";
+import { es as esIntel } from "./dict/intel.es";
+import { tr as trIntel } from "./dict/intel.tr";
+import { ru as ruIntel } from "./dict/intel.ru";
+import { es as esBlog } from "./dict/blog.es";
+import { tr as trBlog } from "./dict/blog.tr";
+import { ru as ruBlog } from "./dict/blog.ru";
+import { es as esPodcast } from "./dict/podcast.es";
+import { tr as trPodcast } from "./dict/podcast.tr";
+import { ru as ruPodcast } from "./dict/podcast.ru";
+import { es as esLogin } from "./dict/login.es";
+import { tr as trLogin } from "./dict/login.tr";
+import { ru as ruLogin } from "./dict/login.ru";
+import { es as esSignup } from "./dict/signup.es";
+import { tr as trSignup } from "./dict/signup.tr";
+import { ru as ruSignup } from "./dict/signup.ru";
 
 export const LOCALES = ["en", "es", "tr", "ru"] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -42,16 +69,25 @@ export const LOCALE_NAMES: Record<Locale, string> = {
 export const TRANSLATED_PATHS = new Set<string>([
   "/home",
   "/pricing",
+  "/check",
   "/about",
   "/proof",
   "/contact",
+  "/podcast",
+  "/intel",
+  "/charts",
+  "/blog",
+  "/login",
+  "/signup",
+  "/docs",
+  "/docs/quickstart",
 ]);
 
 const DICT: Record<Locale, Record<string, string>> = {
   en: {},
-  es: { ...es, ...esPricing, ...esHome, ...esProof },
-  tr: { ...tr, ...trPricing, ...trHome, ...trProof },
-  ru: { ...ru, ...ruPricing, ...ruHome, ...ruProof },
+  es: { ...es, ...esPricing, ...esHome, ...esProof, ...esCheck, ...esDocs, ...esQuickstart, ...esCharts, ...esIntel, ...esBlog, ...esPodcast, ...esLogin, ...esSignup },
+  tr: { ...tr, ...trPricing, ...trHome, ...trProof, ...trCheck, ...trDocs, ...trQuickstart, ...trCharts, ...trIntel, ...trBlog, ...trPodcast, ...trLogin, ...trSignup },
+  ru: { ...ru, ...ruPricing, ...ruHome, ...ruProof, ...ruCheck, ...ruDocs, ...ruQuickstart, ...ruCharts, ...ruIntel, ...ruBlog, ...ruPodcast, ...ruLogin, ...ruSignup },
 };
 
 export function toLocale(x: string | undefined | null): Locale {

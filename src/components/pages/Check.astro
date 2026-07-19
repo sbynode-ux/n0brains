@@ -1,0 +1,923 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { useTranslations, toLocale, navHref } from "../../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const canonicalURL = new URL(Astro.url.pathname, "https://n0brains.com").href;
+
+/* Strings the client script writes at runtime (textContent/innerHTML). Server
+   t() can't reach JS-created text, so they ride along as a JSON blob the script
+   reads. Grades (A/B+/D/F), signal_type tokens, tickers, numbers, endpoints and
+   API-returned notes stay literal in the script — only static label words move. */
+const jsT = {
+  // auth / signed state
+  signedOutRelog: t("signed out — please log in again"),
+  anonSigned: t("anonymous — 1 free check today"),
+  quotaAnon: t("1 free (no account)"),
+  signedSession: t("signed in — session"),
+  usingKey: t("using API key"),
+  sessionExpired: t("Session expired — please log in again."),
+  // chart-parse states
+  readingChart: t("reading chart…"),
+  chartNoTicker: t("couldn't read a ticker from that image — type it instead"),
+  readingThisAs: t("Reading this as"),
+  notCovered: t(" (NOT covered — check the spelling)"),
+  dashConfirm: t(" — confirm?"),
+  dropDifferent: t("📈 drop a different screenshot to re-read"),
+  chartReadFailedPre: t("chart read failed: "),
+  typeTickerInstead: t(" — type the ticker instead"),
+  appliedPre: t("✓ applied — "),
+  filledInBelow: t(" filled in below"),
+  // shortcuts
+  pickAssetFirst: t("pick an asset first (need a price for % stops)"),
+  // engine stages + submit
+  stages: [t("reading positioning…"), t("scanning scheduled events…"), t("measuring volatility…"), t("checking proven edges…"), t("grading…")],
+  runCheck: t("RUN CHECK"),
+  completeVerification: t("Please complete the verification widget first."),
+  firstLookAt: t("First look at "),
+  warmingAuto: t(" — warming market data, auto-retrying in ~"),
+  warmingManual: t(" — warming market data. Run the check again in ~"),
+  secsEllipsis: t("s…"),
+  secsPeriod: t("s."),
+  zeroFreeLeft: t("0 free left — accounts get 3/day"),
+  // verdict panel / score
+  long: t("LONG"),
+  short: t("SHORT"),
+  horizonWord: t("horizon"),
+  regimeWord: t("regime:"),
+  scoreWord: t("score"),
+  realizedVol: t("realized daily vol"),
+  engineWord: t("engine"),
+  // quota
+  unlimitedPro: t("unlimited (pro)"),
+  freeChecksLeft: t("free checks left"),
+  // status + trust strip
+  engineOnlinePre: t("engine online · "),
+  gradesResolvedRecord: t(" grades resolved on the public record"),
+  gradesAlreadyResolved: t(" grades already resolved on the "),
+  publicRecord: t("public record"),
+  weGradeOurGrades: t(" — we grade our own grades."),
+  trustCalibrating: t("every verdict is logged and resolved against real prices; grade performance publishes on /proof once it clears our verification standard."),
+  proofHref: navHref("/proof", locale),
+  // copy result
+  gradedMy: t("n0brains graded my"),
+  conditionsCheckedBeforeEntry: t("— conditions checked before entry:"),
+  copied: t("✓ copied"),
+  copyResult: t("copy result"),
+  // history
+  yourRecord: t("your record:"),
+  profitableAvg: t("profitable · avg"),
+  perCheck: t("per check"),
+  pending: t("pending"),
+  na: t("n/a"),
+  stopped: t(" · stopped"),
+  recheckNow: t("re-check now"),
+};
+---
+
+<BaseLayout
+  title={t("check")}
+  description={t("Ask n0brains First — graded pre-trade conditions check. Submit your trade idea (asset, side, leverage, stop) and get a grade A–F with the reasons: crowding, event risk, liquidation distance vs volatility, and evidence conflicts. Every verdict is logged and resolved.")}
+  canonicalURL={canonicalURL}
+>
+  <section class="check-page">
+    <div class="ck-hero">
+      <p class="ck-kicker"><span class="ck-dash"></span><span data-scramble>{t("pre-trade check · ask n0brains first")}</span></p>
+      <h1 class="ck-h1">{t("ASK SOMEONE WHO KNOWS FIRST.")}<br /><span class="accent">{t("ASK n0brains.")}</span></h1>
+      <p class="ck-lede">
+        {t("About to take a trade? Tell us what you're planning. We check the market around it — who's crowded on your side, what news is coming, whether your leverage survives a normal day — and give it a grade from A to F. Every verdict is logged before its outcome and resolved at the selected horizon — grade performance publishes on")} <a href={navHref("/proof", locale)}>/proof</a> {t("once it meets the same verification standard as everything else we publish.")}
+      </p>
+      <div class="ck-status" id="ck-status">
+        <span class="ck-live-dot"></span>
+        <span id="ck-status-text">{t("engine online · every verdict logged & resolved")}</span>
+      </div>
+      <div class="ck-examples">
+        <span class="ck-opt">{t("try one:")}</span>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"BTC","side":"long","lev":10}'>{t("BTC long 10×")}</button>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"ETH","side":"short","stopPct":2}'>{t("ETH short + stop")}</button>
+        <button type="button" class="ck-chip-btn ck-ex" data-ex='{"asset":"SOL","side":"long","lev":20,"stopPct":1}'>{t("SOL long 20× tight stop")}</button>
+      </div>
+      <p class="ck-trust" id="ck-trust" hidden></p>
+    </div>
+
+    <!-- signed-out gate: try 1 anonymous check, or sign in for more -->
+    <div class="ck-card ck-gate" id="ck-gate" hidden>
+      <p class="ck-gate-line">{t("Try")} <b>{t("1 free check")}</b> {t("below — no account. Free accounts get")} <b>{t("3 checks a day")}</b> {t("+ your history; Pro is unlimited.")}</p>
+      <div class="ck-gate-btns">
+        <a class="ck-btn" href={`${navHref("/login", locale)}?next=/check`}>{t("LOG IN")}</a>
+        <a class="ck-btn ck-btn-cta" href={navHref("/signup", locale)}>{t("CREATE FREE ACCOUNT")}</a>
+      </div>
+      <details class="ck-adv">
+        <summary>{t("advanced: use an API key instead")}</summary>
+        <div class="ck-adv-row">
+          <input id="ck-key" placeholder="intel_sk_…" autocomplete="off" />
+          <button type="button" class="ck-btn" id="ck-key-use">{t("USE KEY")}</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="ck-grid" id="ck-app" hidden>
+      <form id="ck-form" class="ck-card ck-console">
+        <div class="ck-chrome"><span class="ck-chrome-title">n0brains://pre-trade-check</span>
+          <span class="ck-chrome-sig" id="ck-signed"></span></div>
+        <div class="ck-drop" id="ck-drop" hidden>
+          <input type="file" id="ck-file" accept="image/*" hidden />
+          <span id="ck-drop-label">{t("📈 drop a chart screenshot here (or click) — we'll read the ticker")}</span>
+        </div>
+        <div class="ck-parse" id="ck-parse" hidden>
+          <span id="ck-parse-text"></span>
+          <button type="button" class="ck-chip-btn" id="ck-parse-yes">{t("✓ use")}</button>
+          <button type="button" class="ck-chip-btn" id="ck-parse-no">{t("✗ ignore")}</button>
+        </div>
+        <div class="ck-row">
+          <label>{t("ASSET")}<input id="ck-asset" placeholder="BTC" maxlength="12" required
+            list="ck-assets" autocomplete="off" /></label>
+          <datalist id="ck-assets"></datalist>
+          <label>{t("SIDE")}
+            <div class="ck-side">
+              <button type="button" id="ck-long" class="ck-side-btn on">{t("LONG")}</button>
+              <button type="button" id="ck-short" class="ck-side-btn">{t("SHORT")}</button>
+            </div>
+          </label>
+        </div>
+        <div class="ck-spotline" id="ck-spotline" hidden>{t("spot")} <b id="ck-spot">—</b></div>
+        <div class="ck-row">
+          <label>{t("ENTRY")} <span class="ck-opt">{t("optional — live price if empty")}</span><input id="ck-entry" type="number" step="any" placeholder={t("spot")} /></label>
+          <label>{t("STOP")} <span class="ck-opt">{t("optional")}</span><input id="ck-stop" type="number" step="any" placeholder="—" />
+            <span class="ck-shortcuts"><button type="button" class="ck-mini" data-stop="1">−1%</button><button type="button" class="ck-mini" data-stop="2">−2%</button><button type="button" class="ck-mini" data-stop="5">−5%</button></span>
+          </label>
+        </div>
+        <div class="ck-row">
+          <label>{t("TARGET")} <span class="ck-opt">{t("optional")}</span><input id="ck-target" type="number" step="any" placeholder="—" /></label>
+          <label>{t("LEVERAGE")} <span class="ck-opt">{t("optional")}</span><input id="ck-lev" type="number" step="any" min="1" max="100" placeholder="1" />
+            <span class="ck-shortcuts"><button type="button" class="ck-mini" data-lev="3">3×</button><button type="button" class="ck-mini" data-lev="5">5×</button><button type="button" class="ck-mini" data-lev="10">10×</button><button type="button" class="ck-mini" data-lev="20">20×</button></span>
+          </label>
+        </div>
+        <div class="ck-row">
+          <label>{t("HORIZON")}
+            <select id="ck-horizon">
+              <option value="4">4h</option>
+              <option value="24" selected>24h</option>
+              <option value="72">3d</option>
+              <option value="168">7d</option>
+            </select>
+          </label>
+          <label class="ck-quota-label">{t("TODAY")}<span class="ck-opt" id="ck-quota">&nbsp;</span></label>
+        </div>
+        <div id="ck-turnstile" class="ck-turnstile"></div>
+        <button type="submit" id="ck-go" class="ck-submit"><span class="ck-submit-sweep"></span><span id="ck-go-label">{t("RUN CHECK")}</span></button>
+        <p class="ck-err" id="ck-err" hidden></p>
+      </form>
+
+      <div class="ck-card ck-result" id="ck-result" hidden>
+        <div class="ck-scanline" id="ck-scan"></div>
+        <div class="ck-verdict-panel" id="ck-vpanel">
+          <div class="ck-grade-col">
+            <div class="ck-grade" id="ck-grade">—</div>
+            <div class="ck-grade-cap">{t("GRADE")}</div>
+          </div>
+          <div class="ck-grade-meta">
+            <div class="ck-headline" id="ck-headline">{t("conditions")}</div>
+            <div class="ck-verdict" id="ck-verdict"></div>
+            <div class="ck-meter" id="ck-meter" aria-hidden="true">
+              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
+            </div>
+            <div class="ck-scale" id="ck-scale" hidden>
+              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
+            </div>
+            <div class="ck-score" id="ck-score"></div>
+          </div>
+        </div>
+        <p class="ck-upsell" id="ck-upsell" hidden>
+          {t("That's your free check for today —")} <a href={navHref("/signup", locale)}>{t("a free account gets 3/day + your history")}</a>.
+        </p>
+        <div class="ck-reveal">
+          <div class="ck-section" id="ck-flags-wrap" hidden>
+            <div class="ck-sec-title ck-neg">{t("▍WORKING AGAINST YOU")}</div>
+            <ul class="ck-list" id="ck-flags"></ul>
+          </div>
+          <div class="ck-section" id="ck-supports-wrap" hidden>
+            <div class="ck-sec-title ck-pos">{t("▍IN YOUR FAVOR")}</div>
+            <ul class="ck-list" id="ck-supports"></ul>
+          </div>
+          <div class="ck-section" id="ck-fals-wrap" hidden>
+            <div class="ck-sec-title">{t("▍WHAT WOULD CHANGE THIS GRADE")}</div>
+            <ul class="ck-list ck-fals" id="ck-fals"></ul>
+          </div>
+          <figure class="ck-chart-fig" id="ck-chart-fig" hidden>
+            <img id="ck-chart-img" class="ck-chart-img" alt="check chart" />
+            <figcaption>{t("rendered from live market data — your orders vs our measured structure")}</figcaption>
+          </figure>
+          <div class="ck-section" id="ck-terrain-wrap" hidden>
+            <div class="ck-sec-title">{t("▍THE TERRAIN")}</div>
+            <p class="ck-terrain" id="ck-terrain"></p>
+            <ul class="ck-list" id="ck-terrain-notes"></ul>
+          </div>
+          <div class="ck-section" id="ck-unchecked-wrap" hidden>
+            <div class="ck-sec-title">{t("▍NOT CHECKED — YOU DIDN'T TELL US")}</div>
+            <ul class="ck-list ck-unchecked" id="ck-unchecked"></ul>
+          </div>
+          <div class="ck-share-row">
+            <button type="button" class="ck-chip-btn" id="ck-copy">{t("copy result")}</button>
+            <a class="ck-chip-btn" id="ck-dl" download="n0brains-check.png" hidden>{t("download chart")}</a>
+          </div>
+          <p class="ck-fine" id="ck-fine">
+            {t("Conditions assessment measured from live market data — analytical, not financial advice. Grades are logged and resolved at horizon; calibration publishes on")} <a href={navHref("/proof", locale)}>/proof</a>.
+          </p>
+          <div class="ck-section" id="ck-levels-wrap" hidden>
+            <div class="ck-sec-title">{t("▍YOUR LEVELS, AUDITED")}</div>
+            <ul class="ck-list" id="ck-levels"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- history -->
+    <div class="ck-hist" id="ck-hist" hidden>
+      <div class="ck-sec-title">{t("▍YOUR CHECKS · ON THE RECORD")}</div>
+      <p class="ck-record" id="ck-record" hidden></p>
+      <div class="ck-hist-scroll">
+        <table class="ck-table">
+          <thead><tr>
+            <th>{t("when")}</th><th>{t("trade")}</th><th>{t("grade")}</th><th>{t("horizon")}</th><th>{t("result")}</th><th></th>
+          </tr></thead>
+          <tbody id="ck-hist-body"></tbody>
+        </table>
+      </div>
+      <p class="ck-fine">{t("Results are the side-adjusted move from your entry to the end of the horizon (or your stop, if it was hit first). Pending checks resolve automatically — come back after the horizon.")}</p>
+    </div>
+
+    <div class="ck-how">
+      <div class="ck-sec-title">{t("▍HOW IT WORKS")}</div>
+      <ol class="ck-list">
+        <li>{t("Type in the trade you're thinking about. Only the coin and long/short are required.")}</li>
+        <li>{t("We grade the conditions around it, A to F, and show every reason.")}</li>
+        <li>{t("Come back after the horizon — the verdict resolves against what actually happened and stays logged, permanently.")}</li>
+      </ol>
+    </div>
+    <p class="ck-signoff">{t("// every verdict is logged before the outcome")}</p>
+  </section>
+
+  <script type="application/json" id="ck-i18n" set:html={JSON.stringify(jsT)}></script>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const T = JSON.parse(document.getElementById("ck-i18n").textContent || "{}");
+    const API = "https://api.n0brains.com";
+    let side = "long";
+
+    // ── auth state: session JWT > saved API key > anonymous (1/day, Turnstile)
+    const TURNSTILE_SITEKEY = "0x4AAAAAADu0UwgPFCz27sIq";
+    const token = localStorage.getItem("auth_token");
+    const savedKey = localStorage.getItem("api_key");
+    const mode = token ? "session" : savedKey ? "key" : "anon";
+    function authHeader() {
+      if (token) return { Authorization: `Bearer ${token}` };
+      if (savedKey) return { "X-API-Key": savedKey };
+      return {};
+    }
+    function signOutToGate(msg) {
+      // Clear BOTH credentials — clearing only auth_token left a dead saved
+      // API key in place, so the page reloaded straight back into a 401 →
+      // alert → reload loop the user couldn't interact through (2026-07-09).
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("api_key");
+      // Loop breaker: at most one gate-reload per 30s — if we land here again
+      // that fast, render the login gate in place instead of spinning.
+      const gatedAt = Number(sessionStorage.getItem("ck_gated") || 0);
+      if (Date.now() - gatedAt < 30000) {
+        $("ck-gate").hidden = false;
+        $("ck-signed").textContent = T.signedOutRelog;
+        return;
+      }
+      sessionStorage.setItem("ck_gated", String(Date.now()));
+      if (msg) alert(msg);
+      location.reload();
+    }
+
+    // anon: gate (login CTAs) AND the form both show; form runs 1 Turnstile-
+    // gated check against /check/anon. signed-in: form only, full quota.
+    $("ck-app").hidden = false;
+    $("ck-gate").hidden = mode !== "anon";
+    if (mode === "anon") {
+      $("ck-signed").textContent = T.anonSigned;
+      $("ck-quota").textContent = T.quotaAnon;
+      const s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=ckTsInit";
+      s.async = true; s.defer = true;
+      window.ckTsInit = () => window.turnstile.render("#ck-turnstile", { sitekey: TURNSTILE_SITEKEY });
+      document.head.appendChild(s);
+    } else {
+      $("ck-signed").textContent = mode === "session" ? T.signedSession : T.usingKey;
+      loadHistory();
+    }
+    $("ck-key-use").addEventListener("click", () => {
+      const k = $("ck-key").value.trim();
+      if (!k) return;
+      localStorage.setItem("api_key", k);
+      location.reload();
+    });
+
+    // supported-asset autocomplete (public endpoint, cached server-side)
+    fetch(`${API}/check/assets`).then(r => r.json()).then(d => {
+      $("ck-assets").innerHTML = (d.assets || [])
+        .map(a => `<option value="${a}">`).join("");
+    }).catch(() => {});
+
+    // ── chart screenshot → identity parse (signed-in only; vision call) ──
+    if (mode !== "anon") $("ck-drop").hidden = false;
+    const drop = $("ck-drop");
+    drop.addEventListener("click", () => $("ck-file").click());
+    drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("on"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("on"));
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault(); drop.classList.remove("on");
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) parseChart(f);
+    });
+    $("ck-file").addEventListener("change", (e) => {
+      if (e.target.files[0]) parseChart(e.target.files[0]);
+    });
+
+    async function parseChart(file) {
+      $("ck-drop-label").textContent = T.readingChart;
+      try {
+        const b64 = await resizeToJpegB64(file, 900);
+        const r = await fetch(`${API}/check/chart-parse`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify({ image_b64: b64, media_type: "image/jpeg" }),
+          signal: AbortSignal.timeout(40000),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
+        if (!d.asset || d.confidence < 0.3) {
+          $("ck-drop-label").textContent = T.chartNoTicker;
+          return;
+        }
+        window._parse = d;
+        $("ck-parse").hidden = false;
+        $("ck-parse-text").textContent =
+          `${T.readingThisAs} ${d.asset}${d.timeframe ? " · " + d.timeframe : ""}` +
+          `${d.covered ? "" : T.notCovered}${T.dashConfirm}`;
+        $("ck-drop-label").textContent = T.dropDifferent;
+      } catch (err) {
+        $("ck-drop-label").textContent = `${T.chartReadFailedPre}${err.message}${T.typeTickerInstead}`;
+      }
+    }
+    $("ck-parse-yes").addEventListener("click", () => {
+      const d = window._parse || {};
+      if (d.asset) $("ck-asset").value = d.asset;
+      if (d.suggested_horizon_hours) {
+        const sel = $("ck-horizon");
+        const want = String(d.suggested_horizon_hours);
+        for (const o of sel.options) if (o.value === want) sel.value = want;
+      }
+      // explicit confirmation: buttons go away, chip states what happened,
+      // the filled field flashes so the eye lands on it (user QA 2026-07-03:
+      // chip previously appeared to ignore the click)
+      $("ck-parse-yes").hidden = true; $("ck-parse-no").hidden = true;
+      $("ck-parse-text").textContent = `${T.appliedPre}${d.asset}${d.timeframe ? " · " + d.timeframe : ""}${T.filledInBelow}`;
+      $("ck-asset").classList.add("ck-flash");
+      if (typeof fetchSpot === "function") fetchSpot();
+      if (d.asset && (d.horizontal_lines || []).length) auditLevels(d.asset, d.horizontal_lines);
+      setTimeout(() => { $("ck-parse").hidden = true; $("ck-asset").classList.remove("ck-flash");
+                         $("ck-parse-yes").hidden = false; $("ck-parse-no").hidden = false; }, 2500);
+    });
+    $("ck-parse-no").addEventListener("click", () => { $("ck-parse").hidden = true; });
+
+    async function auditLevels(asset, lines) {
+      try {
+        const r = await fetch(`${API}/check/levels`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify({ asset, lines }),
+          signal: AbortSignal.timeout(25000),
+        });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.levels || !d.levels.length) return;
+        $("ck-result").hidden = false;
+        $("ck-levels-wrap").hidden = false;
+        $("ck-levels").innerHTML = d.levels.map(l =>
+          `<li><b>${l.price >= 100 ? l.price.toLocaleString() : l.price}</b> (${l.role}, ${l.distance_from_spot_pct}% away) — ${esc(l.read)}</li>`
+        ).join("");
+      } catch {}
+    }
+
+    function resizeToJpegB64(file, maxDim) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const c = document.createElement("canvas");
+          c.width = Math.round(img.width * scale);
+          c.height = Math.round(img.height * scale);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          resolve(c.toDataURL("image/jpeg", 0.82).split(",")[1]);
+        };
+        img.onerror = () => reject(new Error("could not load image"));
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    function setSide(sd) {
+      side = sd;
+      $("ck-long").classList.toggle("on", sd === "long");
+      $("ck-short").classList.toggle("on", sd === "short");
+    }
+    $("ck-long").addEventListener("click", () => setSide("long"));
+    $("ck-short").addEventListener("click", () => setSide("short"));
+
+    // live spot chip: fetch when the asset field settles
+    let spotPx = null, spotTimer = null;
+    $("ck-asset").addEventListener("input", () => {
+      clearTimeout(spotTimer);
+      spotTimer = setTimeout(fetchSpot, 500);
+    });
+    async function fetchSpot() {
+      const a = $("ck-asset").value.trim().toUpperCase();
+      spotPx = null; $("ck-spotline").hidden = true;
+      if (!a) return;
+      try {
+        const r = await fetch(`${API}/price/${a}`, { signal: AbortSignal.timeout(8000) });
+        if (!r.ok) return;
+        const d = await r.json();
+        const px = Number(d.price || d.mid || d.current_price);
+        if (px > 0) {
+          spotPx = px;
+          $("ck-spot").textContent = px >= 100 ? px.toLocaleString() : String(px);
+          $("ck-spotline").hidden = false;
+        }
+      } catch {}
+    }
+
+    // one-tap shortcuts: stop at −N% (side-aware) and leverage chips
+    document.querySelectorAll(".ck-mini[data-stop]").forEach(b =>
+      b.addEventListener("click", () => {
+        const base = Number($("ck-entry").value) || spotPx;
+        if (!base) { $("ck-err").textContent = T.pickAssetFirst; $("ck-err").hidden = false; return; }
+        const pct = Number(b.dataset.stop) / 100;
+        const px = side === "long" ? base * (1 - pct) : base * (1 + pct);
+        $("ck-stop").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
+      }));
+    document.querySelectorAll(".ck-mini[data-lev]").forEach(b =>
+      b.addEventListener("click", () => { $("ck-lev").value = b.dataset.lev; }));
+
+    // example chips: prefill + run
+    document.querySelectorAll(".ck-ex").forEach(b =>
+      b.addEventListener("click", async () => {
+        const ex = JSON.parse(b.dataset.ex);
+        $("ck-asset").value = ex.asset; setSide(ex.side);
+        $("ck-lev").value = ex.lev || ""; $("ck-stop").value = ""; $("ck-target").value = "";
+        await fetchSpot();
+        if (ex.stopPct && spotPx) {
+          const px = ex.side === "long" ? spotPx * (1 - ex.stopPct / 100) : spotPx * (1 + ex.stopPct / 100);
+          $("ck-stop").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
+        }
+        $("ck-app").scrollIntoView({ behavior: "smooth", block: "start" });
+        if (mode !== "anon") $("ck-form").requestSubmit();  // anon: Turnstile first
+      }));
+
+    // staged progress text while the engine works
+    const STAGES = T.stages;
+    let stageTimer = null;
+    function startStages() {
+      let i = 0;
+      $("ck-go").classList.add("working");
+      $("ck-go-label").textContent = STAGES[0];
+      stageTimer = setInterval(() => {
+        i = Math.min(i + 1, STAGES.length - 1);
+        $("ck-go-label").textContent = STAGES[i];
+      }, 1600);
+    }
+    function stopStages() {
+      clearInterval(stageTimer);
+      $("ck-go").classList.remove("working");
+      $("ck-go-label").textContent = T.runCheck;
+    }
+
+    const num = (id) => { const v = $(id).value.trim(); return v === "" ? null : Number(v); };
+
+    let warmTries = 0;  // #35: auto-retry budget while a cold asset warms
+    $("ck-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      $("ck-err").hidden = true;
+      const body = {
+        asset: $("ck-asset").value.trim().toUpperCase(), side,
+        entry: num("ck-entry"), stop: num("ck-stop"), target: num("ck-target"),
+        leverage: num("ck-lev"), horizon_hours: Number($("ck-horizon").value),
+      };
+      $("ck-go").disabled = true; startStages();
+      try {
+        let url = `${API}/check`;
+        if (mode === "anon") {
+          const ts = window.turnstile && window.turnstile.getResponse();
+          if (!ts) throw new Error(T.completeVerification);
+          body.turnstile_token = ts;
+          url = `${API}/check/anon`;
+        } else {
+          body.chart = true;  // branded chart render (signed-in)
+        }
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeader() },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(50000),  // never strand the button (checks 8-35s under HL contention until candle cache ships)
+        });
+        if (r.status === 401 && mode !== "anon") return signOutToGate(T.sessionExpired);
+        const d = await r.json().catch(() => ({}));
+        if (r.status === 202 && d.status === "warming") {
+          // #35: first look at a cold asset — server is warming its data.
+          warmTries += 1;
+          const wait = (d.retry_after_secs || 30);
+          const auto = mode !== "anon" && warmTries <= 2;  // anon: Turnstile tokens are single-use
+          $("ck-err").textContent = auto
+            ? `${T.firstLookAt}${body.asset}${T.warmingAuto}${wait}${T.secsEllipsis}`
+            : `${T.firstLookAt}${body.asset}${T.warmingManual}${wait}${T.secsPeriod}`;
+          $("ck-err").hidden = false;
+          $("ck-result").hidden = true;
+          if (mode === "anon" && window.turnstile) window.turnstile.reset();
+          if (auto) setTimeout(() => $("ck-form").requestSubmit(), wait * 1000);
+          return;
+        }
+        if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
+        warmTries = 0;
+        render(d);
+        if (mode === "anon") {
+          $("ck-quota").textContent = T.zeroFreeLeft;
+          if (window.turnstile) window.turnstile.reset();
+        } else {
+          loadHistory();
+        }
+      } catch (err) {
+        $("ck-err").textContent = String(err.message || err);
+        $("ck-err").hidden = false;
+        $("ck-result").hidden = true;
+      } finally {
+        $("ck-go").disabled = false; stopStages();
+      }
+    });
+
+    const GRADE_COLOR = { "A": "#2ecc71", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
+    const GRADE_IDX = { "F": 0, "D": 1, "C": 2, "B": 3, "B+": 4, "A": 5 };
+    function render(d) {
+      lastResult = d;
+      const gc = GRADE_COLOR[d.grade] || "#d0d7de";
+      const card = $("ck-result");
+      card.hidden = false;
+      card.style.setProperty("--gc", gc);
+      // grade stamp: retrigger the animation on every render
+      const g = $("ck-grade");
+      g.textContent = d.grade;
+      g.style.color = gc;
+      g.classList.remove("stamp"); void g.offsetWidth; g.classList.add("stamp");
+      const scan = $("ck-scan");
+      scan.classList.remove("run"); void scan.offsetWidth; scan.classList.add("run");
+      $("ck-headline").textContent = `${d.asset} ${d.side === "bullish" ? T.long : T.short} · ${d.horizon_hours}h ${T.horizonWord} · ${T.regimeWord} ${d.regime || "—"}`;
+      $("ck-verdict").textContent = d.verdict || "";
+      if (d.chart_png_b64) {
+        const src = "data:image/png;base64," + d.chart_png_b64;
+        $("ck-chart-img").src = src;
+        $("ck-chart-fig").hidden = false;
+        $("ck-dl").href = src;
+        $("ck-dl").hidden = false;
+      } else {
+        $("ck-chart-fig").hidden = true;
+        $("ck-dl").hidden = true;
+      }
+      $("ck-score").textContent = `${T.scoreWord} ${d.score} · ${T.realizedVol} ${d.realized_daily_vol_pct ?? "—"}%`
+        + (d.engine_version ? ` · ${T.engineWord} ${d.engine_version}` : "");
+      // grade meter: light segments up to the grade
+      const idx = GRADE_IDX[d.grade] ?? 0;
+      document.querySelectorAll("#ck-meter span").forEach((el, i) => {
+        el.classList.toggle("lit", i <= idx);
+        el.classList.toggle("here", i === idx);
+        el.style.setProperty("--seg-d", `${0.12 * i + 0.25}s`);
+        el.style.color = i <= idx ? gc : "";
+      });
+      $("ck-upsell").hidden = !(mode === "anon");
+      setQuota(d.free_checks_remaining_today);
+      fill("ck-flags", "ck-flags-wrap", (d.flags || []).map(f =>
+        `<b class="ck-sev ck-sev-${f.severity}">${f.severity}</b> ${esc(f.note)}`));
+      fill("ck-supports", "ck-supports-wrap", (d.supports || []).map(s => esc(s.note)));
+      fill("ck-fals", "ck-fals-wrap", (d.falsifiers || []).map(esc));
+      fill("ck-unchecked", "ck-unchecked-wrap", (d.unchecked || []).map(esc));
+      const t = d.terrain || {};
+      const tp = [];
+      const fmtPx = (p) => p >= 100 ? p.toLocaleString() : String(p);
+      if (t.nearest_resistance) tp.push(`R ${fmtPx(t.nearest_resistance.price)} (+${t.nearest_resistance.dist_pct}%)`);
+      if (t.nearest_support) tp.push(`S ${fmtPx(t.nearest_support.price)} (−${t.nearest_support.dist_pct}%)`);
+      if (t.nearest_liq_above) tp.push(`liq ↑ ${fmtPx(t.nearest_liq_above.price)}`);
+      if (t.nearest_liq_below) tp.push(`liq ↓ ${fmtPx(t.nearest_liq_below.price)}`);
+      if (t.funding_z != null) tp.push(`funding z ${t.funding_z > 0 ? "+" : ""}${t.funding_z}`);
+      $("ck-terrain-wrap").hidden = tp.length === 0;
+      $("ck-terrain").textContent = tp.join(" · ");
+      $("ck-terrain-notes").innerHTML = (t.notes || []).map(n => `<li>◈ ${esc(n)}</li>`).join("");
+      // staggered section reveal
+      const rev = card.querySelector(".ck-reveal");
+      rev.classList.remove("go"); void rev.offsetWidth; rev.classList.add("go");
+      $("ck-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function setQuota(left) {
+      if (mode === "anon") return; // anon quota text managed by submit handler
+      $("ck-quota").textContent = left == null ? T.unlimitedPro : `${left} ${T.freeChecksLeft}`;
+    }
+    function fill(listId, wrapId, items) {
+      $(wrapId).hidden = items.length === 0;
+      $(listId).innerHTML = items.map(i => `<li>${i}</li>`).join("");
+    }
+    function esc(s) { const t = document.createElement("span"); t.textContent = s ?? ""; return t.innerHTML; }
+
+    // status strip + trust chip: live count of publicly resolved grades
+    fetch(`${API}/proof`).then(r => r.json()).then(d => {
+      const cg = d.check_grades;
+      if (cg && cg.n_resolved > 0) {
+        $("ck-status-text").textContent =
+          `${T.engineOnlinePre}${cg.n_resolved.toLocaleString()}${T.gradesResolvedRecord}`;
+        $("ck-trust").innerHTML = `${cg.n_resolved}${T.gradesAlreadyResolved}` +
+          `<a href="${T.proofHref}">${T.publicRecord}</a>${T.weGradeOurGrades}`;
+        $("ck-trust").hidden = false;
+      } else if (d.check_grade_status && d.check_grade_status.claims_published === false) {
+        // API withholds cross-grade performance while calibration accrues —
+        // say so plainly instead of implying a published record.
+        $("ck-trust").textContent = T.trustCalibrating;
+        $("ck-trust").hidden = false;
+      }
+    }).catch(() => {});
+
+    // copy result as shareable text
+    let lastResult = null;
+    $("ck-copy").addEventListener("click", () => {
+      if (!lastResult) return;
+      const d = lastResult;
+      const flags = (d.flags || []).map(f => `⚠ ${f.note}`).join("\n");
+      const sup = (d.supports || []).map(x => `✓ ${x.note}`).join("\n");
+      const txt = `${T.gradedMy} ${d.asset} ${d.side === "bullish" ? T.long : T.short}: ${d.grade}\n` +
+        [flags, sup].filter(Boolean).join("\n") +
+        `\n${T.conditionsCheckedBeforeEntry} https://n0brains.com/check`;
+      navigator.clipboard.writeText(txt).then(() => {
+        $("ck-copy").textContent = T.copied;
+        setTimeout(() => { $("ck-copy").textContent = T.copyResult; }, 1500);
+      });
+    });
+
+    // ── history ──
+    async function loadHistory() {
+      try {
+        const r = await fetch(`${API}/checks/history`, { headers: { ...authHeader() }, signal: AbortSignal.timeout(20000) });
+        // background load: gate silently (no alert) — only an explicit user
+        // action (submit) should ever pop a modal
+        if (r.status === 401) return signOutToGate(null);
+        if (!r.ok) return;
+        const d = await r.json();
+        setQuota(d.free_checks_remaining_today ?? null);
+        if (!d.checks || d.checks.length === 0) return;
+        $("ck-hist").hidden = false;
+        const res = d.checks.filter(c => c.ret_pct != null);
+        if (res.length >= 2) {
+          const wins = res.filter(c => c.ret_pct > 0).length;
+          const avg = res.reduce((a, c) => a + c.ret_pct, 0) / res.length;
+          $("ck-record").textContent =
+            `${T.yourRecord} ${wins}/${res.length} ${T.profitableAvg} ${avg >= 0 ? "+" : ""}${avg.toFixed(2)}% ${T.perCheck}`;
+          $("ck-record").hidden = false;
+        }
+        $("ck-hist-body").innerHTML = d.checks.map(rowHtml).join("");
+        document.querySelectorAll(".ck-recheck").forEach(b =>
+          b.addEventListener("click", () => {
+            const c = JSON.parse(b.dataset.c);
+            $("ck-asset").value = c.asset; setSide(c.side === "bullish" ? "long" : "short");
+            $("ck-entry").value = ""; // fresh entry at current spot
+            $("ck-stop").value = c.stop_price ?? ""; $("ck-target").value = c.target_price ?? "";
+            $("ck-lev").value = c.leverage ?? "";
+            const want = String(Math.round((c.horizon_secs || 86400) / 3600));
+            for (const o of $("ck-horizon").options) if (o.value === want) $("ck-horizon").value = want;
+            fetchSpot();
+            $("ck-app").scrollIntoView({ behavior: "smooth", block: "start" });
+            $("ck-form").requestSubmit();
+          }));
+      } catch {}
+    }
+    function rowHtml(c) {
+      const dt = new Date(c.created_at * 1000);
+      const when = dt.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      const sideTxt = c.side === "bullish" ? T.long : T.short;
+      const lev = c.leverage ? ` ${c.leverage}x` : "";
+      const hz = c.horizon_secs >= 86400 ? `${Math.round(c.horizon_secs / 86400)}d` : `${Math.round(c.horizon_secs / 3600)}h`;
+      let result;
+      if (c.resolved_at == null) {
+        result = `<span class="ck-pending">${T.pending}</span>`;
+      } else if (c.ret_pct == null) {
+        result = `<span class="ck-pending">${T.na}</span>`;
+      } else {
+        const cls = c.ret_pct > 0 ? "ck-win" : c.ret_pct < 0 ? "ck-loss" : "";
+        const stop = c.stop_hit ? T.stopped : "";
+        result = `<span class="${cls}">${c.ret_pct > 0 ? "+" : ""}${c.ret_pct}%${stop}</span>`;
+      }
+      const gc = GRADE_COLOR[c.grade] || "inherit";
+      const cJson = esc(JSON.stringify({asset: c.asset, side: c.side, stop_price: c.stop_price,
+        target_price: c.target_price, leverage: c.leverage, horizon_secs: c.horizon_secs}));
+      return `<tr>
+        <td>${when}</td>
+        <td>${esc(c.asset)} ${sideTxt}${lev}</td>
+        <td><span class="ck-gchip" style="color:${gc};border-color:${gc}">${esc(c.grade)}</span></td>
+        <td>${hz}</td>
+        <td>${result}</td>
+        <td><button type="button" class="ck-mini ck-recheck" data-c="${cJson}">${T.recheckNow}</button></td>
+      </tr>`;
+    }
+  </script>
+
+  <style>
+    .check-page { max-width: 1100px; margin: 0 auto; }
+    .check-page [hidden] { display: none !important; } /* author display rules must not defeat hidden */
+
+    /* ── hero: faint blueprint grid + radial glow ── */
+    .ck-hero { position: relative; padding: 2.4rem 0 2.2rem; }
+    .ck-hero::before {
+      content: ""; position: absolute; inset: -2rem -20vw 0;
+      background:
+        radial-gradient(ellipse 60% 55% at 28% 20%, color-mix(in srgb, var(--accent, #00ff41) 7%, transparent), transparent 70%),
+        linear-gradient(color-mix(in srgb, currentColor 4%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, currentColor 4%, transparent) 1px, transparent 1px);
+      background-size: 100% 100%, 44px 44px, 44px 44px;
+      mask-image: linear-gradient(to bottom, black 55%, transparent);
+      pointer-events: none; z-index: -1;
+    }
+    .ck-kicker { display: flex; align-items: center; gap: .6rem; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; opacity: .75; }
+    .ck-dash { display: inline-block; width: 26px; height: 1px; background: currentColor; }
+    .ck-h1 { font-size: clamp(1.9rem, 5.2vw, 3.4rem); margin: .5rem 0; letter-spacing: .01em; line-height: 1.12; }
+    .ck-lede { max-width: 620px; opacity: .85; line-height: 1.55; }
+    .ck-status { display: inline-flex; align-items: center; gap: .55rem; margin-top: 1.1rem;
+      border: 1px solid var(--border); padding: .45rem .8rem; font-size: .72rem;
+      letter-spacing: .1em; text-transform: uppercase; opacity: .9;
+      background: color-mix(in srgb, var(--accent, #00ff41) 4%, transparent); }
+    .ck-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #00ff41);
+      box-shadow: 0 0 8px var(--accent, #00ff41); animation: ck-blink 2.2s infinite; }
+    @keyframes ck-blink { 50% { opacity: .35; } }
+    .ck-trust { font-size: .8rem; opacity: .75; margin-top: .9rem; }
+
+    .ck-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; align-items: start; }
+    @media (max-width: 820px) { .ck-grid { grid-template-columns: 1fr; } }
+
+    .ck-card { border: 1px solid var(--border); padding: 1.2rem; background: color-mix(in srgb, var(--border) 6%, transparent); }
+
+    /* ── form as console: chrome bar + focus glow ── */
+    .ck-console { padding-top: 0; }
+    .ck-chrome { display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+      margin: 0 -1.2rem 1rem; padding: .55rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, currentColor 5%, transparent);
+      font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; }
+    .ck-chrome-title { opacity: .75; }
+    .ck-chrome-title::before { content: "▮ "; color: var(--accent, #00ff41); }
+    .ck-chrome-sig { opacity: .5; }
+    .ck-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; margin-bottom: .9rem; }
+    .ck-card label { display: flex; flex-direction: column; gap: .35rem; font-size: .72rem; letter-spacing: .1em; }
+    .ck-opt { opacity: .5; text-transform: none; letter-spacing: 0; }
+    .ck-card input, .ck-card select { background: transparent; border: 1px solid var(--border); padding: .55rem .7rem; color: inherit; font: inherit; transition: border-color .15s, box-shadow .15s; }
+    .ck-card input:focus, .ck-card select:focus { outline: none; border-color: var(--accent, #00ff41);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #00ff41) 60%, transparent),
+                  0 0 14px color-mix(in srgb, var(--accent, #00ff41) 18%, transparent); }
+    .ck-quota-label { justify-content: flex-end; }
+
+    .ck-gate { max-width: 560px; margin-bottom: 1.4rem; }
+    .ck-gate-line { margin: 0 0 1rem; line-height: 1.5; }
+    .ck-gate-btns { display: flex; gap: .7rem; flex-wrap: wrap; }
+    .ck-btn { display: inline-block; padding: .65rem 1.1rem; border: 1px solid var(--border); color: inherit; text-decoration: none; font-size: .8rem; letter-spacing: .14em; background: transparent; font-family: inherit; cursor: pointer; }
+    .ck-btn:hover { border-color: currentColor; }
+    .ck-btn-cta { border-color: var(--accent, #00ff41); color: var(--accent, #00ff41); }
+    .ck-adv { margin-top: 1rem; font-size: .78rem; opacity: .75; }
+    .ck-adv summary { cursor: pointer; }
+    .ck-adv-row { display: flex; gap: .6rem; margin-top: .6rem; }
+    .ck-adv-row input { flex: 1; background: transparent; border: 1px solid var(--border); padding: .5rem .7rem; color: inherit; font: inherit; }
+
+    .ck-side { display: flex; gap: .4rem; }
+    .ck-side-btn { flex: 1; padding: .55rem 0; background: transparent; border: 1px solid var(--border); color: inherit; font: inherit; letter-spacing: .1em; cursor: pointer; opacity: .55; }
+    .ck-side-btn.on { opacity: 1; outline: 1px solid currentColor; }
+    #ck-long.on { color: #2ecc71; outline-color: #2ecc71; }
+    #ck-short.on { color: #e05a3a; outline-color: #e05a3a; }
+
+    .ck-submit { position: relative; overflow: hidden; width: 100%; padding: .85rem; margin-top: .3rem;
+      background: transparent; border: 1px solid var(--accent, #00ff41);
+      color: var(--accent, #00ff41); font: inherit; letter-spacing: .18em; cursor: pointer; }
+    .ck-submit:hover { background: color-mix(in srgb, var(--accent, #00ff41) 12%, transparent);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--accent, #00ff41) 25%, transparent); }
+    .ck-submit:disabled { opacity: .6; cursor: wait; }
+    .ck-submit-sweep { position: absolute; inset: 0; translate: -101% 0;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent, #00ff41) 22%, transparent), transparent); }
+    .ck-submit.working .ck-submit-sweep { animation: ck-sweep-x 1.4s linear infinite; }
+    @keyframes ck-sweep-x { to { translate: 101% 0; } }
+    #ck-go-label { position: relative; }
+    .ck-err { font-size: .82rem; margin-top: .7rem; color: #e05a3a; }
+
+    /* ── verdict panel: the stamp moment ── */
+    .ck-result { position: relative; overflow: hidden; }
+    .ck-scanline { position: absolute; left: 0; right: 0; top: -20%; height: 90px; pointer-events: none;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--gc, #2ecc71) 10%, transparent), transparent);
+      opacity: 0; }
+    .ck-scanline.run { animation: ck-scan-down 0.9s ease-out .1s 1; }
+    @keyframes ck-scan-down { 0% { top: -15%; opacity: 1; } 100% { top: 110%; opacity: 0; } }
+    .ck-verdict-panel { display: flex; gap: 1.3rem; align-items: center; margin-bottom: 1.1rem;
+      border: 1px solid color-mix(in srgb, var(--gc, #2ecc71) 45%, var(--border));
+      background:
+        radial-gradient(ellipse 90% 130% at 12% 50%, color-mix(in srgb, var(--gc, #2ecc71) 9%, transparent), transparent 60%);
+      padding: 1.1rem 1.2rem; }
+    .ck-grade-col { text-align: center; min-width: 4.6rem; }
+    .ck-grade { font-size: 4.6rem; font-weight: 700; line-height: .95;
+      text-shadow: 0 0 22px color-mix(in srgb, var(--gc, #2ecc71) 55%, transparent); }
+    .ck-grade.stamp { animation: ck-stamp .45s cubic-bezier(.2, 1.6, .35, 1) both; }
+    @keyframes ck-stamp {
+      0% { transform: scale(2.4) rotate(-7deg); opacity: 0; filter: blur(3px); }
+      65% { transform: scale(.94) rotate(1deg); opacity: 1; filter: blur(0); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .ck-grade-cap { font-size: .6rem; letter-spacing: .34em; opacity: .55; margin-top: .3rem; }
+    .ck-grade-meta { font-size: .85rem; line-height: 1.5; min-width: 0; }
+    .ck-headline { font-weight: 700; letter-spacing: .04em; }
+    .ck-verdict { font-size: .88rem; margin: .2rem 0 .45rem; opacity: .95; }
+    .ck-score { opacity: .6; font-size: .74rem; margin-top: .45rem; }
+    .ck-meter { display: flex; gap: .3rem; }
+    .ck-meter span { flex: 0 0 2.1rem; text-align: center; font-size: .68rem; letter-spacing: .06em;
+      border: 1px solid var(--border); padding: .18rem 0; opacity: .3; }
+    .ck-meter span.lit { opacity: 1; border-color: currentColor; animation: ck-seg .25s ease-out both; animation-delay: var(--seg-d, 0s); }
+    .ck-meter span.here { font-weight: 700; background: color-mix(in srgb, currentColor 14%, transparent);
+      box-shadow: 0 0 10px color-mix(in srgb, currentColor 35%, transparent); }
+    @keyframes ck-seg { from { opacity: .15; transform: translateY(3px); } }
+
+    /* staggered content reveal after the stamp */
+    .ck-reveal.go > * { animation: ck-fadeup .4s ease-out both; }
+    .ck-reveal.go > *:nth-child(1) { animation-delay: .18s; }
+    .ck-reveal.go > *:nth-child(2) { animation-delay: .28s; }
+    .ck-reveal.go > *:nth-child(3) { animation-delay: .38s; }
+    .ck-reveal.go > *:nth-child(4) { animation-delay: .48s; }
+    .ck-reveal.go > *:nth-child(5) { animation-delay: .56s; }
+    .ck-reveal.go > *:nth-child(6) { animation-delay: .64s; }
+    .ck-reveal.go > *:nth-child(n+7) { animation-delay: .72s; }
+    @keyframes ck-fadeup { from { opacity: 0; transform: translateY(7px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .ck-grade.stamp, .ck-scanline.run, .ck-reveal.go > *, .ck-meter span.lit { animation: none !important; }
+    }
+
+    .ck-section { margin: 1rem 0; padding-left: .75rem; border-left: 2px solid color-mix(in srgb, currentColor 14%, transparent); }
+    .ck-sec-title { font-size: .7rem; letter-spacing: .16em; opacity: .75; margin-bottom: .45rem; }
+    .ck-sec-title.ck-pos { color: #2ecc71; opacity: .95; }
+    .ck-sec-title.ck-neg { color: #e0983a; opacity: .95; }
+    .ck-list { margin: 0; padding-left: 1.1rem; font-size: .86rem; line-height: 1.55; }
+    .ck-list li { margin-bottom: .45rem; }
+    .ck-sev { text-transform: uppercase; font-size: .68rem; letter-spacing: .08em; margin-right: .35rem; }
+    .ck-sev-fatal { color: #ff2e2e; border: 1px solid #ff2e2e; padding: 0 .3rem; }
+    .ck-sev-high { color: #e03a3a; }
+    .ck-sev-medium { color: #e0983a; }
+    .ck-sev-low { color: #c9b843; }
+    .ck-fals li { opacity: .8; }
+    .ck-unchecked li { opacity: .5; }
+    .ck-terrain { font-size: .82rem; opacity: .85; margin: 0 0 .4rem; }
+
+    /* chart figure: corner brackets frame */
+    .ck-chart-fig { position: relative; margin: 1rem 0; padding: .55rem; }
+    .ck-chart-fig::before, .ck-chart-fig::after {
+      content: ""; position: absolute; width: 22px; height: 22px; pointer-events: none; }
+    .ck-chart-fig::before { top: 0; left: 0;
+      border-top: 2px solid var(--gc, #2ecc71); border-left: 2px solid var(--gc, #2ecc71); }
+    .ck-chart-fig::after { bottom: 0; right: 0;
+      border-bottom: 2px solid var(--gc, #2ecc71); border-right: 2px solid var(--gc, #2ecc71); }
+    .ck-chart-img { display: block; width: 100%; border: 1px solid var(--border); }
+    .ck-chart-fig figcaption { font-size: .68rem; opacity: .55; margin-top: .45rem; letter-spacing: .06em; }
+
+    .ck-share-row { display: flex; gap: .6rem; margin-top: .9rem; }
+    .ck-turnstile { margin: .6rem 0; min-height: 0; }
+    .ck-drop { border: 1px dashed var(--border); padding: .8rem; margin-bottom: .9rem;
+      font-size: .78rem; opacity: .75; cursor: pointer; text-align: center; transition: border-color .15s, opacity .15s; }
+    .ck-drop.on, .ck-drop:hover { border-color: var(--accent, #00ff41); opacity: 1; }
+    .ck-parse { display: flex; gap: .6rem; align-items: center; margin-bottom: .9rem;
+      font-size: .82rem; border: 1px solid var(--border); padding: .55rem .8rem; }
+    .ck-chip-btn { background: transparent; border: 1px solid var(--border); color: inherit;
+      font: inherit; font-size: .75rem; padding: .3rem .7rem; cursor: pointer; text-decoration: none; display: inline-block; }
+    .ck-chip-btn:hover { border-color: currentColor; }
+    .ck-flash { outline: 2px solid #2ecc71 !important; transition: outline .3s; }
+    .ck-examples { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: 1.1rem; }
+    .ck-spotline { font-size: .75rem; opacity: .7; margin: -0.4rem 0 .6rem; }
+    .ck-shortcuts { display: flex; gap: .3rem; margin-top: .3rem; }
+    .ck-mini { background: transparent; border: 1px solid var(--border); color: inherit;
+      font: inherit; font-size: .68rem; padding: .15rem .45rem; cursor: pointer; opacity: .75; }
+    .ck-mini:hover { border-color: currentColor; opacity: 1; }
+    .ck-gchip { display: inline-block; border: 1px solid; padding: 0 .5rem; font-weight: 700; }
+    .ck-upsell { font-size: .85rem; border: 1px solid var(--border); padding: .6rem .8rem; margin: 0 0 1rem; }
+    .ck-record { font-size: .85rem; margin: .3rem 0 .7rem; opacity: .9; }
+    .ck-fine { font-size: .72rem; opacity: .55; line-height: 1.5; margin-top: 1.1rem; }
+
+    .ck-hist { margin-top: 2rem; }
+    .ck-hist-scroll { overflow-x: auto; border: 1px solid var(--border); }
+    .ck-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .ck-table th, .ck-table td { padding: .55rem .8rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .ck-table th { font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; opacity: .6; }
+    .ck-pending { opacity: .5; }
+    .ck-win { color: #2ecc71; }
+    .ck-loss { color: #e03a3a; }
+
+    .ck-how { margin-top: 2rem; max-width: 620px; }
+    .ck-signoff { margin-top: 2.2rem; font-size: .78rem; opacity: .5; }
+  </style>
+</BaseLayout>

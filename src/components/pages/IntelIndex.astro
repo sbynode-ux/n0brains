@@ -1,0 +1,53 @@
+---
+/* Shared body for /intel and /{es,tr,ru}/intel. Intel post titles, summaries,
+   slugs, categories and dates come from the cron-generated content collection
+   and stay in English on purpose — only the page chrome is localized. */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+import { useTranslations, toLocale } from "../../i18n/ui";
+
+const locale = toLocale(Astro.currentLocale);
+const t = useTranslations(locale);
+const canonicalURL = new URL(Astro.url.pathname, "https://n0brains.com").href;
+
+const posts = await getCollection("intel");
+posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout
+  title={t("Market Intel")}
+  description={t("Ultra-specific, data-backed crypto market intelligence. Funding rates, liquidation clusters, smart money flows, and narrative performance — updated daily.")}
+  canonicalURL={canonicalURL}
+  ogType="website" homepage={true}
+>
+  <section class="hero" id="hero">
+    <p class="hero-eyebrow">{t("n0brains // market intel")}</p>
+    <h1>
+      {t("data-backed")}<br />
+      <span class="highlight">{t("Market Intel.")}</span>
+    </h1>
+    <p class="hero-desc">
+      {t("Ultra-specific answers to the questions traders are asking. Funding rates, liquidation clusters, smart money flows, narrative performance. Updated daily from live market data.")}
+    </p>
+  </section>
+
+  <section>
+    <p class="section-label">{t("// latest intel")}</p>
+    <div class="post-list">
+      {
+        posts.map((post, i) => (
+          <a href={`/intel/${post.id}/`} class="post-card">
+            <div class="post-meta">
+              <span class="post-index">0{i + 1}</span>
+              <span class="date">{post.data.pubDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+              <span class="category-chip">{post.data.category}</span>
+            </div>
+            <h2>{post.data.title}</h2>
+            <p>{post.data.description}</p>
+            <span class="read-more">{t("read")}</span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

@@ -4,8 +4,10 @@
    scrollspy). Rendered by BaseLayout on /docs/* except /docs/quickstart,
    which ships its own right-rail TOC. Hidden under 1300px — the docs
    column needs the room. */
-interface Props { current: string }
+import { navHref, toLocale, type Locale } from "../i18n/ui";
+interface Props { current: string; locale?: Locale }
 const { current } = Astro.props;
+const locale = toLocale(Astro.props.locale ?? Astro.currentLocale);
 
 const pages = [
   { href: "/docs/", label: "api reference" },
@@ -23,7 +25,7 @@ const isActive = (href: string) =>
   <p class="docsnav-head">docs</p>
   <nav class="docsnav-pages">
     {pages.map((p) => (
-      <a href={p.href} class={isActive(p.href) ? "active" : ""}>{p.label}</a>
+      <a href={navHref(p.href, locale)} class={isActive(p.href) ? "active" : ""}>{p.label}</a>
     ))}
   </nav>
   <div class="docsnav-sections" id="docsnav-sections" hidden>
