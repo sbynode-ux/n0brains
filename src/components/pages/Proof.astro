@@ -243,18 +243,39 @@ const jsT = {
 
   // Horizon-qualified proof (#106): "proven" always names its horizon. Three
   // states — intraday tradeable (with its horizons), swing-proven (7–30d cells,
-  // labeled, never the trade badge), intel-only.
+  // labeled, never the trade badge), intel-only. One compact nowrap chip: the
+  // DISPLAY horizon only (the one the headline stats use); the full horizon
+  // list rides in the tooltip — multi-horizon text made the chip wrap badly.
+  function isSwingRow(t) {
+    return !t.tradeable && !!t.swing_stats;
+  }
   function badgeFor(t) {
     if (t.tradeable) {
-      const hz = (t.proven_horizons || []).join("/");
-      return `<span class="badge badge-yes">${T.proven}${hz ? " @" + hz : ""}</span>`;
+      const all = (t.proven_horizons || []).join("/");
+      const hz = t.proven_horizon || (t.proven_horizons || [])[0] || "";
+      return `<span class="badge badge-yes" title="${T.proven}${all ? " @" + all : ""}">${T.proven}${hz ? " @" + hz : ""}</span>`;
     }
-    const cells = t.swing_proven_cells || [];
-    if (cells.length) {
-      const hz = [...new Set(cells.flatMap((c) => c.horizons || []))].join("/");
-      return `<span class="badge badge-swing" title="${T.swingBadgeTitle}">${T.swingProven}${hz ? " @" + hz : ""}</span>`;
+    if (t.swing_stats) {
+      const cells = t.swing_proven_cells || [];
+      const all = [...new Set(cells.flatMap((c) => c.horizons || []))].join("/");
+      return `<span class="badge badge-swing" title="${T.swingBadgeTitle}${all ? " (" + all + ")" : ""}">${T.swingProven} @${t.swing_stats.horizon}</span>`;
     }
     return `<span class="badge badge-no">${T.intelOnly}</span>`;
+  }
+  // Effective display stats: swing-proven rows show their SWING cell's numbers
+  // (win/avg/excess/CI at the horizon the proof lives at) — a swing badge next
+  // to the pooled intraday coinflip row was the same stat-vs-badge mismatch
+  // the 07-01 intraday display-horizon fix removed.
+  function statsFor(t) {
+    if (isSwingRow(t)) {
+      const s = t.swing_stats;
+      return { n: s.n, win_rate: s.win_rate, avg_net_pct: s.avg_net_pct,
+               excess_pct: s.excess_pct, ci_low_pct: s.ci_low_pct,
+               horizon: s.horizon, direction: s.direction, swing: true };
+    }
+    return { n: t.n, win_rate: t.win_rate, avg_net_pct: t.avg_net_pct,
+             excess_pct: t.excess_pct, ci_low_pct: t.ci_low_pct,
+             horizon: t.horizon, direction: null, swing: false };
   }
 
   function pct(v) {
@@ -416,10 +437,15 @@ const jsT = {
   function renderBars(data) {
     const wrap = document.getElementById("wr-bars");
     if (!wrap) return;
-    const rows = [...data.types].sort((a, b) => (b.win_rate || 0) - (a.win_rate || 0));
+    const rows = [...data.types].sort(
+      (a, b) => (statsFor(b).win_rate || 0) - (statsFor(a).win_rate || 0));
     wrap.innerHTML = rows.map((t) => {
-      const w = Math.max(0, Math.min(100, (t.win_rate || 0) * 100));
-      const cls = t.tradeable ? "proven" : "demoted";
+      const s = statsFor(t);
+      const w = Math.max(0, Math.min(100, (s.win_rate || 0) * 100));
+      const cls = t.tradeable ? "proven" : (s.swing ? "swing" : "demoted");
+      const val = s.swing
+        ? `${pct(s.win_rate)}<span class="wr-hz">@${s.horizon}</span>`
+        : pct(s.win_rate);
       return `
         <div class="wr-row ${cls}">
           <span class="wr-name">${t.signal_type}</span>
@@ -427,7 +453,7 @@ const jsT = {
             <span class="wr-fill" style="width:${barsAnimated ? w : 0}%" data-w="${w}"></span>
             <span class="wr-50" title="${T.coinFlipLine}"></span>
           </span>
-          <span class="wr-val">${pct(t.win_rate)}</span>
+          <span class="wr-val">${val}</span>
           <span class="wr-badge">${badgeFor(t)}</span>
         </div>`;
     }).join("");
@@ -469,18 +495,25 @@ const jsT = {
 
     let rows = "";
     for (const t of data.types) {
-      const cls = t.tradeable ? "row-tradeable" : "row-untradeable";
+      const s = statsFor(t);
+      const cls = t.tradeable ? "row-tradeable"
+                : (s.swing ? "row-swing" : "row-untradeable");
       const flag = badgeFor(t);
+      // Swing rows display THEIR cell's numbers (direction + horizon labeled);
+      // everything else keeps the intraday display horizon.
+      const typeCell = s.swing
+        ? `${t.signal_type} <span class="type-hz">${s.direction} @${s.horizon}</span>`
+        : t.signal_type;
       // CI shown as the lower bound on excess return — the conservative edge.
-      const ciCls = t.ci_low_pct > 0 ? "pos" : "neg";
+      const ciCls = s.ci_low_pct > 0 ? "pos" : "neg";
       rows += `
         <tr class="${cls}">
-          <td class="type">${t.signal_type}</td>
-          <td>${t.n}</td>
-          <td>${pct(t.win_rate)}</td>
-          <td class="${t.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.avg_net_pct)}</td>
-          <td class="${t.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(t.excess_pct)}</td>
-          <td class="${ciCls}">${pctRaw(t.ci_low_pct)}</td>
+          <td class="type">${typeCell}</td>
+          <td>${s.n}</td>
+          <td>${pct(s.win_rate)}</td>
+          <td class="${s.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(s.avg_net_pct)}</td>
+          <td class="${s.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(s.excess_pct)}</td>
+          <td class="${ciCls}">${pctRaw(s.ci_low_pct)}</td>
           <td>${flag}</td>
         </tr>`;
     }
@@ -879,7 +912,7 @@ const jsT = {
   /* Win-rate bar board */
   .wr-bars { margin-bottom: 1.5rem; }
   :global(.wr-row) {
-    display: grid; grid-template-columns: 120px 1fr 64px 90px;
+    display: grid; grid-template-columns: 120px 1fr 64px auto;
     gap: 0.9rem; align-items: center; padding: 0.45rem 0;
   }
   @media (max-width: 640px) {
@@ -911,6 +944,16 @@ const jsT = {
     text-align: right;
   }
   :global(.wr-row.demoted .wr-val) { color: var(--text-muted); }
+  /* Swing-proven rows: highlighted (violet), never dimmed like intel-only —
+     their stats ARE the swing cell's own numbers at its proven horizon. */
+  :global(.wr-row.swing .wr-name) { color: var(--text-heading); }
+  :global(.wr-row.swing .wr-fill) {
+    background: linear-gradient(90deg, #6d28a8, #c084fc);
+  }
+  :global(.wr-row.swing .wr-val) { color: #c084fc; }
+  :global(.wr-hz) {
+    display: block; font-size: 0.6rem; color: #9d6ad1; line-height: 1.1;
+  }
 
   .proven-cards.loaded :global(.pv-card) { animation: none; opacity: 1; transform: none; }
 
@@ -1020,10 +1063,18 @@ const jsT = {
   :global(.badge) {
     font-size: 0.72rem; padding: 2px 8px; border-radius: 10px;
     border: 1px solid var(--border);
+    white-space: nowrap;   /* chip must never wrap into stacked fragments */
   }
   :global(.badge-yes) { color: #4ade80; border-color: #2a7a2a; }
   :global(.badge-swing) { color: #c084fc; border-color: #7e3aa8; }
   :global(.badge-no)  { color: var(--text-muted); }
+  /* Swing table rows: highlighted like the bars — not dimmed intel-only */
+  :global(.row-swing) { background: rgba(148, 76, 214, 0.06); }
+  :global(.row-swing .type) { color: var(--text-heading); }
+  :global(.type-hz) {
+    font-size: 0.68rem; color: #9d6ad1; font-weight: 400;
+    text-transform: none; letter-spacing: 0;
+  }
 
   .meta { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;
           font-family: var(--font-mono); }
