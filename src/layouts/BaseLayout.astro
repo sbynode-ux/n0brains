@@ -243,8 +243,8 @@ const softwareAppLd = homepage ? {
           </div>
           <span class="rail-divider" aria-hidden="true"></span>
           <div class="rail-auth">
-            <a href={nav("/login")} class={navBase.startsWith("/login") ? "active" : ""}>{t("login")}</a>
-            <a href="/signup" class="rail-cta">{t("start free →")}</a>
+            <a href={nav("/login")} class={navBase.startsWith("/login") ? "active" : ""} data-nav-login data-dash-label={t("dashboard")}>{t("login")}</a>
+            <a href="/signup" class="rail-cta" data-nav-cta data-logout-label={t("log out")} data-login-href={nav("/login")}>{t("start free →")}</a>
           </div>
         </nav>
         <LangSwitcher variant="header" />
@@ -278,8 +278,8 @@ const softwareAppLd = homepage ? {
           );
         })}
         <div class="sheet-actions">
-          <a href={nav("/login")} class="sheet-btn sheet-btn-ghost">{t("login")}</a>
-          <a href="/signup" class="sheet-btn sheet-btn-solid">{t("start free →")}</a>
+          <a href={nav("/login")} class="sheet-btn sheet-btn-ghost" data-nav-login data-dash-label={t("dashboard")}>{t("login")}</a>
+          <a href="/signup" class="sheet-btn sheet-btn-solid" data-nav-cta data-logout-label={t("log out")} data-login-href={nav("/login")}>{t("start free →")}</a>
         </div>
         <p class="sheet-signoff" aria-hidden="true">{t("// every call. on the record.")}</p>
       </nav>
@@ -332,14 +332,17 @@ const softwareAppLd = homepage ? {
            /dashboard itself re-validates. */
         try {
           if (localStorage.getItem("auth_token")) {
-            document.querySelectorAll('a[href="/login"]').forEach((a) => {
-              a.textContent = "dashboard";
+            /* Match by data-attr, not href — the login link is localized
+               (/tr/login etc) so an exact href selector missed it and the
+               nav showed "login" to signed-in users on non-English pages. */
+            document.querySelectorAll('[data-nav-login]').forEach((a) => {
+              a.textContent = a.dataset.dashLabel || "dashboard";
               a.setAttribute("href", "/dashboard");
-              a.classList.toggle("active", window.location.pathname.startsWith("/dashboard"));
+              a.classList.toggle("active", window.location.pathname.replace(/^\/(es|tr|ru)(?=\/|$)/, "").startsWith("/dashboard"));
             });
-            document.querySelectorAll('.rail-cta[href="/signup"], .sheet-btn-solid[href="/signup"]').forEach((a) => {
-              a.textContent = "log out";
-              a.setAttribute("href", "/login");
+            document.querySelectorAll('[data-nav-cta]').forEach((a) => {
+              a.textContent = a.dataset.logoutLabel || "log out";
+              a.setAttribute("href", a.dataset.loginHref || "/login");
               a.classList.add("is-logout");
               a.addEventListener("click", () => {
                 localStorage.removeItem("auth_token");
@@ -349,8 +352,9 @@ const softwareAppLd = homepage ? {
             });
             /* In-content signup buttons (home hero, /proof, charts) stop
                pushing signup at people who already signed up. Prose links
-               are left alone — /signup itself bounces authed visitors. */
-            document.querySelectorAll('a.btn-primary[href^="/signup"], a.btn-secondary[href^="/signup"], a.lm-cta[href^="/signup"]').forEach((a) => {
+               are left alone — /signup itself bounces authed visitors.
+               href*= so localized /tr/signup and /signup?redirect both match. */
+            document.querySelectorAll('a.btn-primary[href*="/signup"], a.btn-secondary[href*="/signup"], a.lm-cta[href*="/signup"]').forEach((a) => {
               a.textContent = "open dashboard →";
               a.setAttribute("href", "/dashboard");
             });
