@@ -22,7 +22,10 @@ try {
     seedBestNum = String(Math.round(best.win_rate * 100));
     seedBest = seedBestNum + "%";
     seedBestSub = best.signal_type + " · +" + (best.excess_pct ?? 0).toFixed(1) + "pts vs BTC";
-    seedBanner = proven.length + " proven signal types · measured on real Hyperliquid prices";
+    const seedSwingN = types.filter((t) => !t.tradeable && (t.swing_proven_cells || []).length).length;
+    seedBanner = proven.length + " proven signal types"
+      + (seedSwingN ? " · " + seedSwingN + " swing-proven at 7–30d" : "")
+      + " · measured on real Hyperliquid prices";
   }
 } catch (e) { /* leave placeholders; client JS fills on load */ }
 
@@ -39,6 +42,9 @@ const jsT = {
   noTypeClears: t("no type currently clears the gate"),
   noneRightNow: t("none right now"),
   intelOnly: t("intel only"),
+  swingProven: t("swing-proven"),
+  swingBadgeTitle: t("proven at swing horizons (7–30d) — measured edge at days-scale; feeds the labeled swing outlook, never the intraday trade gate"),
+  bannerSwingSuffix: t("swing-proven at 7–30d"),
   coinFlipLine: t("coin-flip line"),
   proofUnavailable: t("proof unavailable"),
   fetchFailed: t("fetch failed"),
@@ -235,6 +241,22 @@ const jsT = {
   const REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let countedUp = false;
 
+  // Horizon-qualified proof (#106): "proven" always names its horizon. Three
+  // states — intraday tradeable (with its horizons), swing-proven (7–30d cells,
+  // labeled, never the trade badge), intel-only.
+  function badgeFor(t) {
+    if (t.tradeable) {
+      const hz = (t.proven_horizons || []).join("/");
+      return `<span class="badge badge-yes">${T.proven}${hz ? " @" + hz : ""}</span>`;
+    }
+    const cells = t.swing_proven_cells || [];
+    if (cells.length) {
+      const hz = [...new Set(cells.flatMap((c) => c.horizons || []))].join("/");
+      return `<span class="badge badge-swing" title="${T.swingBadgeTitle}">${T.swingProven}${hz ? " @" + hz : ""}</span>`;
+    }
+    return `<span class="badge badge-no">${T.intelOnly}</span>`;
+  }
+
   function pct(v) {
     if (v === null || v === undefined) return "—";
     const n = Number(v) * 100;
@@ -406,7 +428,7 @@ const jsT = {
             <span class="wr-50" title="${T.coinFlipLine}"></span>
           </span>
           <span class="wr-val">${pct(t.win_rate)}</span>
-          <span class="wr-badge">${t.tradeable ? `<span class="badge badge-yes">${T.proven}</span>` : `<span class="badge badge-no">${T.intelOnly}</span>`}</span>
+          <span class="wr-badge">${badgeFor(t)}</span>
         </div>`;
     }).join("");
     if (!barsAnimated) {
@@ -438,16 +460,17 @@ const jsT = {
     renderProvenCards(data);
 
     const tradeable = data.types.filter((t) => t.tradeable);
+    const swingN = data.types.filter(
+      (t) => !t.tradeable && (t.swing_proven_cells || []).length).length;
     banner.className = "proof-banner proof-up";
     banner.querySelector(".banner-text").textContent =
-      tradeable.length + " " + (tradeable.length === 1 ? T.bannerProvenOne : T.bannerProvenMany);
+      tradeable.length + " " + (tradeable.length === 1 ? T.bannerProvenOne : T.bannerProvenMany)
+      + (swingN ? " · " + swingN + " " + T.bannerSwingSuffix : "");
 
     let rows = "";
     for (const t of data.types) {
       const cls = t.tradeable ? "row-tradeable" : "row-untradeable";
-      const flag = t.tradeable
-        ? `<span class="badge badge-yes">${T.proven}</span>`
-        : `<span class="badge badge-no">${T.intelOnly}</span>`;
+      const flag = badgeFor(t);
       // CI shown as the lower bound on excess return — the conservative edge.
       const ciCls = t.ci_low_pct > 0 ? "pos" : "neg";
       rows += `
@@ -999,6 +1022,7 @@ const jsT = {
     border: 1px solid var(--border);
   }
   :global(.badge-yes) { color: #4ade80; border-color: #2a7a2a; }
+  :global(.badge-swing) { color: #c084fc; border-color: #7e3aa8; }
   :global(.badge-no)  { color: var(--text-muted); }
 
   .meta { color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;
