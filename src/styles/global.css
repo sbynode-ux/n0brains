@@ -1015,3 +1015,14 @@ footer .footer-socials svg { display: block; }
   nav { gap: 14px; }
   .post-header h1 { font-size: 2.5rem; }
 }
+
+/* ── i18n header: translated nav labels are longer than the English rail
+   budget. Non-English locales widen the header a touch and keep the rail on
+   wide desktops; below 1260px they collapse to the burger + full-screen sheet
+   (which has room). English is untouched. ── */
+html:not([lang="en"]) #site-header .inner { max-width: 1260px; }
+@media (max-width: 1259px) {
+  html:not([lang="en"]) .rail { display: none; }
+  html:not([lang="en"]) .nav-burger { display: flex; }
+  html:not([lang="en"]) .nav-sheet:not([hidden]) { display: block !important; }
+}

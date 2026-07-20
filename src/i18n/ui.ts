@@ -127,6 +127,23 @@ export function navHref(pathname: string, locale: Locale): string {
   return pathname;
 }
 
+/* Top-nav section labels. Own map (not the t() dict) so English renders the
+   English word and there's no collision with page-title keys. */
+const NAV_LABELS: Record<string, Record<Locale, string>> = {
+  check:      { en: "check",      es: "comprobar",     tr: "kontrol",         ru: "проверка" },
+  docs:       { en: "docs",       es: "guías",         tr: "belgeler",        ru: "документы" },
+  quickstart: { en: "quickstart", es: "inicio", tr: "başlangıç", ru: "старт" },
+  proof:      { en: "proof",      es: "pruebas",       tr: "kanıt",           ru: "доказательства" },
+  charts:     { en: "charts",     es: "gráficos",      tr: "grafikler",       ru: "графики" },
+  pricing:    { en: "pricing",    es: "precios",       tr: "fiyatlar",        ru: "цены" },
+  intel:      { en: "intel",      es: "inteligencia",  tr: "istihbarat",      ru: "аналитика" },
+  blog:       { en: "blog",       es: "blog",          tr: "blog",            ru: "блог" },
+  podcast:    { en: "podcast",    es: "podcast",       tr: "podcast",         ru: "подкаст" },
+};
+export function navLabel(slug: string, locale: Locale): string {
+  return NAV_LABELS[slug]?.[locale] ?? slug;
+}
+
 /* t(englishSource) → translated string for `locale`, English fallback. */
 export function useTranslations(locale: Locale) {
   const table = DICT[locale] ?? {};

@@ -6,6 +6,7 @@ import {
   useTranslations,
   toLocale,
   navHref,
+  navLabel,
   localizePath,
   stripLocale,
   LOCALES,
@@ -224,21 +225,21 @@ const softwareAppLd = homepage ? {
           <div class="rail-cluster">
             <span class="rail-label">{t("product")}</span>
             <div class="rail-links">
-              <a href={nav("/check")} class={navBase.startsWith("/check") ? "active" : ""}>check</a>
-              <a href={nav("/docs/")} class={navBase.startsWith("/docs") && !navBase.startsWith("/docs/quickstart") ? "active" : ""}>docs</a>
-              <a href={nav("/docs/quickstart")} class={navBase.startsWith("/docs/quickstart") ? "active" : ""}>quickstart</a>
-              <a href={nav("/proof")} class={navBase.startsWith("/proof") ? "active" : ""}>proof</a>
-              <a href={nav("/charts")} class={navBase.startsWith("/charts") ? "active" : ""}>charts</a>
-              <a href={nav("/pricing")} class={navBase.startsWith("/pricing") ? "active" : ""}>pricing</a>
+              <a href={nav("/check")} class={navBase.startsWith("/check") ? "active" : ""}>{navLabel("check", locale)}</a>
+              <a href={nav("/docs/")} class={navBase.startsWith("/docs") && !navBase.startsWith("/docs/quickstart") ? "active" : ""}>{navLabel("docs", locale)}</a>
+              <a href={nav("/docs/quickstart")} class={navBase.startsWith("/docs/quickstart") ? "active" : ""}>{navLabel("quickstart", locale)}</a>
+              <a href={nav("/proof")} class={navBase.startsWith("/proof") ? "active" : ""}>{navLabel("proof", locale)}</a>
+              <a href={nav("/charts")} class={navBase.startsWith("/charts") ? "active" : ""}>{navLabel("charts", locale)}</a>
+              <a href={nav("/pricing")} class={navBase.startsWith("/pricing") ? "active" : ""}>{navLabel("pricing", locale)}</a>
             </div>
           </div>
           <span class="rail-divider" aria-hidden="true"></span>
           <div class="rail-cluster">
             <span class="rail-label">{t("research")}</span>
             <div class="rail-links">
-              <a href={nav("/intel")} class={navBase.startsWith("/intel") ? "active" : ""}>intel</a>
-              <a href={nav("/blog")} class={navBase.startsWith("/blog") ? "active" : ""}>blog</a>
-              <a href={nav("/podcast")} class={navBase.startsWith("/podcast") ? "active" : ""}>podcast</a>
+              <a href={nav("/intel")} class={navBase.startsWith("/intel") ? "active" : ""}>{navLabel("intel", locale)}</a>
+              <a href={nav("/blog")} class={navBase.startsWith("/blog") ? "active" : ""}>{navLabel("blog", locale)}</a>
+              <a href={nav("/podcast")} class={navBase.startsWith("/podcast") ? "active" : ""}>{navLabel("podcast", locale)}</a>
             </div>
           </div>
           <span class="rail-divider" aria-hidden="true"></span>
@@ -272,7 +273,7 @@ const softwareAppLd = homepage ? {
             : navBase.startsWith(href);
           return (
             <a href={nav(href)} class={`sheet-link ${active ? "active" : ""}`}>
-              <span class="sheet-name">{label}{active && <span class="sheet-here"> {t("· here")}</span>}</span>
+              <span class="sheet-name">{navLabel(label, locale)}{active && <span class="sheet-here"> {t("· here")}</span>}</span>
               <span class="sheet-idx">{idx}</span>
             </a>
           );
