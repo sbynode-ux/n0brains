@@ -149,7 +149,9 @@ const jsT = {
           </label>
         </div>
         <div class="ck-row">
-          <label>{t("TARGET")} <span class="ck-opt">{t("optional")}</span><input id="ck-target" type="number" step="any" placeholder="—" /></label>
+          <label>{t("TARGET")} <span class="ck-opt">{t("optional")}</span><input id="ck-target" type="number" step="any" placeholder="—" />
+            <span class="ck-shortcuts"><button type="button" class="ck-mini" data-target="1">+1%</button><button type="button" class="ck-mini" data-target="5">+5%</button><button type="button" class="ck-mini" data-target="10">+10%</button></span>
+          </label>
           <label>{t("LEVERAGE")} <span class="ck-opt">{t("optional")}</span><input id="ck-lev" type="number" step="any" min="1" max="100" placeholder="1" />
             <span class="ck-shortcuts"><button type="button" class="ck-mini" data-lev="3">3×</button><button type="button" class="ck-mini" data-lev="5">5×</button><button type="button" class="ck-mini" data-lev="10">10×</button><button type="button" class="ck-mini" data-lev="20">20×</button></span>
           </label>
@@ -453,7 +455,7 @@ const jsT = {
       } catch {}
     }
 
-    // one-tap shortcuts: stop at −N% (side-aware) and leverage chips
+    // one-tap shortcuts: stop at −N% / target at +N% (side-aware) and leverage chips
     document.querySelectorAll(".ck-mini[data-stop]").forEach(b =>
       b.addEventListener("click", () => {
         const base = Number($("ck-entry").value) || spotPx;
@@ -461,6 +463,14 @@ const jsT = {
         const pct = Number(b.dataset.stop) / 100;
         const px = side === "long" ? base * (1 - pct) : base * (1 + pct);
         $("ck-stop").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
+      }));
+    document.querySelectorAll(".ck-mini[data-target]").forEach(b =>
+      b.addEventListener("click", () => {
+        const base = Number($("ck-entry").value) || spotPx;
+        if (!base) { $("ck-err").textContent = T.pickAssetFirst; $("ck-err").hidden = false; return; }
+        const pct = Number(b.dataset.target) / 100;
+        const px = side === "long" ? base * (1 + pct) : base * (1 - pct);
+        $("ck-target").value = px >= 100 ? px.toFixed(1) : px.toPrecision(5);
       }));
     document.querySelectorAll(".ck-mini[data-lev]").forEach(b =>
       b.addEventListener("click", () => { $("ck-lev").value = b.dataset.lev; }));
