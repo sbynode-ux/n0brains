@@ -27,7 +27,7 @@ import DashShell from "../components/DashShell.astro";
       </div>
 
       <!-- Profile -->
-      <div class="dash-section">
+      <div class="dash-section" id="profile">
         <h2 class="dash-h2">profile</h2>
         <div class="kv"><span>email</span><strong id="p-email">—</strong></div>
         <div class="kv"><span>plan</span><strong id="p-tier">—</strong></div>
@@ -65,7 +65,7 @@ import DashShell from "../components/DashShell.astro";
       </div>
 
       <!-- Credits -->
-      <div class="dash-section">
+      <div class="dash-section" id="credits">
         <h2 class="dash-h2">pay-per-call credits</h2>
         <div class="kv"><span>balance</span><strong id="c-balance">—</strong></div>
         <p class="auth-subtle">1 credit = 1 data API call beyond your tier's included rate limit. Within your rate limit, calls are free.</p>
@@ -84,7 +84,7 @@ import DashShell from "../components/DashShell.astro";
       </div>
 
       <!-- Usage -->
-      <div class="dash-section">
+      <div class="dash-section" id="usage">
         <h2 class="dash-h2">
           usage
           <span class="usage-toggle">
@@ -127,6 +127,7 @@ import DashShell from "../components/DashShell.astro";
   .dash-section {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+    scroll-margin-top: 96px; /* fixed site header — anchor targets must clear it */
   }
   .dash-h2 {
     font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase;
@@ -507,8 +508,20 @@ import DashShell from "../components/DashShell.astro";
     $('p-tier').textContent = (me.tier || 'free') === 'pro' ? 'Pro' : 'Free';
     renderKeys(me.api_keys || []);
     renderBilling(me);
-    loadUsage('7d');
-    loadCredits();
+    // Settle the async sections before honoring a #hash — the browser's own
+    // anchor jump fired while #dash-main was still display:none, and the
+    // credits card above #keys changes height as it loads.
+    await Promise.allSettled([loadUsage('7d'), loadCredits()]);
+    scrollToHash();
+  }
+
+  let hashScrolled = false;  // loadAccount re-runs after key-modal close / terms accept
+  function scrollToHash() {
+    if (hashScrolled || !location.hash) return;
+    hashScrolled = true;
+    let target;
+    try { target = document.querySelector(location.hash); } catch { return; }
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   $('logout-btn').addEventListener('click', logout);
