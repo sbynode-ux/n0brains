@@ -175,6 +175,10 @@ const jsT = {
           <div class="gate-col-label pass">{t("proven")} → conviction: strong <span id="gate-n-pass"></span></div>
           <div class="gate-pool" id="gate-pass"></div>
         </div>
+        <div class="gate-out swing" id="gate-swing-lane" hidden>
+          <div class="gate-col-label swing">{t("swing-proven")} → 7–30d horizon <span id="gate-n-swing"></span></div>
+          <div class="gate-pool" id="gate-swing"></div>
+        </div>
         <div class="gate-out fail">
           <div class="gate-col-label">{t("intel only — stays public")} <span id="gate-n-fail"></span></div>
           <div class="gate-pool" id="gate-fail"></div>
@@ -326,11 +330,17 @@ const jsT = {
     const proven = data.types
       .filter((t) => t.tradeable)
       .sort((a, b) => (b.excess_pct || 0) - (a.excess_pct || 0));
-    if (!proven.length) {
+    // Swing-proven types get cards too — same shape, purple, stats AT the
+    // swing horizon (direction + horizon labeled), sorted by CI-low.
+    const swing = data.types
+      .filter((t) => !t.tradeable && t.swing_stats)
+      .map((t) => ({ ...t.swing_stats, type: t.signal_type }))
+      .sort((a, b) => (b.ci_low_pct || 0) - (a.ci_low_pct || 0));
+    if (!proven.length && !swing.length) {
       wrap.innerHTML = `<div class="pv-empty">${T.provenEmpty}</div>`;
       return;
     }
-    wrap.innerHTML = proven.map((t, i) => `
+    const provenCards = proven.map((t, i) => `
       <div class="pv-card" style="--pvi:${i}">
         <div class="pv-head">
           <span class="pv-type">${t.signal_type}</span>
@@ -343,6 +353,20 @@ const jsT = {
           <div><span>${T.ci95Low}</span><b class="${t.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(t.ci_low_pct)}</b></div>
         </div>
       </div>`).join("");
+    const swingCards = swing.map((s, i) => `
+      <div class="pv-card swing" style="--pvi:${proven.length + i}">
+        <div class="pv-head">
+          <span class="pv-type">${s.type || s.signal_type || ""}<span class="pv-dir">${s.direction} @${s.horizon}</span></span>
+          <span class="badge badge-swing">${T.swingProven}</span>
+        </div>
+        <div class="pv-win">${pct(s.win_rate)}<span>${T.winRateN}${s.n} · ${s.horizon}</span></div>
+        <div class="pv-rows">
+          <div><span>${T.avgReturn}</span><b class="${s.avg_net_pct >= 0 ? "pos" : "neg"}">${pctRaw(s.avg_net_pct)}</b></div>
+          <div><span>${T.excessVsBtc}</span><b class="${s.excess_pct >= 0 ? "pos" : "neg"}">${pctRaw(s.excess_pct)}</b></div>
+          <div><span>${T.ci95Low}</span><b class="${s.ci_low_pct > 0 ? "pos" : "neg"}">${pctRaw(s.ci_low_pct)}</b></div>
+        </div>
+      </div>`).join("");
+    wrap.innerHTML = provenCards + swingCards;
     // Entrance animation only on first render — 60s refreshes update silently.
     setTimeout(() => wrap.classList.add("loaded"), 1600);
   }
@@ -412,22 +436,35 @@ const jsT = {
     rotTimer = setInterval(show, 7000);
   }
 
-  /* THE GATE — candidates in, criteria, proven/demoted out. */
+  /* THE GATE — candidates in, criteria, proven / swing-proven / intel-only out. */
   function renderGate(data) {
     const pool = document.getElementById("gate-pool");
     const pass = document.getElementById("gate-pass");
     const fail = document.getElementById("gate-fail");
     if (!pool) return;
-    const chips = (arr, cls) => arr.map((t, i) =>
-      `<span class="gate-chip ${cls}" style="--gi:${i}">${t.signal_type}</span>`).join("");
+    const chips = (arr, cls, label) => arr.map((t, i) =>
+      `<span class="gate-chip ${cls}" style="--gi:${i}">${t.signal_type}${label ? `<span class="gate-hz">${label(t)}</span>` : ""}</span>`).join("");
     const proven = data.types.filter((t) => t.tradeable);
-    const demoted = data.types.filter((t) => !t.tradeable);
+    // Swing-proven cells earn their OWN lane (not intel-only): proven at a
+    // 7-30d horizon, labeled with it, highlighted — the same distinction the
+    // bar board and cards make.
+    const swing = data.types.filter((t) => !t.tradeable && t.swing_stats);
+    const intel = data.types.filter((t) => !t.tradeable && !t.swing_stats);
     pool.innerHTML = chips(data.types, "");
     pass.innerHTML = proven.length ? chips(proven, "pass") : `<span class="gate-chip dim">${T.noneRightNow}</span>`;
-    fail.innerHTML = demoted.length ? chips(demoted, "dim") : '<span class="gate-chip dim">—</span>';
+    fail.innerHTML = intel.length ? chips(intel, "dim") : '<span class="gate-chip dim">—</span>';
+    const swingLane = document.getElementById("gate-swing-lane");
+    const swingPool = document.getElementById("gate-swing");
+    if (swing.length) {
+      swingLane.hidden = false;
+      swingPool.innerHTML = chips(swing, "swing", (t) => " @" + t.swing_stats.horizon);
+      document.getElementById("gate-n-swing").textContent = "×" + swing.length;
+    } else {
+      swingLane.hidden = true;
+    }
     document.getElementById("gate-n-in").textContent = "×" + data.types.length;
     document.getElementById("gate-n-pass").textContent = "×" + proven.length;
-    document.getElementById("gate-n-fail").textContent = "×" + demoted.length;
+    document.getElementById("gate-n-fail").textContent = "×" + intel.length;
     // Chip entrance only once; refreshes swap content silently.
     setTimeout(() => document.getElementById("gate")?.classList.add("loaded"), 1400);
   }
@@ -858,6 +895,8 @@ const jsT = {
     margin-bottom: 0.6rem;
   }
   .gate-col-label.pass { color: var(--accent); }
+  .gate-col-label.swing { color: #c084fc; }
+  .gate-out.swing { margin-top: 0.9rem; }
   .gate-pool { display: flex; flex-wrap: wrap; gap: 6px; }
   :global(.gate-chip) {
     font-family: var(--font-mono); font-size: 0.66rem;
@@ -869,6 +908,14 @@ const jsT = {
     border-color: var(--border-accent); color: var(--accent);
     background: rgba(0,255,65,0.05);
     box-shadow: 0 0 14px -6px var(--accent-glow-strong);
+  }
+  :global(.gate-chip.swing) {
+    border-color: #7e3aa8; color: #c084fc;
+    background: rgba(148,76,214,0.08);
+    box-shadow: 0 0 14px -6px rgba(192,132,252,0.6);
+  }
+  :global(.gate-chip .gate-hz) {
+    color: #9d6ad1; font-size: 0.9em; margin-left: 3px; white-space: nowrap;
   }
   :global(.gate-chip.dim) { color: var(--text-muted); animation-name: gateChipInDim; }
   @keyframes gateChipIn { to { opacity: 1; } }
@@ -1021,6 +1068,18 @@ const jsT = {
     display: block; font-family: var(--font-mono); font-size: 0.62rem;
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted);
     margin-top: 0.4rem;
+  }
+  /* Swing-proven cards: purple accent, same layout — days-scale proof, not
+     the intraday trade badge. */
+  :global(.pv-card.swing) {
+    border-color: #7e3aa8;
+    box-shadow: 0 0 36px -18px rgba(192,132,252,0.6);
+  }
+  :global(.pv-card.swing .pv-win) { color: #c084fc; }
+  :global(.pv-dir) {
+    display: block; font-family: var(--font-mono); font-size: 0.6rem;
+    font-weight: 400; letter-spacing: 0.06em; color: #9d6ad1;
+    text-transform: none; margin-top: 0.25rem;
   }
   :global(.pv-rows > div) {
     display: flex; justify-content: space-between;
