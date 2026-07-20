@@ -33,6 +33,25 @@ import DashShell from "../components/DashShell.astro";
         <div class="kv"><span>plan</span><strong id="p-tier">—</strong></div>
       </div>
 
+      <!-- Security -->
+      <div class="dash-section" id="security">
+        <h2 class="dash-h2">security</h2>
+        <form id="pw-form" autocomplete="off">
+          <label class="pw-label" for="pw-current">current password</label>
+          <input class="pw-input" type="password" id="pw-current" autocomplete="current-password" required />
+          <label class="pw-label" for="pw-new">new password</label>
+          <input class="pw-input" type="password" id="pw-new" autocomplete="new-password" minlength="8" required />
+          <label class="pw-label" for="pw-confirm">confirm new password</label>
+          <input class="pw-input" type="password" id="pw-confirm" autocomplete="new-password" minlength="8" required />
+          <div class="dash-actions">
+            <button class="btn btn-primary" type="submit" id="pw-btn">change password</button>
+          </div>
+          <p class="auth-error" id="pw-error"></p>
+          <p class="auth-subtle" id="pw-ok" style="display:none;color:var(--accent);">Password updated.</p>
+        </form>
+        <p class="auth-subtle">Forgot your current password? <a href="/forgot">Reset it by email</a>.</p>
+      </div>
+
       <!-- Billing -->
       <div class="dash-section" id="billing">
         <h2 class="dash-h2">billing</h2>
@@ -121,6 +140,20 @@ import DashShell from "../components/DashShell.astro";
   .kv strong { color: var(--text-heading); }
 
   .dash-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+
+  /* change password */
+  .pw-label {
+    display: block; font-family: var(--font-mono); font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted);
+    margin: 0.75rem 0 0.3rem;
+  }
+  .pw-label:first-of-type { margin-top: 0; }
+  .pw-input {
+    width: 100%; background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.6rem 0.8rem;
+    color: var(--text-heading); font-family: var(--font-mono); font-size: 0.85rem;
+  }
+  .pw-input:focus { outline: none; border-color: var(--accent); }
 
   /* buttons (shared vocabulary with login/signup) */
   .btn {
@@ -417,6 +450,36 @@ import DashShell from "../components/DashShell.astro";
     if (data.url) window.location.href = data.url;
     else { alert(data.detail || 'Could not start checkout'); btn.disabled = false; }
   }
+
+  // ── Change password ─────────────────────────────────────────────
+  // Raw fetch, not api(): a wrong current password must not trigger the
+  // 401-logout path. (Backend returns 400 for that case, but stay immune.)
+  $('pw-form').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    $('pw-error').textContent = '';
+    $('pw-ok').style.display = 'none';
+    const current = $('pw-current').value;
+    const next = $('pw-new').value;
+    if (next !== $('pw-confirm').value) { $('pw-error').textContent = 'New passwords do not match.'; return; }
+    if (next.length < 8) { $('pw-error').textContent = 'New password must be at least 8 characters.'; return; }
+    $('pw-btn').disabled = true;
+    try {
+      const resp = await fetch(`${API_BASE}/auth/change-password`, {
+        method: 'POST', headers: authHeaders,
+        body: JSON.stringify({ current_password: current, new_password: next }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        $('pw-form').reset();
+        $('pw-ok').style.display = 'block';
+      } else {
+        $('pw-error').textContent = data.detail || 'Could not change password.';
+      }
+    } catch {
+      $('pw-error').textContent = 'Network error — try again.';
+    }
+    $('pw-btn').disabled = false;
+  });
 
   // ── Terms gate ──────────────────────────────────────────────────
   $('accept-terms-btn').addEventListener('click', async () => {
