@@ -8,13 +8,18 @@ const canonicalURL = new URL(Astro.url.pathname, "https://n0brains.com").href;
 
 // Build-time seed so crawlers / link-previews (no JS) see real numbers, not
 // "loading…". Client JS still refreshes these live every 60s (progressive enhancement).
-let seedBestNum = "", seedBest = "", seedBestSub = "", seedProven = "", seedSignals = "", seedBanner = "";
+let seedBestNum = "", seedBest = "", seedBestSub = "", seedProven = "", seedProvenSub = "", seedSignals = "", seedBanner = "";
 try {
   const res = await fetch("https://api.n0brains.com/proof");
   const d = await res.json();
   const types = Array.isArray(d.types) ? d.types : [];
   const proven = types.filter((t) => t.tradeable);
-  seedProven = String(proven.length);
+  // Swing-proven types ARE proven — at a 7-30d horizon. The headline count is
+  // the union (intraday + swing); the split rides in the sub so neither is
+  // overclaimed as the other.
+  const swingN = types.filter((t) => !t.tradeable && t.swing_stats).length;
+  seedProven = String(proven.length + swingN);
+  seedProvenSub = swingN ? proven.length + " intraday · " + swingN + " swing" : "";
   const totalN = types.reduce((a, t) => a + (t.n || 0), 0);
   seedSignals = totalN ? totalN.toLocaleString("en-US") : "";
   const best = proven.slice().sort((a, b) => (b.win_rate || 0) - (a.win_rate || 0))[0];
@@ -22,11 +27,10 @@ try {
     seedBestNum = String(Math.round(best.win_rate * 100));
     seedBest = seedBestNum + "%";
     seedBestSub = best.signal_type + " · +" + (best.excess_pct ?? 0).toFixed(1) + "pts vs BTC";
-    const seedSwingN = types.filter((t) => !t.tradeable && (t.swing_proven_cells || []).length).length;
-    seedBanner = proven.length + " proven signal types"
-      + (seedSwingN ? " · " + seedSwingN + " swing-proven at 7–30d" : "")
-      + " · measured on real Hyperliquid prices";
   }
+  seedBanner = (proven.length + swingN) + " proven signal types"
+    + (swingN ? " (" + proven.length + " intraday · " + swingN + " swing 7–30d)" : "")
+    + " · measured on real Hyperliquid prices";
 } catch (e) { /* leave placeholders; client JS fills on load */ }
 
 /* Strings the client script injects at runtime. Server-side t() can't reach
@@ -122,6 +126,7 @@ const jsT = {
       <div class="stat">
         <span class="stat-num" id="st-proven">{seedProven || "–"}</span>
         <span class="stat-label">{t("proven signal types")}</span>
+        <span class="stat-sub" id="st-proven-sub">{seedProvenSub}</span>
       </div>
       <div class="stat">
         <span class="stat-num" id="st-signals">{seedSignals || "–"}</span>
@@ -306,20 +311,27 @@ const jsT = {
 
   function renderStats(data) {
     const proven = data.types.filter((t) => t.tradeable);
+    // Swing-proven types count as proven (7-30d horizon) — headline number is
+    // the union; the split rides in the sub-line so neither is overclaimed.
+    const swingN = data.types.filter((t) => !t.tradeable && t.swing_stats).length;
+    const provenTotal = proven.length + swingN;
     const totalN = data.types.reduce((a, t) => a + (t.n || 0), 0);
     const best = proven.length ? Math.max(...proven.map((t) => t.win_rate || 0)) : null;
     const stP = document.getElementById("st-proven");
+    const stPsub = document.getElementById("st-proven-sub");
     const stS = document.getElementById("st-signals");
     const stB = document.getElementById("st-best");
+    if (stPsub) stPsub.textContent = swingN
+      ? `${proven.length} intraday · ${swingN} swing` : "";
     if (countedUp) {
       // Subsequent refreshes: update silently, no re-animation.
-      stP.textContent = String(proven.length);
+      stP.textContent = String(provenTotal);
       stS.textContent = totalN.toLocaleString();
       stB.textContent = best === null ? "—" : (best * 100).toFixed(1) + "%";
       return;
     }
     countedUp = true;
-    countUp(stP, proven.length, (v) => Math.round(v).toString());
+    countUp(stP, provenTotal, (v) => Math.round(v).toString());
     countUp(stS, totalN, (v) => Math.round(v).toLocaleString());
     if (best === null) stB.textContent = "—";
     else countUp(stB, best * 100, (v) => v.toFixed(1) + "%");
@@ -1022,6 +1034,12 @@ const jsT = {
     font-family: var(--font-mono); font-size: 0.62rem;
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted);
   }
+  .stat-sub {
+    display: block; margin-top: 0.25rem;
+    font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.04em;
+    color: #9d6ad1;
+  }
+  .stat-sub:empty { display: none; }
   @media (max-width: 720px) { .stat-band { grid-template-columns: 1fr 1fr; } }
 
   .proof-banner {
