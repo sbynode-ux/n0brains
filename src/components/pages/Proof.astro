@@ -57,6 +57,9 @@ const jsT = {
   thType: t("type"),
   thSignals: t("signals"),
   winRate: t("win rate"),
+  forwardReturn: t("forward return"),
+  provenLive: t("proven · live"),
+  swingProvenLive: t("swing-proven · live"),
   avgReturnTitle: t("mean return of the trade itself"),
   excessVsBtcTitle: t("mean return minus BTC over the same window"),
   excessCiLow: t("excess CI low"),
@@ -112,7 +115,7 @@ const jsT = {
       </div>
       <!-- Rotating live stat — cycles through proven types, values from /proof -->
       <div class="ph-panel" id="ph-panel" aria-live="off">
-        <div class="ph-label"><span class="live-dot-sm"></span>{t("proven · live")}</div>
+        <div class="ph-label" id="ph-label"><span class="live-dot-sm"></span>{t("proven · live")}</div>
         <div class="ph-body" id="ph-body">
           <div class="ph-num" id="ph-num">{seedBestNum || "··"}<span class="ph-pct">%</span></div>
           <div class="ph-sub" id="ph-sub">{seedBestSub || t("measuring…")}</div>
@@ -420,31 +423,62 @@ const jsT = {
     requestAnimationFrame(step);
   }
 
+  // Hero rotation set = ALL proven cells, intraday AND swing. Was
+  // filter(t.tradeable) only → with a single intraday-tradeable type
+  // (deleverage) the list had length 1, so `< 2` returned and the card stuck
+  // on deleverage forever. Swing-proven types are proven at their own horizon;
+  // each entry carries its horizon so the foot never claims 24h for a 7-30d cell.
+  function heroEntries(data) {
+    const out = [];
+    for (const t of (data.types || [])) {
+      if (t.tradeable) {
+        out.push({ type: t.signal_type, win: t.win_rate, n: t.n,
+                   excess: t.excess_pct,
+                   horizon: t.proven_horizon || t.horizon || "24h",
+                   swing: false });
+      } else if (t.swing_stats) {
+        const s = t.swing_stats;
+        out.push({ type: t.signal_type, win: s.win_rate, n: s.n,
+                   excess: s.excess_pct, horizon: s.horizon,
+                   dir: s.direction, swing: true });
+      }
+    }
+    return out;   // intraday first (page order), swing after
+  }
+
   function startHeroRotator(data) {
-    const proven = data.types.filter((t) => t.tradeable);
+    const entries = heroEntries(data);
     const num = document.getElementById("ph-num");
     const sub = document.getElementById("ph-sub");
+    const foot = document.getElementById("ph-foot");
+    const label = document.getElementById("ph-label");
+    const panel = document.getElementById("ph-panel");
     if (!num) return;
-    if (!proven.length) {
+    if (!entries.length) {
       num.innerHTML = "0";
       sub.textContent = T.noTypeClears;
       return;
     }
     let i = -1;
     const show = () => {
-      i = (i + 1) % proven.length;
-      const t = proven[i];
-      const win = t.win_rate * 100;
+      i = (i + 1) % entries.length;
+      const e = entries[i];
+      const win = (e.win || 0) * 100;
       // First paint rolls up from just below; afterwards rolls between values.
       tweenNum(num, lastWin === null ? Math.max(0, win - 15) : lastWin, win);
       lastWin = win;
-      const txt = `${t.signal_type} · n=${t.n} · ${pctRaw(t.excess_pct)} ${T.excessVsBtc}`;
-      const html = `${t.signal_type} · n=${t.n} · <b class="pos">${pctRaw(t.excess_pct)}</b> ${T.excessVsBtc}`;
+      const dir = e.swing && e.dir ? " " + e.dir : "";
+      const txt = `${e.type}${dir} · n=${e.n} · ${pctRaw(e.excess)} ${T.excessVsBtc}`;
+      const html = `${e.type}${dir} · n=${e.n} · <b class="pos">${pctRaw(e.excess)}</b> ${T.excessVsBtc}`;
       scrambleTo(sub, txt, html);
+      // Horizon-honest foot + swing tint so a 7-30d cell never reads as 24h.
+      if (foot) foot.textContent = `${T.winRate} · ${e.horizon} ${T.forwardReturn}`;
+      if (label) label.innerHTML = `<span class="live-dot-sm"></span>${e.swing ? T.swingProvenLive : T.provenLive}`;
+      if (panel) panel.classList.toggle("swing", !!e.swing);
     };
     if (rotTimer) { show(); return; }   // refresh: update values, keep cadence
     show();
-    if (REDUCE || proven.length < 2) return;
+    if (REDUCE || entries.length < 2) return;
     rotTimer = setInterval(show, 7000);
   }
 
@@ -885,6 +919,12 @@ const jsT = {
     letter-spacing: 0.12em; color: var(--text-faint); margin-top: 0.6rem;
     padding-top: 0.6rem; border-top: 1px dashed rgba(255,255,255,0.07);
   }
+  /* Swing frame while the rotator is on a swing cell — purple to match the
+     board's swing lane; green stays for intraday. Transitions with the tween. */
+  .ph-panel.swing .ph-label { color: #c084fc; }
+  .ph-panel.swing .live-dot-sm { background: #c084fc; }
+  .ph-panel :global(.ph-pct) { transition: color 0.4s; }
+  .ph-panel.swing :global(.ph-pct) { color: #c084fc; }
 
   /* THE GATE */
   .gate {
