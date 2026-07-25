@@ -1,0 +1,463 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="crypto & tokenized-stock long/short ratio"
+  description="n0brains live long/short ratio by price point — real on-chain DEX positions (Hyperliquid + GMX) split into longs vs shorts at every price level, for BTC, ETH and tokenized stocks/metals/indices. Aggregate long/short split, positioning trend, funding and open-interest context. Free, live. Not financial advice."
+>
+  <section class="about-section ls-wide">
+    <a href="/charts" class="ls-back">← charts</a>
+    <p class="ls-kicker"><span class="ls-livedot"></span>Real on-chain positions · live · <a href="/charts/liqmap" class="ls-accent" style="text-decoration:underline">liquidation map →</a></p>
+    <h1 class="ls-h1">LONG / SHORT<br /><span class="ls-accent">RATIO</span></h1>
+    <p class="legal-updated">
+      Who is positioned which way, at every price. We read <em>real</em> on-chain
+      positions (Hyperliquid + GMX) and split the notional into <strong>longs</strong>
+      vs <strong>shorts</strong> at each price level — not an exchange-reported
+      estimate. The headline is the aggregate long/short split; the chart shows
+      where those longs and shorts actually sit. <strong>Funding</strong> (Hyperliquid)
+      is a single-venue crowding proxy; <strong>open interest by venue</strong> is
+      size only, not direction. Free and live. Analytical data,
+      <strong>not financial advice</strong>.
+    </p>
+
+    <div class="ls-controls">
+      <div id="ls-coins" class="ls-tabs" role="tablist" aria-label="coin"></div>
+      <label class="ls-more">
+        more
+        <select id="ls-select" aria-label="more coins"></select>
+      </label>
+      <div id="ls-range" class="ls-tabs" role="tablist" aria-label="trend range">
+        <button data-days="1" role="tab">24h</button>
+        <button data-days="7" class="active" role="tab">7d</button>
+        <button data-days="30" role="tab">30d</button>
+        <button data-days="90" role="tab">max</button>
+      </div>
+    </div>
+
+    <div id="ls-banner" class="proof-banner proof-loading" role="status">
+      <span class="dot"></span><span class="banner-text">loading long/short…</span>
+    </div>
+
+    <!-- headline split -->
+    <div id="ls-head" class="ls-head" hidden>
+      <div class="ls-splitbar">
+        <div id="ls-long" class="ls-seg ls-seg-long"><span id="ls-long-lbl"></span></div>
+        <div id="ls-short" class="ls-seg ls-seg-short"><span id="ls-short-lbl"></span></div>
+      </div>
+      <div class="ls-headmeta">
+        <span><b id="ls-ratio">—</b> long/short ratio</span>
+        <span id="ls-longusd" class="ls-mLong">—</span>
+        <span id="ls-shortusd" class="ls-mShort">—</span>
+        <span id="ls-npos" class="ls-muted"></span>
+      </div>
+    </div>
+
+    <!-- diverging bars by price -->
+    <div id="ls-wrap" class="ls-wrap">
+      <canvas id="ls-canvas" class="ls-canvas"></canvas>
+      <div id="ls-tip" class="ls-tip"></div>
+    </div>
+    <p class="meta" id="ls-meta"></p>
+
+    <!-- context: funding + OI by venue + trend -->
+    <div id="ls-ctx" class="ls-ctx" hidden>
+      <div class="ls-card">
+        <div class="ls-card-t">FUNDING · Hyperliquid <span class="ls-tag">proxy</span></div>
+        <div id="ls-funding" class="ls-card-v">—</div>
+        <div id="ls-funding-r" class="ls-card-sub"></div>
+      </div>
+      <div class="ls-card">
+        <div class="ls-card-t">POSITIONING TREND · <span id="ls-trend-days">7d</span></div>
+        <canvas id="ls-spark" class="ls-spark"></canvas>
+        <div id="ls-trend-r" class="ls-card-sub"></div>
+      </div>
+      <div class="ls-card ls-card-oi">
+        <div class="ls-card-t">OPEN INTEREST BY VENUE <span class="ls-tag">size only</span></div>
+        <div id="ls-oi" class="ls-oi"></div>
+      </div>
+    </div>
+    <p class="ls-disclaimer" id="ls-disclaimer"></p>
+
+    <div class="ls-upsell">
+      <p>
+        <strong>Want this in your agent or bot?</strong> Real DEX long/short by
+        price point — all coins — is on the <a href="/signup">n0brains API</a> via
+        REST &amp; the MCP server.
+      </p>
+      <p class="ls-endpoints">
+        <code>/charts/long-short/{'{coin}'}</code> · <code>/liqmap/{'{coin}'}</code>
+        · <code>/positioning/{'{coin}'}</code> — <a href="/docs">docs</a>
+      </p>
+      <a class="ls-cta" href="/signup">Get API access →</a>
+    </div>
+  </section>
+
+  <style is:global>
+    .about-section.ls-wide { max-width: 1100px; }
+    .ls-back { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); text-decoration: none; }
+    .ls-back:hover { color: var(--accent); }
+    .ls-kicker { font-family: var(--font-mono); font-size: 0.74rem; text-transform: uppercase;
+      letter-spacing: 0.2em; color: var(--accent); margin: 1rem 0; display: flex; align-items: center; gap: 0.6rem; }
+    .ls-livedot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 8px var(--accent); display: inline-block; animation: ls-blink 2s infinite; }
+    @keyframes ls-blink { 50% { opacity: 0.3; } }
+    .ls-h1 { font-family: var(--font-display); font-size: clamp(2.6rem, 7vw, 4.6rem);
+      line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
+    .ls-accent { color: var(--accent); }
+  </style>
+  <style>
+    .ls-controls { display:flex; gap:1.1rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 1rem; }
+    .ls-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .ls-tabs :global(button), .ls-more select {
+      background:var(--bg-card,#0d0d0d); border:1px solid var(--border,#1a1a1a);
+      color:var(--text-muted,#707070); padding:.4rem .85rem; border-radius:7px;
+      cursor:pointer; font-size:.82rem; font-family:var(--font-mono,inherit); line-height:1;
+      transition:background .12s,border-color .12s,color .12s;
+    }
+    .ls-tabs :global(button:hover) { border-color:var(--accent,#00ff41); color:var(--text-heading,#efefef); }
+    .ls-tabs :global(button.active) { background:var(--accent,#00ff41); color:#000; font-weight:700; border-color:var(--accent,#00ff41); }
+    .ls-more { display:flex; align-items:center; gap:.4rem; font-size:.72rem; color:#8b909c; font-family:var(--font-mono); }
+    @media (pointer:coarse) { .ls-tabs :global(button) { padding:.6rem 1.05rem; min-height:40px; } }
+    @media (max-width:640px) { .ls-tabs :global(button) { font-size:.78rem; padding:.5rem .7rem; } }
+
+    /* headline split bar */
+    .ls-head { margin:.5rem 0 1rem; }
+    .ls-splitbar { display:flex; width:100%; height:38px; border-radius:8px; overflow:hidden;
+      border:1px solid #2a2a3a; background:#14121f; }
+    .ls-seg { display:flex; align-items:center; min-width:0; transition:width .5s ease; }
+    .ls-seg-long { background:linear-gradient(90deg,#0f7a3f,#1fbf6b); justify-content:flex-start; padding-left:.7rem; }
+    .ls-seg-short { background:linear-gradient(90deg,#c23b34,#8c1f1c); justify-content:flex-end; padding-right:.7rem; }
+    .ls-seg span { font-size:.82rem; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; white-space:nowrap;
+      text-shadow:0 1px 2px rgba(0,0,0,.4); }
+    .ls-headmeta { display:flex; gap:1.3rem; flex-wrap:wrap; margin-top:.55rem; font-size:.82rem;
+      color:#cfd2dc; font-family:var(--font-mono); align-items:baseline; }
+    .ls-headmeta b { color:#fff; font-size:1.05rem; }
+    .ls-mLong { color:#3fd07f; } .ls-mLong::before { content:"▲ long "; opacity:.7; font-size:.72rem; }
+    .ls-mShort { color:#ff6f66; } .ls-mShort::before { content:"▼ short "; opacity:.7; font-size:.72rem; }
+    .ls-muted { color:#6b7280; }
+
+    .ls-wrap { width:100%; margin-top:.25rem; min-height:160px; position:relative; }
+    .ls-canvas { display:block; width:100%; height:auto; border-radius:6px; background:#0d0b1a;
+      cursor:crosshair; -webkit-user-select:none; user-select:none; touch-action:none; }
+    .ls-tip { display:none; position:absolute; pointer-events:none; z-index:5; background:rgba(15,13,28,0.96);
+      border:1px solid #3a3a4a; border-radius:7px; padding:.5rem .7rem; font-size:.74rem;
+      color:#e3e6ee; line-height:1.5; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.5); }
+    .ls-tip .k { color:#9aa0ad; } .ls-tip b { color:#fff; font-variant-numeric:tabular-nums; }
+
+    .ls-ctx { display:grid; grid-template-columns:1fr 1.2fr 1.4fr; gap:.9rem; margin-top:1.1rem; }
+    @media (max-width:820px) { .ls-ctx { grid-template-columns:1fr; } }
+    .ls-card { border:1px solid var(--border,#242433); border-radius:9px; padding:.8rem .9rem; background:rgba(255,255,255,.015); }
+    .ls-card-t { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:#8b909c; font-family:var(--font-mono); margin-bottom:.45rem; }
+    .ls-tag { color:#6b7280; text-transform:none; letter-spacing:0; font-style:italic; }
+    .ls-card-v { font-size:1.3rem; font-weight:700; color:#efefef; font-variant-numeric:tabular-nums; }
+    .ls-card-sub { font-size:.74rem; color:#9aa0ad; margin-top:.25rem; }
+    .ls-spark { display:block; width:100%; height:52px; }
+    .ls-oi { display:flex; flex-direction:column; gap:.35rem; }
+    .ls-oi-row { display:grid; grid-template-columns:82px 1fr auto; align-items:center; gap:.5rem; font-size:.74rem; font-family:var(--font-mono); }
+    .ls-oi-name { color:#cfd2dc; } .ls-oi-usd { color:#9aa0ad; }
+    .ls-oi-bar { height:8px; border-radius:4px; background:linear-gradient(90deg,#3a5bd0,#5b8cff); }
+
+    .ls-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.8rem; max-width:80ch; }
+    .ls-upsell { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid var(--border,#2a2a3a);
+      border-radius:10px; background:rgba(91,140,255,0.05); max-width:74ch; }
+    .ls-upsell p { margin:0 0 .6rem; font-size:.9rem; color:#cfd2dc; }
+    .ls-upsell .ls-endpoints { font-size:.74rem; color:#9aa0ad; }
+    .ls-upsell code { font-size:.72rem; color:#8fb3ff; }
+    .ls-cta { display:inline-block; margin-top:.4rem; background:var(--accent,#5b8cff);
+      color:#fff; padding:.5rem 1rem; border-radius:7px; font-size:.85rem; font-weight:600; text-decoration:none; }
+    .ls-cta:hover { filter:brightness(1.1); }
+    .proof-banner.proof-ok .dot { background:#2ecc71; }
+  </style>
+
+  <script is:inline>
+  (function () {
+    "use strict";
+    const API = "https://api.n0brains.com";
+    // Quick tabs = the highest-interest names; the rest live in the dropdown.
+    const QUICK = ["BTC","ETH","GOLD","SILVER","NVDA","TSLA","COIN","MSTR"];
+    const MORE = ["AAPL","AMD","AMZN","AVGO","BABA","BB","BRENTOIL","COPPER","COST",
+      "CRCL","GME","GOOGL","HOOD","INTC","LLY","META","MRVL","MSFT","MU","NASDAQ",
+      "NBIS","NFLX","OIL","ORCL","PLTR","QCOM","RIVN","SKHX","SMSN","SNDK","SP500",
+      "SPCX","STRC","TSM","XYZ100"];
+    const REFRESH_MS = 60000;
+    let coin = "BTC", days = 7, timer = null, reqId = 0, last = null, resizeT = null;
+
+    const $ = (id) => document.getElementById(id);
+    const fmtPx = (p) => {
+      p = +p;
+      if (p >= 1000) return "$" + p.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      if (p >= 1)    return "$" + p.toFixed(2);
+      return "$" + p.toPrecision(3);
+    };
+    const fmtUsd = (n) => {
+      n = Math.abs(+n || 0);
+      if (n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+      if (n >= 1e6) return "$" + (n/1e6).toFixed(1) + "M";
+      if (n >= 1e3) return "$" + (n/1e3).toFixed(0) + "K";
+      return "$" + n.toFixed(0);
+    };
+    const pct = (x) => (x == null ? "—" : (x * 100).toFixed(1) + "%");
+
+    function buildCoins() {
+      $("ls-coins").innerHTML = QUICK.map((c) =>
+        `<button data-coin="${c}" role="tab" class="${c===coin?'active':''}">${c}</button>`).join("");
+      $("ls-coins").querySelectorAll("button").forEach((b) =>
+        b.addEventListener("click", () => { coin = b.dataset.coin; sel(); load(); }));
+      const s = $("ls-select");
+      s.innerHTML = `<option value="">— pick —</option>` +
+        MORE.map((c) => `<option value="${c}">${c}</option>`).join("");
+      s.addEventListener("change", () => { if (s.value) { coin = s.value; sel(); load(); } });
+    }
+    function bindRange() {
+      $("ls-range").querySelectorAll("button").forEach((b) =>
+        b.addEventListener("click", () => { days = +b.dataset.days; sel(); load(); }));
+    }
+    function sel() {
+      $("ls-coins").querySelectorAll("button").forEach((b) =>
+        b.classList.toggle("active", b.dataset.coin === coin));
+      $("ls-range").querySelectorAll("button").forEach((b) =>
+        b.classList.toggle("active", +b.dataset.days === days));
+      // if current coin is a "more" coin, clear quick highlight + set select
+      const inQuick = QUICK.includes(coin);
+      $("ls-select").value = inQuick ? "" : coin;
+      const dl = days === 1 ? "24h" : days === 90 ? "max" : days + "d";
+      $("ls-trend-days").textContent = dl;
+    }
+    function banner(state, text) {
+      const b = $("ls-banner");
+      b.className = "proof-banner " + state;
+      b.querySelector(".banner-text").textContent = text;
+    }
+
+    function renderHead(d) {
+      const t = d.totals;
+      if (!t || t.long_pct == null) { $("ls-head").hidden = true; return; }
+      $("ls-head").hidden = false;
+      const lp = t.long_pct, sp = t.short_pct != null ? t.short_pct : (1 - lp);
+      $("ls-long").style.width = (lp * 100) + "%";
+      $("ls-short").style.width = (sp * 100) + "%";
+      $("ls-long-lbl").textContent = "LONG " + pct(lp);
+      $("ls-short-lbl").textContent = pct(sp) + " SHORT";
+      $("ls-ratio").textContent = t.ls_ratio != null ? t.ls_ratio.toFixed(2) : "—";
+      $("ls-longusd").textContent = fmtUsd(t.long_usd);
+      $("ls-shortusd").textContent = fmtUsd(t.short_usd);
+      $("ls-npos").textContent = t.n_positions ? "· " + t.n_positions + " positions" : "";
+    }
+
+    function renderBars(d) {
+      const canvas = $("ls-canvas"), wrap = $("ls-wrap");
+      const buckets = (d.buckets || []).filter((b) => (b.long_usd + b.short_usd) > 0);
+      const ctx = canvas.getContext("2d");
+      const W = Math.max(360, Math.floor(wrap.clientWidth || 1000));
+      if (!buckets.length) {
+        canvas.width = W; canvas.height = 180; canvas.style.width = "100%"; canvas.style.height = "auto";
+        ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W,180);
+        ctx.fillStyle = "#6b7280"; ctx.font = "14px system-ui";
+        ctx.fillText("No DEX positions for " + d.coin + " yet.", 24, 92);
+        $("ls-meta").textContent = ""; return;
+      }
+      // focus window: current price ± band holding most mass (like the liqmap)
+      const cur = d.current_price ||
+        buckets[Math.floor(buckets.length/2)].price;
+      const prices = buckets.map((b) => b.price);
+      const pmin0 = Math.min(...prices), pmax0 = Math.max(...prices);
+      let vmin = pmin0, vmax = pmax0;
+      const total = buckets.reduce((a,b)=>a+b.long_usd+b.short_usd,0) || 1;
+      for (const p of [0.06,0.12,0.25,0.5]) {
+        const lo = cur*(1-p), hi = cur*(1+p);
+        let m = 0; for (const b of buckets) if (b.price>=lo&&b.price<=hi) m += b.long_usd+b.short_usd;
+        if (m >= 0.6*total) { vmin = Math.max(pmin0, lo); vmax = Math.min(pmax0, hi); break; }
+      }
+      const vspan = (vmax - vmin) || 1;
+      const vis = buckets.filter((b)=>b.price>=vmin&&b.price<=vmax);
+      const maxSide = Math.max(1, ...vis.map((b)=>Math.max(b.long_usd,b.short_usd)));
+
+      const padT=18, padB=22, padL=64, padR=64;
+      const H = Math.max(340, Math.min(680, vis.length*9 + padT + padB));
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = W*dpr; canvas.height = H*dpr; canvas.style.width="100%"; canvas.style.height="auto";
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.fillStyle = "#0d0b1a"; ctx.fillRect(0,0,W,H);
+      const plotW = W - padL - padR, plotH = H - padT - padB;
+      const cx = padL + plotW/2;
+      const yOf = (p) => padT + (vmax - p)/vspan * plotH;
+      const halfMax = plotW/2 - 6;
+      const bh = Math.max(2, plotH/Math.max(vis.length,1) * 0.8);
+
+      last = d; last._geom = { padL, padT, plotW, plotH, cx, vmin, vmax, vspan, maxSide, halfMax, W, H };
+
+      // center axis
+      ctx.strokeStyle = "rgba(255,255,255,0.18)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, padT); ctx.lineTo(cx, padT+plotH); ctx.stroke();
+      // bars
+      for (const b of vis) {
+        const y = yOf(b.price) - bh/2;
+        if (b.short_usd > 0) {
+          const w = (b.short_usd/maxSide)*halfMax;
+          ctx.fillStyle = "rgba(226,80,72,0.9)";
+          ctx.fillRect(cx - w, y, w, bh);
+        }
+        if (b.long_usd > 0) {
+          const w = (b.long_usd/maxSide)*halfMax;
+          ctx.fillStyle = "rgba(31,191,107,0.92)";
+          ctx.fillRect(cx, y, w, bh);
+        }
+      }
+      // current price line + chip
+      if (cur>=vmin && cur<=vmax) {
+        const py = yOf(cur);
+        ctx.save(); ctx.setLineDash([5,4]); ctx.strokeStyle="rgba(255,255,255,0.6)"; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(padL+plotW,py); ctx.stroke(); ctx.setLineDash([]);
+        const lbl = fmtPx(cur); ctx.font="bold 11px system-ui";
+        const tw = ctx.measureText(lbl).width;
+        ctx.fillStyle="rgba(255,255,255,0.92)"; ctx.fillRect(cx-tw/2-6, py-9, tw+12, 18);
+        ctx.fillStyle="#0d0b1a"; ctx.textAlign="left"; ctx.fillText(lbl, cx-tw/2, py+4);
+        ctx.restore();
+      }
+      // price ticks (Y) — round steps
+      ctx.font="11px system-ui"; ctx.textAlign="right"; ctx.fillStyle="#8b909c";
+      const niceStep=(r,t)=>{const raw=r/t,mag=Math.pow(10,Math.floor(Math.log10(raw)));
+        for(const m of[1,2,2.5,5,10])if(raw<=m*mag)return m*mag;return 10*mag;};
+      const step=niceStep(vspan,7);
+      for(let p=Math.ceil(vmin/step)*step;p<vmax;p+=step){const py=yOf(p);
+        ctx.fillStyle="rgba(255,255,255,0.06)"; ctx.fillRect(padL,py,plotW,0.5);
+        ctx.fillStyle="#8b909c"; ctx.fillText(fmtPx(p), padL-6, py+3);}
+      // side labels
+      ctx.textAlign="center"; ctx.font="bold 11px system-ui";
+      ctx.fillStyle="#ff6f66"; ctx.fillText("◀ SHORT", padL+plotW*0.25, padT-4);
+      ctx.fillStyle="#3fd07f"; ctx.fillText("LONG ▶", padL+plotW*0.75, padT-4);
+
+      const asOf = d.as_of ? new Date(d.as_of*1000) : null;
+      $("ls-meta").innerHTML = `<strong>${d.coin}</strong> · real DEX positions (HL+GMX) · `
+        + `${vis.length} price levels · window ${fmtPx(vmin)}–${fmtPx(vmax)}`
+        + (asOf ? ` · ${asOf.toLocaleTimeString()}` : "");
+    }
+
+    function renderCtx(d) {
+      $("ls-ctx").hidden = false;
+      // funding
+      if (d.funding && d.funding.annualized_pct != null) {
+        const a = d.funding.annualized_pct;
+        $("ls-funding").textContent = (a>0?"+":"") + a.toFixed(2) + "%/yr";
+        $("ls-funding").style.color = a>0.05 ? "#3fd07f" : a<-0.05 ? "#ff6f66" : "#efefef";
+        $("ls-funding-r").textContent = d.funding.read || "";
+      } else {
+        $("ls-funding").textContent = "—";
+        $("ls-funding").style.color = "#6b7280";
+        $("ls-funding-r").textContent = "no perp funding for this asset";
+      }
+      // trend sparkline (long_pct over time)
+      renderSpark(d.trend || []);
+      const tr = d.trend || [];
+      if (tr.length >= 2) {
+        const a = tr[0].long_pct, b = tr[tr.length-1].long_pct;
+        const dd = (b - a) * 100;
+        $("ls-trend-r").textContent = `long share ${pct(a)} → ${pct(b)} `
+          + `(${dd>=0?"+":""}${dd.toFixed(1)} pts)`;
+      } else { $("ls-trend-r").textContent = "trend builds as snapshots accrue"; }
+      // OI by venue
+      const oi = d.oi_by_venue || [];
+      if (!oi.length) {
+        $("ls-oi").innerHTML = `<div class="ls-card-sub">no CEX open-interest for this asset</div>`;
+      } else {
+        const mx = Math.max(...oi.map((o)=>o.oi_usd)) || 1;
+        $("ls-oi").innerHTML = oi.map((o) =>
+          `<div class="ls-oi-row"><span class="ls-oi-name">${o.exchange}</span>`
+          + `<span class="ls-oi-bar" style="width:${Math.max(6,(o.oi_usd/mx)*100)}%"></span>`
+          + `<span class="ls-oi-usd">${fmtUsd(o.oi_usd)}</span></div>`).join("");
+      }
+    }
+
+    function renderSpark(tr) {
+      const c = $("ls-spark"), wrap = c.parentElement;
+      const W = Math.max(120, wrap.clientWidth - 4), H = 52;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      c.width = W*dpr; c.height = H*dpr; c.style.width="100%"; c.style.height=H+"px";
+      const ctx = c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,W,H);
+      if (tr.length < 2) { ctx.fillStyle="#6b7280"; ctx.font="11px system-ui"; ctx.fillText("accruing…",4,30); return; }
+      const xs = tr.map((_,i)=>i/(tr.length-1)*(W-4)+2);
+      const ys = tr.map((p)=> H-4 - p.long_pct*(H-8));  // long_pct 0..1
+      // 50% guide
+      const y50 = H-4 - 0.5*(H-8);
+      ctx.strokeStyle="rgba(255,255,255,0.12)"; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(2,y50); ctx.lineTo(W-2,y50); ctx.stroke(); ctx.setLineDash([]);
+      // area + line
+      ctx.beginPath(); ctx.moveTo(xs[0],ys[0]);
+      for(let i=1;i<xs.length;i++) ctx.lineTo(xs[i],ys[i]);
+      ctx.strokeStyle="#3fd07f"; ctx.lineWidth=1.6; ctx.stroke();
+      ctx.lineTo(xs[xs.length-1],H); ctx.lineTo(xs[0],H); ctx.closePath();
+      ctx.fillStyle="rgba(31,191,107,0.12)"; ctx.fill();
+    }
+
+    function bindHover() {
+      const canvas = $("ls-canvas"), tip = $("ls-tip"), wrap = $("ls-wrap");
+      const hide = () => tip.style.display = "none";
+      const show = (cxp, cyp) => {
+        if (!last || !last._geom || !last.buckets) { hide(); return; }
+        const g = last._geom, rect = canvas.getBoundingClientRect();
+        if (!rect.width) { hide(); return; }
+        const sx = g.W/rect.width, sy = g.H/rect.height;
+        const x = (cxp-rect.left)*sx, y = (cyp-rect.top)*sy;
+        if (x<g.padL||x>g.padL+g.plotW||y<g.padT||y>g.padT+g.plotH){hide();return;}
+        const price = g.vmax - (y-g.padT)/g.plotH*g.vspan;
+        let best=null, bd=1e18;
+        for (const b of last.buckets) { const dd=Math.abs(b.price-price); if(dd<bd){bd=dd;best=b;} }
+        if (!best){hide();return;}
+        const tot = best.long_usd+best.short_usd;
+        tip.innerHTML = `<div><span class="k">price</span> <b>${fmtPx(best.price)}</b></div>`
+          + `<div><span class="k">long</span> <b style="color:#3fd07f">${fmtUsd(best.long_usd)}</b></div>`
+          + `<div><span class="k">short</span> <b style="color:#ff6f66">${fmtUsd(best.short_usd)}</b></div>`
+          + (tot>0?`<div><span class="k">long share</span> <b>${pct(best.long_usd/tot)}</b></div>`:"");
+        tip.style.display="block";
+        const wr = wrap.getBoundingClientRect();
+        let tx=cxp-wr.left+14, ty=cyp-wr.top+14;
+        if (tx+tip.offsetWidth>wrap.clientWidth) tx=cxp-wr.left-tip.offsetWidth-14;
+        if (ty+tip.offsetHeight>wrap.clientHeight) ty=cyp-wr.top-tip.offsetHeight-14;
+        tip.style.left=Math.max(0,tx)+"px"; tip.style.top=Math.max(0,ty)+"px";
+      };
+      canvas.addEventListener("mousemove",(e)=>show(e.clientX,e.clientY));
+      canvas.addEventListener("mouseleave",hide);
+      const onT=(e)=>{if(!e.touches||!e.touches.length)return;e.preventDefault();show(e.touches[0].clientX,e.touches[0].clientY);};
+      canvas.addEventListener("touchstart",onT,{passive:false});
+      canvas.addEventListener("touchmove",onT,{passive:false});
+      canvas.addEventListener("touchend",hide);
+    }
+
+    async function load() {
+      const my = ++reqId;
+      banner("proof-loading", "loading " + coin + " long/short…");
+      try {
+        const r = await fetch(`${API}/charts/long-short/${encodeURIComponent(coin)}?days=${days}`,
+          { cache:"no-store", signal: AbortSignal.timeout(20000) });
+        if (my !== reqId) return;
+        if (!r.ok) { banner("proof-error", "error " + r.status + (last?" — showing previous":"")); return; }
+        const d = await r.json();
+        if (my !== reqId) return;
+        renderHead(d); renderBars(d); renderCtx(d);
+        $("ls-disclaimer").textContent = d.disclaimer || "";
+        banner("proof-ok", "live · real on-chain");
+      } catch (e) {
+        if (my !== reqId) return;
+        banner("proof-error", "fetch failed" + (last?" — showing previous, retrying…":" — retrying…"));
+      }
+    }
+
+    function start() {
+      buildCoins(); bindRange(); bindHover(); sel(); load();
+      timer = setInterval(load, REFRESH_MS);
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { clearInterval(timer); timer=null; }
+        else if (!timer) { load(); timer=setInterval(load, REFRESH_MS); }
+      });
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeT);
+        resizeT = setTimeout(() => { if (last) { renderBars(last); renderSpark(last.trend||[]); } }, 150);
+      });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
+  })();
+  </script>
+</BaseLayout>
