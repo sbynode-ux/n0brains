@@ -17,7 +17,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       oil and the equity indices</strong> we read <strong>CFTC Commitments of
       Traders</strong> — the weekly long/short of managed money (commodities) and
       large speculators (indices), the deepest real positioning that exists for
-      those markets. Free and live. Analytical data,
+      those markets. For <strong>alts</strong> (SOL, XRP, DOGE…) we read the
+      long/short <strong>account ratio</strong> across Binance, Bybit and OKX
+      perps. Free and live. Analytical data,
       <strong>not financial advice</strong>.
     </p>
 
@@ -52,6 +54,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <canvas id="ls-canvas" class="ls-canvas"></canvas>
       <div id="ls-tip" class="ls-tip"></div>
     </div>
+    <div id="ls-exlist" class="ls-exlist" hidden></div>
     <p class="meta" id="ls-meta"></p>
 
     <div id="ls-ctx" class="ls-ctx" hidden></div>
@@ -143,6 +146,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     .ls-oi-barwrap { height:8px; background:#1a1a24; border-radius:4px; overflow:hidden; }
     .ls-oi-bar { height:8px; border-radius:4px; background:linear-gradient(90deg,#3a5bd0,#5b8cff); }
 
+    .ls-exlist { display:flex; flex-direction:column; gap:.7rem; margin-top:.5rem; }
+    .ls-exlist[hidden] { display:none; }
+    .ls-ex-row { border:1px solid var(--border,#242433); border-radius:9px; padding:.7rem .85rem; background:rgba(255,255,255,.015); }
+    .ls-ex-head { display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; font-family:var(--font-mono); }
+    .ls-ex-name { font-size:.92rem; font-weight:700; color:#efefef; }
+    .ls-ex-badge { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; color:#8b909c; border:1px solid var(--border,#2a2a3a); border-radius:100px; padding:2px 8px; }
+    .ls-ex-ratio { margin-left:auto; font-size:.95rem; font-weight:700; color:#fff; font-variant-numeric:tabular-nums; }
+    .ls-ex-bar { display:flex; height:26px; border-radius:6px; overflow:hidden; border:1px solid #2a2a3a; }
+    .ls-ex-long { background:linear-gradient(90deg,#0f7a3f,#1fbf6b); color:#fff; font-size:.72rem; font-weight:700; display:flex; align-items:center; padding-left:.5rem; min-width:0; white-space:nowrap; }
+    .ls-ex-short { background:linear-gradient(90deg,#c23b34,#8c1f1c); color:#fff; font-size:.72rem; font-weight:700; display:flex; align-items:center; justify-content:flex-end; padding-right:.5rem; margin-left:auto; min-width:0; white-space:nowrap; }
+
     .ls-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.8rem; max-width:82ch; }
     .ls-upsell { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid var(--border,#2a2a3a);
       border-radius:10px; background:rgba(91,140,255,0.05); max-width:74ch; }
@@ -164,6 +178,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // meaningful positioning source exists for them.
     const GROUPS = [
       ["crypto", ["BTC", "ETH"]],
+      ["alts",   ["SOL", "XRP", "DOGE", "BNB", "AVAX", "SUI", "TON", "ARB"]],
       ["metals", ["GOLD", "SILVER", "COPPER"]],
       ["energy", ["OIL", "BRENTOIL"]],
       ["index",  ["SP500", "NASDAQ"]],
@@ -243,6 +258,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         const cat = d.cot.category, rd = d.cot.report_date;
         el.innerHTML = `<span class="ls-srcpill cot">CFTC COT</span> `
           + `${cat} positioning · weekly (reported ${rd}, ~3d lag) · the deepest real long/short for this market`;
+      } else if (mode === "exchange_ls") {
+        el.innerHTML = `<span class="ls-srcpill" style="color:#8fb3ff;border-color:#26406a">EXCHANGE</span> `
+          + `long/short account ratio across Binance, Bybit & OKX perps — the deepest positioning available for alts`;
       } else {
         let s = `<span class="ls-srcpill">DEX · real</span> live on-chain positions (Hyperliquid + GMX), by price point`;
         if (d.cot) s += ` · <span class="ls-srcpill cot" style="margin-left:.3rem">COT lens</span> spec net ${d.cot.net_pct_of_oi>0?"+":""}${d.cot.net_pct_of_oi}% of OI`;
@@ -385,6 +403,27 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           + `<div class="ls-card-sub">contracts · ${fmtNum(c.long)} long / ${fmtNum(c.short)} short</div></div>`;
         return;
       }
+      if (mode === "exchange_ls") {
+        const e = d.exchange_ls;
+        const al = e.avg_account_long_pct;
+        const accts = (e.venues || []).filter((v) => v.ratio_type === "account");
+        let maxV = null, minV = null;
+        for (const v of accts) {
+          if (!maxV || v.long_pct > maxV.long_pct) maxV = v;
+          if (!minV || v.long_pct < minV.long_pct) minV = v;
+        }
+        el.innerHTML =
+          `<div class="ls-card"><div class="ls-card-t">AVG ACCOUNT LONG</div>`
+          + `<div class="ls-card-v" style="color:${al>0.5?'#3fd07f':al<0.5?'#ff6f66':'#efefef'}">${pct(al)}</div>`
+          + `<div class="ls-card-sub">across ${e.n_account_venues} exchange${e.n_account_venues===1?'':'s'}</div></div>`
+          + `<div class="ls-card"><div class="ls-card-t">CROWDING SPREAD</div>`
+          + `<div class="ls-card-v" style="font-size:1rem">${maxV?maxV.exchange+" "+pct(maxV.long_pct):"—"}</div>`
+          + `<div class="ls-card-sub">${minV&&maxV&&minV!==maxV?"vs "+minV.exchange+" "+pct(minV.long_pct)+" — venues "+(Math.abs((maxV.long_pct-minV.long_pct)*100)).toFixed(0)+"pts apart":"single venue"}</div></div>`
+          + `<div class="ls-card"><div class="ls-card-t">SOURCE <span class="ls-tag">retail</span></div>`
+          + `<div class="ls-card-v" style="font-size:.95rem">Binance · Bybit · OKX</div>`
+          + `<div class="ls-card-sub">account long/short; crowded extremes often fade</div></div>`;
+        return;
+      }
       // DEX mode: funding + DEX trend + OI-by-venue
       let f = "";
       if (d.funding && d.funding.annualized_pct != null) {
@@ -411,11 +450,15 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     function render(d) {
       last = d; last._geom = null;
-      const mode = d.primary_source === "cot" && d.cot ? "cot" : "dex";
-      // The range window only applies to the COT weekly series. The DEX chart is
-      // a LIVE SNAPSHOT (no time axis), so it gets no range control.
+      let mode = "dex";
+      if (d.primary_source === "cot" && d.cot) mode = "cot";
+      else if (d.primary_source === "exchange_ls" && d.exchange_ls) mode = "exchange_ls";
+      // Range window applies only to the COT weekly series.
       $("ls-rangewrap").hidden = (mode !== "cot");
       if (mode === "cot") buildCotRange();
+      // Canvas (DEX/COT) vs exchange-venue list (exchange_ls).
+      $("ls-wrap").style.display = (mode === "exchange_ls") ? "none" : "";
+      $("ls-exlist").hidden = (mode !== "exchange_ls");
       srcline(mode, d);
       if (mode === "cot") {
         const c = d.cot;
@@ -423,6 +466,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
           "▲ " + fmtNum(c.long) + " long", "▼ " + fmtNum(c.short) + " short",
           "· contracts · net " + (c.net_pct_of_oi>0?"+":"") + c.net_pct_of_oi + "% OI");
         renderCotChart(d);
+      } else if (mode === "exchange_ls") {
+        renderExchangeLs(d);
       } else {
         const t = d.totals || {};
         renderHead(t.long_pct, t.short_pct, t.ls_ratio,
@@ -435,7 +480,34 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         ? "CFTC Commitments of Traders — weekly managed-money (commodities) / "
           + "large-speculator (equity-index) futures positioning, reported by the "
           + "CFTC with a ~3-day lag. Positioning context, not financial advice."
+        : mode === "exchange_ls"
+        ? "Long/short ACCOUNT ratios from Binance, Bybit and OKX perpetual futures "
+          + "— the share of trader accounts (Binance also: top-trader positions) net "
+          + "long vs short. Retail-heavy; crowded extremes often precede squeezes. "
+          + "Positioning context, not financial advice."
         : (d.disclaimer || "");
+    }
+
+    function renderExchangeLs(d) {
+      const e = d.exchange_ls;
+      const al = e.avg_account_long_pct;
+      renderHead(al, al != null ? 1 - al : null, e.avg_account_ls_ratio,
+        "▲ avg long", "▼ avg short",
+        "· " + e.n_account_venues + " exchanges · account ratio");
+      const rows = (e.venues || []).map((v) => {
+        const lp = v.long_pct, sp = v.short_pct != null ? v.short_pct : (1 - lp);
+        const badge = v.ratio_type === "top_position" ? "top traders" : "all accounts";
+        return `<div class="ls-ex-row"><div class="ls-ex-head">`
+          + `<span class="ls-ex-name">${v.exchange}</span>`
+          + `<span class="ls-ex-badge">${badge}</span>`
+          + `<span class="ls-ex-ratio">${v.ls_ratio.toFixed(2)}</span></div>`
+          + `<div class="ls-ex-bar">`
+          + `<div class="ls-ex-long" style="width:${(lp*100).toFixed(1)}%">${(lp*100).toFixed(0)}% long</div>`
+          + `<div class="ls-ex-short" style="width:${(sp*100).toFixed(1)}%">${(sp*100).toFixed(0)}% short</div>`
+          + `</div></div>`;
+      }).join("");
+      $("ls-exlist").innerHTML = rows || `<div class="ls-card-sub">exchange data still loading…</div>`;
+      $("ls-meta").innerHTML = `<strong>${LABEL[d.coin]||d.coin}</strong> · exchange long/short account ratio · perpetual futures · updates ~30 min`;
     }
 
     function bindHover() {
