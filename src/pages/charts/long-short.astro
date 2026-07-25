@@ -87,6 +87,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   <style>
     .ls-controls { display:flex; gap:1.1rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 .8rem; }
     .ls-rangewrap { display:flex; align-items:center; gap:.5rem; }
+    .ls-rangewrap[hidden] { display:none; }   /* [hidden] loses to display:flex without this */
     .ls-rangelbl { font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:#5a5f6b; font-family:var(--font-mono); }
     .ls-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
     .ls-tabs :global(button) {
