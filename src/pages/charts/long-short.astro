@@ -87,7 +87,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       line-height: 0.92; color: var(--text-heading); margin-bottom: 1rem; }
     .ls-accent { color: var(--accent); }
   </style>
-  <style>
+  <style is:global>
+    /* is:global — many of these classes are injected via JS innerHTML (venue
+       rows, ctx cards, OI rows); Astro's scoped attribute never lands on JS
+       nodes, so scoped rules would silently not apply. All selectors are
+       ls-prefixed, so global is collision-safe. */
     .ls-controls { display:flex; gap:1.1rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 .8rem; }
     .ls-rangewrap { display:flex; align-items:center; gap:.5rem; }
     .ls-rangewrap[hidden] { display:none; }   /* [hidden] loses to display:flex without this */
