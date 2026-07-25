@@ -23,11 +23,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     <div class="ls-controls">
       <div id="ls-coins" class="ls-tabs" role="tablist" aria-label="asset"></div>
-      <div id="ls-range" class="ls-tabs" role="tablist" aria-label="trend range">
-        <button data-days="1" role="tab">24h</button>
-        <button data-days="7" class="active" role="tab">7d</button>
-        <button data-days="30" role="tab">30d</button>
-        <button data-days="90" role="tab">max</button>
+      <div id="ls-rangewrap" class="ls-rangewrap" hidden>
+        <span class="ls-rangelbl">window</span>
+        <div id="ls-range" class="ls-tabs" role="tablist" aria-label="chart window"></div>
       </div>
     </div>
 
@@ -88,6 +86,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   </style>
   <style>
     .ls-controls { display:flex; gap:1.1rem; flex-wrap:wrap; align-items:center; margin:1.75rem 0 .8rem; }
+    .ls-rangewrap { display:flex; align-items:center; gap:.5rem; }
+    .ls-rangelbl { font-size:.62rem; letter-spacing:.12em; text-transform:uppercase; color:#5a5f6b; font-family:var(--font-mono); }
     .ls-tabs { display:flex; gap:.4rem; flex-wrap:wrap; }
     .ls-tabs :global(button) {
       background:var(--bg-card,#0d0d0d); border:1px solid var(--border,#1a1a1a);
@@ -169,7 +169,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     ];
     const LABEL = { OIL: "WTI", BRENTOIL: "BRENT", SP500: "S&P 500", NASDAQ: "NASDAQ" };
     const REFRESH_MS = 60000;
-    let coin = "BTC", days = 7, timer = null, reqId = 0, last = null, resizeT = null;
+    let coin = "BTC", cotWeeks = 156, timer = null, reqId = 0, last = null, resizeT = null;
+    const DEX_TREND_DAYS = 7;   // DEX main chart is a live snapshot; trend card fixed 7d
+    // COT weekly-series windows (client-side slice of the ~156 weeks the API returns)
+    const COT_RANGES = [{lbl:"3M",v:13},{lbl:"6M",v:26},{lbl:"1Y",v:52},{lbl:"3Y",v:156}];
 
     const $ = (id) => document.getElementById(id);
     const fmtPx = (p) => {
@@ -199,15 +202,20 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       $("ls-coins").querySelectorAll("button[data-coin]").forEach((b) =>
         b.addEventListener("click", () => { coin = b.dataset.coin; sel(); load(); }));
     }
-    function bindRange() {
+    function buildCotRange() {
+      $("ls-range").innerHTML = COT_RANGES.map((r) =>
+        `<button data-v="${r.v}" role="tab" class="${r.v===cotWeeks?'active':''}">${r.lbl}</button>`).join("");
       $("ls-range").querySelectorAll("button").forEach((b) =>
-        b.addEventListener("click", () => { days = +b.dataset.days; sel(); load(); }));
+        b.addEventListener("click", () => {
+          cotWeeks = +b.dataset.v;
+          $("ls-range").querySelectorAll("button").forEach((x) =>
+            x.classList.toggle("active", +x.dataset.v === cotWeeks));
+          if (last) render(last);   // client-side re-slice of the weekly series, no refetch
+        }));
     }
     function sel() {
       $("ls-coins").querySelectorAll("button[data-coin]").forEach((b) =>
         b.classList.toggle("active", b.dataset.coin === coin));
-      $("ls-range").querySelectorAll("button").forEach((b) =>
-        b.classList.toggle("active", +b.dataset.days === days));
     }
     function banner(state, text) {
       const b = $("ls-banner");
@@ -308,7 +316,8 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // ── COT mode: weekly long-share trend line ──
     function renderCotChart(d) {
       const canvas = $("ls-canvas"), wrap = $("ls-wrap");
-      const tr = (d.cot && d.cot.trend || []).filter((p)=>p.long_pct!=null);
+      let tr = (d.cot && d.cot.trend || []).filter((p)=>p.long_pct!=null);
+      if (cotWeeks < tr.length) tr = tr.slice(-cotWeeks);   // apply the window
       const ctx = canvas.getContext("2d");
       const W = Math.max(360, Math.floor(wrap.clientWidth || 1000));
       const H = 360, padT=22, padB=30, padL=52, padR=16;
@@ -402,6 +411,10 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     function render(d) {
       last = d; last._geom = null;
       const mode = d.primary_source === "cot" && d.cot ? "cot" : "dex";
+      // The range window only applies to the COT weekly series. The DEX chart is
+      // a LIVE SNAPSHOT (no time axis), so it gets no range control.
+      $("ls-rangewrap").hidden = (mode !== "cot");
+      if (mode === "cot") buildCotRange();
       srcline(mode, d);
       if (mode === "cot") {
         const c = d.cot;
@@ -471,7 +484,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const my = ++reqId;
       banner("proof-loading", "loading " + (LABEL[coin]||coin) + " long/short…");
       try {
-        const r = await fetch(`${API}/charts/long-short/${encodeURIComponent(coin)}?days=${days}`,
+        const r = await fetch(`${API}/charts/long-short/${encodeURIComponent(coin)}?days=${DEX_TREND_DAYS}`,
           { cache:"no-store", signal: AbortSignal.timeout(20000) });
         if (my !== reqId) return;
         if (!r.ok) { banner("proof-error", "error " + r.status + (last?" — showing previous":"")); return; }
@@ -486,7 +499,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     function start() {
-      buildCoins(); bindRange(); bindHover(); sel(); load();
+      buildCoins(); bindHover(); sel(); load();
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer=null; }
