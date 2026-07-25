@@ -417,7 +417,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         renderDexChart(d);
       }
       renderCtx(mode, d);
-      $("ls-disclaimer").textContent = d.disclaimer || "";
+      $("ls-disclaimer").textContent = mode === "cot"
+        ? "CFTC Commitments of Traders — weekly managed-money (commodities) / "
+          + "large-speculator (equity-index) futures positioning, reported by the "
+          + "CFTC with a ~3-day lag. Positioning context, not financial advice."
+        : (d.disclaimer || "");
     }
 
     function bindHover() {
