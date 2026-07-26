@@ -19,7 +19,20 @@
     <itunes:explicit>false</itunes:explicit>
     <itunes:category text="Technology"/>
     <itunes:type>episodic</itunes:type>
-                <item>
+                    <item>
+      <title>Ep 7: Market Shifts, Macro Signals, and Agentic AI Trading Evolution</title>
+      <description>This episode navigates significant market movements, crucial economic calendar events impacting crypto, and the latest in AI advancements shaping agentic AI trading. We discuss institutional blockchain adoption, regulatory shifts, exchange consolidation, and high-impact USD economic announcements that directly influence risk assets.</description>
+      <itunes:summary>This episode navigates significant market movements, crucial economic calendar events impacting crypto, and the latest in AI advancements shaping agentic AI trading. We discuss institutional blockchain adoption, regulatory shifts, exchange consolidation, and high-impact USD economic announcements that directly influence risk assets.</itunes:summary>
+      <pubDate>Sun, 26 Jul 2026 12:00:00 GMT</pubDate>
+      <guid isPermaLink="false">n0brains-ep-07</guid>
+      <enclosure url="https://n0brains.com/podcast/ep-07-market-shifts-macro-signals-and-agentic-ai-trading-evolution.mp3" length="8237997" type="audio/mpeg"/>
+      <itunes:duration>8:34</itunes:duration>
+      <itunes:episode>7</itunes:episode>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>n0brains</itunes:author>
+    </item>
+
+    <item>
       <title>Ep 6: Structure Over Headlines: Quantum Bitcoin, the Fed, and Reasoning Agents</title>
       <description>This week: the Bitcoin quantum-resistance debate and Hyperliquid challenging Wall Street, how ISM Services and the FOMC minutes set the risk backdrop, and a wave of AI research on autonomous agents that reason under uncertainty — the same discipline that separates a sharp trader from the noise.</description>
       <itunes:summary>This week: the Bitcoin quantum-resistance debate and Hyperliquid challenging Wall Street, how ISM Services and the FOMC minutes set the risk backdrop, and a wave of AI research on autonomous agents that reason under uncertainty — the same discipline that separates a sharp trader from the noise.</itunes:summary>
