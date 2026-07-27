@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — July 27, 2026"
-description: "Macro regime: risk-off. BTC bias: bearish (0.4 conviction). 2 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: risk-off. BTC bias: neutral (0.4 conviction). 2 whale/sentiment signals, 1 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-07-27
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -10,32 +10,32 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish** at **0.4 conviction**. Smart money is defensive — favoring BTC over altcoins in this risk-off environment.
+The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **neutral** at **0.4 conviction**. Smart money is defensive — favoring BTC over altcoins in this risk-off environment.
 
 ## Whale & Sentiment Signals
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| ⚪ | USDP | sentiment | $USDP is live on UrStableDegenPad launchpad on Solana | N/A | 0.0 | 65% |
-| 🟢 | BTC | sentiment | CoinGecko trending list shows positive momentum for PONS, PUMP, SHIB,  | N/A | 0.2 | 65% |
+| 🟢 | BTC | sentiment | Coinbase CEO argues crypto is essential infrastructure for AI agents t | N/A | 0.3 | 65% |
+| 🟢 | BTC | sentiment | Samsung integrates USDC and other stablecoins into Galaxy Wallet. | N/A | 0.3 | 65% |
 
 ## High-Conviction Signals (≥85% confidence)
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| — | — | — | No high-conviction signals | — | — | — |
+| 🟢 | SUI | listing | SUI now available for rewards on Coinbase. | N/A | 0.4 | 95% |
 
 ## Macro Context
 
-- **Regime**: risk-off — High real yields (z=2.99) and strong DXY (z=0.6) driving a negative deterministic composite score.
-- **BTC Bias**: bearish at 0.4 conviction
-- **ETH Bias**: bearish at 0.35 conviction
-- **Key Calendar Risks**: July 29: FOMC Rate Decision & Press Conference (High Volatility), July 30: Core PCE Price Index (Inflation Benchmark), July 30: Advance GDP q/q (Growth Data)
+- **Regime**: risk-off — High real yields (2.43%) and negative deterministic composite score (-0.278) driving macro headwinds.
+- **BTC Bias**: neutral at 0.4 conviction
+- **ETH Bias**: bearish at 0.45 conviction
+- **Key Calendar Risks**: FOMC Interest Rate Decision & Press Conference (July 29), Core PCE Price Index (July 30) - key inflation gauge
 
 ## Key Takeaways
 
-1. **Sentiment on USDP**: $USDP is live on UrStableDegenPad launchpad on Solana
-2. **Sentiment on BTC**: CoinGecko trending list shows positive momentum for PONS, PUMP, SHIB, ONDO, and BTC.
+1. **Sentiment on BTC**: Coinbase CEO argues crypto is essential infrastructure for AI agents to transact.
+2. **Sentiment on BTC**: Samsung integrates USDC and other stablecoins into Galaxy Wallet.
 
 ## Track Smart Money in Real-Time
 
@@ -49,4 +49,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on July 27, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on July 27, 2026.
