@@ -9,7 +9,7 @@ import { useTranslations, toLocale, navHref } from "../../i18n/ui";
    question, then hand the agent a job from the prompt library.
 
    Every number, config shape, and auth path on this page is verified
-   against the LIVE API (2026-07-17): 40 MCP tools total, 14 on a free
+   against the LIVE API (2026-07-29): 52 MCP tools total, 20 on a free
    key (authoritative -32001 free_tools list), ?api_key= URL auth
    confirmed working end-to-end, check_trade example is a real response.
    ---------------------------------------------------------------------- */
@@ -320,7 +320,7 @@ const howToJsonLd = JSON.stringify({
           <span class="qs-num" aria-hidden="true">02</span>
           <h2>{t("Connect your agent")}</h2>
           <p>{t("Pick the agent you already use. Every path below points at the same MCP server —")}
-          <code>https://api.n0brains.com/mcp/</code> {t("— and a free key already unlocks 14 tools, including the flagship")} <code>check_trade</code>.</p>
+          <code>https://api.n0brains.com/mcp/</code> {t("— and a free key already unlocks 20 tools, including the flagship")} <code>check_trade</code>.</p>
           <div class="qs-clients">
             {clients.map((c) => (
               <a class={`qs-client ${c.tag ? "qs-client-star" : ""}`} href={`#${c.id}`}>
@@ -455,7 +455,7 @@ const howToJsonLd = JSON.stringify({
           <table>
             <thead><tr><th></th><th>{t("Free — $0")}</th><th>{t("Pro — $39.99/mo")}</th></tr></thead>
             <tbody>
-              <tr><td>{t("MCP tools")}</td><td>14 ({t("incl.")} <code>check_trade</code>, signals, levels, prices, macro, regime, calendar, proof)</td><td>{t("all 40")}</td></tr>
+              <tr><td>{t("MCP tools")}</td><td>20 ({t("incl.")} <code>check_trade</code>, signals, levels, prices, macro, regime, calendar, proof, long/short, check history, usage)</td><td>{t("all 52")}</td></tr>
               <tr><td><code>check_trade</code></td><td>{t("3 / day")}</td><td>{t("unlimited")}</td></tr>
               <tr><td>{t("Signal feed")}</td><td>{t("15-min delay")}</td><td>{t("real-time")}</td></tr>
               <tr><td>{t("Rate limit")}</td><td>60 req/min</td><td>600 req/min</td></tr>

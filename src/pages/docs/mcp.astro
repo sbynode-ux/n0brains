@@ -11,7 +11,7 @@ const claudeDesktopConfig = JSON.stringify({
 }, null, 2);
 ---
 
-<BaseLayout title={title} description="n0brains MCP server for Claude Desktop, Cursor, Cline, Continue. Free tier: 14 tools including check_trade. Pro: all 40 tools real-time. Listed on the official MCP Registry as com.n0brains/mcp.">
+<BaseLayout title={title} description="n0brains MCP server for Claude Desktop, Cursor, Cline, Continue. 52 tools with a built-in agent playbook. Free tier: 20 tools including check_trade and the full proof board. Listed on the official MCP Registry as com.n0brains/mcp.">
   <main class="docs-page">
     <h1>MCP Server</h1>
     <p class="lead">
@@ -21,13 +21,25 @@ const claudeDesktopConfig = JSON.stringify({
     </p>
 
     <div class="card">
-      <strong>Free tier works here.</strong> Any valid API key can call 14 tools —
-      including <code>check_trade</code> (3/day), delayed signals, levels, regime,
-      and the public proof scoreboard. Pro unlocks all 40 tools in real time.
+      <strong>Free tier works here.</strong> Any valid API key can call 20 tools —
+      including <code>check_trade</code> (3/day), the full <code>get_proof</code>
+      board with swing horizons, real long/short positioning, delayed signals,
+      levels, regime, and your own check history with resolved outcomes.
+      Pro unlocks all 52 tools in real time plus the private trade journal.
       <a href="/signup">Get a free key →</a> · Listed on the official
       <a href="https://registry.modelcontextprotocol.io/v0/servers?search=n0brains">MCP Registry</a>
       as <code>com.n0brains/mcp</code>.
     </div>
+
+    <h2>Your agent already knows how to use it</h2>
+    <p>The server ships its own <strong>agent playbook</strong>: the MCP
+    instructions teach your model which tool answers which intent — find a
+    trade, vet a trade, read one coin, brief the whole market, vet an alt for
+    scam risk — and how to read the honesty fields (measured cell records,
+    anti-predictive flags, uncalibrated labels). Connect it and ask a plain
+    question; the agent routes itself. The same guide is callable as
+    <code>get_playbook</code>, and every tool description carries a routing
+    tag like <code>[START HERE]</code> or <code>[RAW FEED — NOT trade calls]</code>.</p>
 
     <h2>Ask n0brains First — <code>check_trade</code></h2>
     <p>The flagship tool. Your agent submits a trade idea (asset, side, and
@@ -36,7 +48,19 @@ const claudeDesktopConfig = JSON.stringify({
     event risk inside the horizon, liquidation distance vs realized volatility,
     stop sanity, conflicts with measured evidence — plus falsifiers your
     agent can monitor. Every verdict is logged before its outcome and resolved at
-    its horizon. Grade performance publishes on /proof once it clears the verification standard.</p>
+    its horizon. Grade performance publishes on /proof once it clears the verification standard.
+    <code>get_check_history</code> returns your own past checks with resolved outcomes.</p>
+
+    <h2>One-call briefs</h2>
+    <ul>
+      <li><code>get_market_brief</code> — regime, liquidity, high-impact events
+      next 72h, the engine's actionable reads, and a cross-asset trade-plan
+      ranking in a single compact call. The morning brief, as one tool.</li>
+      <li><code>get_state</code> — everything about one coin: price, consensus,
+      swing outlook, levels, options, macro regime.</li>
+      <li><code>get_state_brief</code> — the same, written as readable prose
+      your agent can quote directly.</li>
+    </ul>
 
     <h2>Endpoint</h2>
     <pre><code>POST https://api.n0brains.com/mcp
@@ -44,7 +68,7 @@ Authorization: Bearer &lt;your_api_key&gt;
 Content-Type: application/json</code></pre>
 
     <p>Get your API key when you <a href="/signup">sign up</a> — it is shown once,
-    so copy it then. Free keys call the 14 free tools; a Pro-only tool called
+    so copy it then. Free keys call the 20 free tools; a Pro-only tool called
     with a free key returns JSON-RPC error <code>-32001</code> whose
     <code>error.data.free_tools</code> lists everything that works on your tier.</p>
 
@@ -63,35 +87,107 @@ Content-Type: application/json</code></pre>
     <p>Both honor the same <code>mcpServers</code> shape as Claude Desktop.
     Add the block to their respective config files.</p>
 
-    <h2>Tools</h2>
+    <h2>Tools — 52, grouped the way the playbook routes them</h2>
+
+    <h3>Decide</h3>
     <table>
-      <thead><tr><th>Name</th><th>Returns</th><th>Notes</th></tr></thead>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
       <tbody>
-        <tr><td><code>list_signals</code></td><td>SignalListOut</td><td>Filters: asset, signal_type, since, limit (max 100), cursor.</td></tr>
-        <tr><td><code>get_signal</code></td><td>SignalOut</td><td>Full enrichment incl. historical_edge, paired_inverse.</td></tr>
-        <tr><td><code>get_levels</code></td><td>LevelsOut</td><td>Support/resistance for a coin.</td></tr>
-        <tr><td><code>get_macro</code></td><td>MacroOut</td><td>BTC + ETH macro bias, daily/weekly.</td></tr>
-        <tr><td><code>get_performance</code></td><td>PerformanceOut</td><td>Live forward-return record by signal type over N days.</td></tr>
-        <tr><td><code>get_market_opens</code></td><td>MarketOpensOut</td><td>Crypto session opening prices (BTC/ETH/SOL) — Tokyo/London/NY.</td></tr>
-        <tr><td><code>get_actionable_signals</code></td><td>SignalListOut</td><td>Pre-filtered by production trade-gate (score, conf, percentile).</td></tr>
-        <tr><td><code>get_macro_aligned_signals</code></td><td>SignalListOut</td><td>Same macro-veto rule as the internal pipeline.</td></tr>
-        <tr><td><code>get_signals_since</code></td><td>SignalListOut</td><td>Polling alternative to <code>/stream</code>.</td></tr>
-        <tr><td><code>get_signal_with_context</code></td><td>composite dict</td><td>Signal + levels + macro + dedup cluster, single round trip.</td></tr>
-        <tr><td><code>get_anti_predictive_cells</code></td><td>AntiPredictiveCellsOut</td><td>Cells where empirical edge inverted.</td></tr>
-        <tr><td><code>get_liquidation_map</code></td><td>LiquidationMapOut</td><td>Estimated liquidation-cluster zones (modeled from OI + leverage tiers).</td></tr>
-        <tr><td><code>get_correlation</code></td><td>CorrelationCoinOut</td><td>Correlation + beta of a coin to BTC/ETH + peers.</td></tr>
-        <tr><td><code>get_rotation</code></td><td>RotationOut</td><td>Altseason/rotation read — into_alts / into_btc / neutral.</td></tr>
-        <tr><td><code>get_options</code></td><td>OptionsOut</td><td>Options analytics — ATM IV, skew, term structure, max-pain (BTC/ETH).</td></tr>
-        <tr><td><code>get_sentiment</code></td><td>SentimentOut</td><td>Aggregate sentiment — net lean, volume, velocity (curated sources).</td></tr>
-        <tr><td><code>get_mindshare</code></td><td>MindshareOut</td><td>Attention-share leaderboard + velocity (rising/falling/emerging).</td></tr>
-        <tr><td><code>get_mindshare_coin</code></td><td>MindshareCoinOut</td><td>One coin's mindshare share, rank, velocity.</td></tr>
-        <tr><td><code>health</code></td><td>HealthOut</td><td>Liveness, recent signal count, regime.</td></tr>
+        <tr><td><code>check_trade</code></td><td>Free (3/day)</td><td>"Should I take this trade?" — A–F conditions grade + falsifiers.</td></tr>
+        <tr><td><code>get_actionable_signals</code></td><td>Pro</td><td>"Find me a trade" — only what the production trade-gate itself marked actionable, plus labeled swing outlooks.</td></tr>
+        <tr><td><code>get_market_brief</code></td><td>Pro</td><td>"Brief me" — regime + liquidity + events + actionable reads + ranking, one call.</td></tr>
+        <tr><td><code>get_state</code></td><td>Pro</td><td>"What's going on with this coin?" — whole snapshot.</td></tr>
+        <tr><td><code>rank_trades</code></td><td>Pro</td><td>"Which coin is the better trade right now?" — assembled plans, ranked.</td></tr>
+        <tr><td><code>get_trade_plan</code></td><td>Pro</td><td>Entry, target, stop, R:R and warnings for one coin.</td></tr>
+        <tr><td><code>get_state_brief</code></td><td>Pro</td><td>The coin snapshot as quotable prose.</td></tr>
       </tbody>
     </table>
 
+    <h3>Position &amp; structure</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>get_positioning</code></td><td>Pro</td><td>Who is crowded and which way — 8-leg synthesis with a coverage grade.</td></tr>
+        <tr><td><code>get_long_short</code></td><td>Free</td><td>Real long/short by price point — DEX positions, CFTC COT, or exchange ratios, picked by the asset's primary source.</td></tr>
+        <tr><td><code>get_liquidation_map</code></td><td>Pro</td><td>REAL on-chain liquidation clusters (Hyperliquid + GMX) with exact liquidation prices.</td></tr>
+        <tr><td><code>get_levels</code></td><td>Free</td><td>Support/resistance with tested bounce/break win rates.</td></tr>
+        <tr><td><code>get_indicators</code></td><td>Pro</td><td>RSI, MACD, MAs, stochastic, Fibonacci — daily + weekly.</td></tr>
+        <tr><td><code>get_options</code></td><td>Pro</td><td>ATM IV, skew (the fear gauge), term structure, max-pain.</td></tr>
+        <tr><td><code>get_price</code> / <code>get_prices</code></td><td>Free</td><td>THE canonical live price — cross-check everything against it.</td></tr>
+        <tr><td><code>get_market_opens</code></td><td>Free</td><td>Session opens (Tokyo/Shanghai/HK/London/NY).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Market context</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>get_market_regime</code></td><td>Free</td><td>Do conditions favor risk right now?</td></tr>
+        <tr><td><code>get_macro</code></td><td>Free</td><td>Macro regime + BTC/ETH bias with reasons and invalidation.</td></tr>
+        <tr><td><code>get_liquidity_map</code></td><td>Pro</td><td>Fed net liquidity, stablecoin dry-powder, OI, taker flow.</td></tr>
+        <tr><td><code>get_cross_asset_flows</code></td><td>Pro</td><td>Where funds are going — crypto vs tradfi, ETF/COT/13F posture.</td></tr>
+        <tr><td><code>get_rotation</code></td><td>Pro</td><td>Altseason or back-to-BTC?</td></tr>
+        <tr><td><code>get_market_analogs</code></td><td>Pro</td><td>Nearest historical market states + what happened next.</td></tr>
+        <tr><td><code>get_correlation</code></td><td>Pro</td><td>Correlation + beta to BTC/ETH, most/least correlated peers.</td></tr>
+        <tr><td><code>get_economic_calendar</code></td><td>Free</td><td>What prints when — macro + earnings, consensus + surprise.</td></tr>
+        <tr><td><code>get_event_outlook</code></td><td>Pro</td><td>Upcoming events joined with their measured historical reactions.</td></tr>
+        <tr><td><code>get_macro_aligned_signals</code></td><td>Pro</td><td>Signals agreeing with the current macro bias (the pipeline's own ×1.12 boost rule).</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Attention &amp; forensics</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>get_trust</code></td><td>Pro</td><td>Honeypot / mint / tax / insider screen before you trust any alt signal.</td></tr>
+        <tr><td><code>get_manipulation</code></td><td>Pro</td><td>Coordinated-pump probability, fake engagement, cascade risk.</td></tr>
+        <tr><td><code>get_narrative</code></td><td>Pro</td><td>Is the story building or dying — momentum/velocity/decay over 1h/4h/24h.</td></tr>
+        <tr><td><code>get_sentiment</code></td><td>Pro</td><td>What curated smart-money voices lean, confidence-weighted.</td></tr>
+        <tr><td><code>get_mindshare</code> / <code>get_mindshare_coin</code></td><td>Pro</td><td>Attention share + velocity — acceleration before price.</td></tr>
+        <tr><td><code>find_similar_signals</code></td><td>Pro</td><td>Semantic search: have we seen this setup before?</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Signal feed</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>list_signals</code></td><td>Free</td><td>The raw feed — engine inputs with full honesty metadata, not trade calls.</td></tr>
+        <tr><td><code>get_signal</code></td><td>Free</td><td>One signal, fully enriched.</td></tr>
+        <tr><td><code>get_signals_since</code></td><td>Free</td><td>Cursor polling — the /stream alternative. Filters: asset, signal_type.</td></tr>
+        <tr><td><code>get_signal_with_context</code></td><td>Pro</td><td>Signal + levels + macro in one round trip.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Receipts</h3>
+    <table>
+      <thead><tr><th>Name</th><th>Tier</th><th>What it answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>get_proof</code></td><td>Free</td><td>The full public forward-return board — proven-gate badges, swing-horizon boards (7d/14d/30d), asset-class boards.</td></tr>
+        <tr><td><code>get_performance</code></td><td>Free</td><td>Live forward-return record by signal type over N days.</td></tr>
+        <tr><td><code>get_asset_class_proof</code></td><td>Free</td><td>Stocks / indices / metals / commodities scoreboards.</td></tr>
+        <tr><td><code>get_check_history</code></td><td>Free</td><td>Your own past checks with resolved outcomes + quota remaining.</td></tr>
+        <tr><td><code>get_discovery</code></td><td>Pro</td><td>Pattern combinations mined from the shadow ledger, honesty-gated.</td></tr>
+        <tr><td><code>get_anti_predictive_cells</code></td><td>Pro</td><td>Where the empirical edge inverted — disclosed, not hidden.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Journal (Pro)</h3>
+    <p><code>log_trade</code> · <code>amend_trade</code> · <code>close_trade</code> ·
+    <code>void_trade</code> · <code>get_journal</code> — a private trade journal that
+    snapshots full entry conditions the moment your agent logs a fill and resolves
+    outcomes from real candles (return, R multiple, MAE/MFE, stop/target touch).
+    <code>get_journal</code> includes your personal calibration: realized R per entry grade.</p>
+
+    <h3>Utility</h3>
+    <p><code>get_playbook</code> (the routing guide) ·
+    <code>get_checkable_assets</code> (the 250+ asset universe check_trade can
+    price — crypto plus tokenized stocks, metals and indices) ·
+    <code>get_usage</code> (your call budget) · <code>health</code> — all free.</p>
+
     <h2>Signal payload reference</h2>
     <p>Every signal-returning tool emits the same shape as our REST <code>/signals</code>
-    endpoint, including the May 2026 additions:</p>
+    endpoint:</p>
     <ul>
       <li><code>historical_edge</code> — empirical win-rate cell, sample size, PnL stats</li>
       <li><code>paired_inverse</code> — round-trip-cost-aware inverse-trade advisory</li>
@@ -102,7 +198,7 @@ Content-Type: application/json</code></pre>
 
     <h2>Limits</h2>
     <ul>
-      <li>Rate limit: 600 requests/minute (shared with REST).</li>
+      <li>Rate limit: 600 requests/minute on Pro, 60 on free (shared with REST).</li>
       <li>Per-tool <code>limit</code> hard-capped at 100; use the <code>cursor</code> field to paginate.</li>
       <li>For streaming, use <code>get_signals_since</code> as a polling alternative or subscribe to the native <code>/stream</code> WebSocket.</li>
     </ul>

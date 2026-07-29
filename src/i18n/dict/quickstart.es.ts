@@ -55,8 +55,8 @@ export const es: Record<string, string> = {
   "Connect your agent": "Conecta tu agente",
   "Pick the agent you already use. Every path below points at the same MCP server —":
     "Elige el agente que ya usas. Cada ruta de abajo apunta al mismo servidor MCP —",
-  "— and a free key already unlocks 14 tools, including the flagship":
-    "— y una clave gratuita ya desbloquea 14 herramientas, incluida la insignia",
+  "— and a free key already unlocks 20 tools, including the flagship":
+    "— y una clave gratuita ya desbloquea 20 herramientas, incluida la insignia",
   "start here": "empieza aquí",
   "web + mobile app — no install at all": "web + app móvil — sin instalar nada",
   "one command in your terminal": "un comando en tu terminal",
@@ -223,7 +223,7 @@ export const es: Record<string, string> = {
   "Free — $0": "Gratis — 0 $",
   "Pro — $39.99/mo": "Pro — 39,99 $/mes",
   "MCP tools": "Herramientas MCP",
-  "all 40": "las 40",
+  "all 52": "las 52",
   "3 / day": "3 / día",
   "unlimited": "ilimitado",
   "Signal feed": "Feed de señales",

@@ -55,8 +55,8 @@ export const tr: Record<string, string> = {
   "Connect your agent": "Ajanını bağla",
   "Pick the agent you already use. Every path below points at the same MCP server —":
     "Zaten kullandığın ajanı seç. Aşağıdaki her yol aynı MCP sunucusuna işaret eder —",
-  "— and a free key already unlocks 14 tools, including the flagship":
-    "— ve ücretsiz bir anahtar zaten 14 aracın kilidini açar, amiral gemisi olan",
+  "— and a free key already unlocks 20 tools, including the flagship":
+    "— ve ücretsiz bir anahtar zaten 20 aracın kilidini açar, amiral gemisi olan",
   "start here": "buradan başla",
   "web + mobile app — no install at all": "web + mobil uygulama — hiç kurulum yok",
   "one command in your terminal": "terminalinde tek komut",
@@ -223,7 +223,7 @@ export const tr: Record<string, string> = {
   "Free — $0": "Ücretsiz — 0 $",
   "Pro — $39.99/mo": "Pro — 39,99 $/ay",
   "MCP tools": "MCP araçları",
-  "all 40": "40'ın tümü",
+  "all 52": "52'nin tümü",
   "3 / day": "3 / gün",
   "unlimited": "sınırsız",
   "Signal feed": "Sinyal akışı",

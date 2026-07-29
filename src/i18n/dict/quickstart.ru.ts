@@ -55,8 +55,8 @@ export const ru: Record<string, string> = {
   "Connect your agent": "Подключите вашего агента",
   "Pick the agent you already use. Every path below points at the same MCP server —":
     "Выберите агента, которым уже пользуетесь. Каждый путь ниже ведёт к одному и тому же MCP-серверу —",
-  "— and a free key already unlocks 14 tools, including the flagship":
-    "— и бесплатный ключ уже открывает 14 инструментов, включая флагманский",
+  "— and a free key already unlocks 20 tools, including the flagship":
+    "— и бесплатный ключ уже открывает 20 инструментов, включая флагманский",
   "start here": "начните здесь",
   "web + mobile app — no install at all": "веб + мобильное приложение — вообще без установки",
   "one command in your terminal": "одна команда в терминале",
@@ -223,7 +223,7 @@ export const ru: Record<string, string> = {
   "Free — $0": "Бесплатно — $0",
   "Pro — $39.99/mo": "Pro — $39.99/мес",
   "MCP tools": "Инструменты MCP",
-  "all 40": "все 40",
+  "all 52": "все 52",
   "3 / day": "3 / день",
   "unlimited": "без ограничений",
   "Signal feed": "Лента сигналов",
