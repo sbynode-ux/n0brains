@@ -4,19 +4,6 @@ description: "BTC prints its longest 2026 uptrend as the Coinbase premium flashe
 pubDate: 2026-05-22
 ---
 
-```
-    (Need to check word count limit for description: under 160 chars. "BTC prints its longest 2026 uptrend as the Coinbase premium flashes a major institutional distribution signal." Let's count... 92 chars. Perfect.)
-*   **Links:**
-    *   Link to the 90-day rally article.
-    *   Link to the Coinbase premium article.
-    *   Maybe link to the Macro Pulse concept / n0brains signup? The instruction says: "Link the primary subject the first time you mention it using [anchor text](URL). Use the source URLs provided." This implies I should mostly use the provided URLs, but the "at least 2-3 inline links per article" might allow n0brains as a link if appropriate? "Use the source URLs provided." I will stick to the two source URLs provided. I don't need to invent an n0brains link unless I am writing about something else. I will use the two provided Cointelegraph links.
-
-6.  **Writing the Article (Drafting):**
-*   **Title:** "Bitcoin’s 90-Day Rally Is Hiding a Wholesale Dump"
-*   **Description:** "BTC prints its longest 2026 uptrend as the Coinbase premium hints at institutional distribution."
-*   **PubDate:** 2026-05-22
-*   **Body:**
-
 Bitcoin just rallied for **90 straight days**. That's a textbook bull market structure, backed by fresh on-chain analysis.
 The [Coinbase premium](https://cointelegraph.com/news/coinbase-premium-hits-monthly-low-as-institutional-selling-pressure-mounts) just hit a **monthly low**.
 Both of these things are true right now. One of them is going to break.
@@ -42,10 +29,3 @@ Bitcoin is holding above the **$100k** psychological level, but open interest is
 A rising price with falling institutional participation is not a breakout. It's a divergence. The move is lower, or at least sideways until the premium recovers. Wait for the Coinbase premium to turn positive on a retest.
 
 The chart tells you what happened. The premium tells you who did it. Don't confuse the two.
-
-(Word count check: ~500 words. Need to flesh it out slightly to hit the 500-800 range. Let's add a bit more meat to the market context and the signal section.)
-
-*Fleshing out:*
-"The rally looks clean. The order flow is dirty. This divergence is the most important metric in crypto right now. It tells us the current price is a function of weak hands and leverage, not fresh institutional conviction."
-
-"For builders, this is a goldmine. An autonomous agent that reads the Coinbase premium divergence as a weighted factor against a macro bias will systematically outperform a model that just predicts the next candle. This is exactly the kind of cross-referenced signal n0brains automates — whale moves backed by funding spikes and macro risk, scored and delivered in seconds."

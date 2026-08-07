@@ -52,36 +52,4 @@ Don't buy the dip just because it's cheap. Wait for a catalyst. The AI rotation 
 
 Until one of those triggers flips, strength is a short. Aggressive shorts on bounces toward **$64K**. Let $60K consolidate for a week before calling a bottom.
 
-## The signal
-
 Bitcoin isn't in a bear market. It's in a beta correction against a stronger sector. The market will recover when capital realizes there is no yield left in AI. Patience is the only active position that matters right now.
-
-```
-
-*   **Title:** "Bitcoin Decoupled From Tech Stocks. Here's What That Really Means."
-*   **Description:** "Bitcoin's correlation to the Nasdaq just broke down. Capital is rotating to AI. Our take on the $60K line in the sand." (Under 160 chars - 136 chars) ✓
-*   **Hook:** "Bitcoin just stopped trading like a tech stock." — Direct, no fluff, surprising fact. ✓
-*   **3-5 ## sections:**
-    1.  "## The Capital Rotation Nobody Is Talking About"
-    2.  "## Market Context"
-    3.  "## The Macro Context"
-    4.  "## The $60K Support Line"
-    5.  "## The Signal" (Wait, there is both a "The Signal" section and a final paragraph. The prompt says: "End with '## The signal' section — your take on what this means for traders and builders. Final paragraph is a punchy 1-2 sentence takeaway, no summary.")
-    Let me adjust the section titles. I have "## The Signal" as a heading and then a final paragraph, but I also have a final paragraph. Let me make sure the flow adheres exactly.
-    Actually, the prompt says: "End with '## The signal' section — your take... Final paragraph is a punchy 1-2 sentence takeaway..."
-    So the structure should end:
-    ## The signal
-    [analysis]
-    [1-2 sentence final takeaway]
-
-    The current "## The Signal" is a bit repetitive. Let's make "## The Signal" the final punchy analysis section, and the last paragraph the "1-2 sentence takeaway, no summary".
-
-    ## The Signal
-
-    Defend your book. Don't buy the dip without a catalyst.
-
-    Strength is a short. Weakness in AI earnings releases actually benefits crypto. Wait for the correlation to re-establish on the downside for AI before leaning into BTC longs.
-
-    This decoupling is temporary. Capital will rotate back into crypto once the AI narrative exhausts itself. The macro backdrop (debt, inflation, debasement) hasn't changed. Bitcoin's structural thesis remains intact.
-
-    Patience isn't just a virtue right now. It's the only active position that makes sense.
