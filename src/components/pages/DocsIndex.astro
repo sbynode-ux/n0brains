@@ -275,7 +275,7 @@ const macroPulseResponse = JSON.stringify({
 }, null, 2);
 ---
 <BaseLayout title={t("n0brains Documentation")} description={t("n0brains documentation — REST API, MCP server, CLI, x402 pay-per-call, endpoints, authentication, rate limits, and response formats.")} canonicalURL={canonicalURL}>
-  <script type="application/ld+json">{JSON.stringify({
+  <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebAPI",
     "name": "n0brains API",
@@ -297,7 +297,7 @@ const macroPulseResponse = JSON.stringify({
       "target": "https://api.n0brains.com/signals?asset={asset}&signal_type={type}",
       "query-input": "required name=asset"
     }
-  })}</script>
+  })} />
   <section class="docs-page">
     <h1>{t("API Reference")}</h1>
     <p class="docs-subtitle">{t("Base URL:")} <code>https://api.n0brains.com</code> &middot; {t("All responses are JSON")} &middot; {t("Timestamps are Unix epoch (seconds)")}</p>

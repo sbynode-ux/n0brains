@@ -1,8 +1,8 @@
 ---
 title: "Macro Brief: Dovish Pause — Bullish BTC, Neutral ETH"
-description: "Fed holds at 3.75%, core PCE cools, and Fear grips the tape. The empty August calendar is a bull case for BTC — ETH chops." — count: ~136 chars. Good."
+description: "Fed holds at 3.75%, core PCE cools, and Fear grips the tape. The empty August calendar is a bull case for BTC — ETH chops."
 pubDate: 2026-08-01
-question: "What is the macro regime and directional bias for BTC and ETH — Fed holds at 3.75%, core PCE cools, and Fear grips the tape. The empty August calendar is a bull case for BTC — ETH chops." — count: ~136 chars. Good.?"
+question: "What is the macro regime and directional bias for BTC and ETH — Fed holds at 3.75%, core PCE cools, and Fear grips the tape. The empty August calendar is a bull case for BTC — ETH chops.?"
 category: "macro-brief"
 dataSources:
   - "ForexFactory"

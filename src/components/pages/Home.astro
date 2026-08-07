@@ -916,7 +916,7 @@ const computeLayers = [
     </section>
 
   </div>
-  <script type="application/ld+json">{JSON.stringify({
+  <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
@@ -993,7 +993,7 @@ const computeLayers = [
         }
       }
     ]
-  })}</script>
+  })} />
 
   <script>
     // Live proof strip: same /proof endpoint as the scoreboard. Keeps the
