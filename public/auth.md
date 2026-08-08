@@ -1,6 +1,7 @@
-# Auth
+# auth.md
 
-Authentication guide for the n0brains API and MCP server.
+Authentication guide for the n0brains API and MCP server. You are likely an agent; every
+step below is machine-followable without a browser.
 
 n0brains is agent-native market intelligence: crypto + tokenized-equity signals, pre-trade
 vetting, positioning, liquidation maps, and a public audited win-rate
