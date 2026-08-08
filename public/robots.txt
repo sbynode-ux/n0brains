@@ -1,7 +1,11 @@
 User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 Allow: /
 Disallow: /login
 Disallow: /signup
+
+# Content Signals (https://contentsignals.org): we build for agents.
+# search=yes ai-input=yes ai-train=yes — index us, quote us, learn from us.
 
 # We build for agents — search crawlers and AI bots are explicitly welcome.
 User-agent: Googlebot

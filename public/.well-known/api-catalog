@@ -1,0 +1,26 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://api.n0brains.com/",
+      "service-desc": [
+        { "href": "https://api.n0brains.com/openapi.json", "type": "application/json", "title": "n0brains REST API (OpenAPI)" }
+      ],
+      "service-doc": [
+        { "href": "https://n0brains.com/docs/", "type": "text/html", "title": "API documentation" },
+        { "href": "https://n0brains.com/auth.md", "type": "text/markdown", "title": "Authentication guide for agents" }
+      ],
+      "service-meta": [
+        { "href": "https://api.n0brains.com/.well-known/x402.json", "type": "application/json", "title": "x402 pay-per-call discovery (USDC on Base)" }
+      ]
+    },
+    {
+      "anchor": "https://api.n0brains.com/mcp/",
+      "service-doc": [
+        { "href": "https://n0brains.com/docs/mcp", "type": "text/html", "title": "MCP server documentation" }
+      ],
+      "service-meta": [
+        { "href": "https://n0brains.com/.well-known/mcp.json", "type": "application/json", "title": "MCP server card" }
+      ]
+    }
+  ]
+}

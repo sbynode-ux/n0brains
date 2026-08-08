@@ -1,0 +1,19 @@
+{
+  "name": "com.n0brains/mcp",
+  "title": "n0brains market intelligence",
+  "description": "52-tool MCP server for crypto + tokenized-equity market intelligence: pre-trade vetting (check_trade), actionable signals, positioning and crowding, liquidation maps, support/resistance levels, macro regime, options, sentiment, and a public audited win-rate. Every metric carries its own honesty metadata.",
+  "website": "https://n0brains.com",
+  "documentation": "https://n0brains.com/docs/mcp",
+  "proof": "https://n0brains.com/proof",
+  "registry": "com.n0brains/mcp",
+  "servers": [
+    {
+      "transport": "streamable-http",
+      "url": "https://api.n0brains.com/mcp/",
+      "authentication": {
+        "type": "api_key",
+        "instructions": "Get a free key at https://n0brains.com/signup. Send it as an X-API-Key header, an Authorization: Bearer header, or (for MCP clients that cannot set headers, e.g. claude.ai custom connectors) an ?api_key= URL query parameter. initialize and tools/list work unauthenticated. Free tier covers a subset of tools; the full catalog is on Pro. No-account pay-per-call is available via x402 (USDC on Base): https://api.n0brains.com/.well-known/x402.json"
+      }
+    }
+  ]
+}
