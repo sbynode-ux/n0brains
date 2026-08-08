@@ -1,6 +1,13 @@
 {
   "resource": "https://api.n0brains.com/",
   "resource_name": "n0brains market intelligence API",
+  "authorization_servers": ["https://api.n0brains.com"],
   "bearer_methods_supported": ["header"],
-  "resource_documentation": "https://n0brains.com/docs/"
+  "resource_documentation": "https://n0brains.com/docs/",
+  "agent_auth": {
+    "skill": "https://n0brains.com/auth.md",
+    "identity_endpoint": "https://api.n0brains.com/agent/identity",
+    "claim_endpoint": "https://api.n0brains.com/agent/identity/claim",
+    "identity_types_supported": ["anonymous", "verified_email"]
+  }
 }

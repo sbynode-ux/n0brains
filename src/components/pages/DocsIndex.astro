@@ -379,8 +379,18 @@ const macroPulseResponse = JSON.stringify({
         <tbody>
           <tr><td>API Key</td><td><code>X-API-Key</code></td><td><code>intel_sk_a1b2c3...</code></td></tr>
           <tr><td>JWT Token</td><td><code>Authorization</code></td><td><code>Bearer eyJhbGci...</code></td></tr>
+          <tr><td>{t("Agent token")}</td><td><code>Authorization</code></td><td><code>Bearer n0at_...</code></td></tr>
         </tbody>
       </table>
+
+      <h3 id="agent-registration">{t("Agents: register yourself, no signup form")}</h3>
+      <p set:html={t("An agent can obtain its own credentials without a human filling in a form. Discovery lives at <code>/.well-known/oauth-authorization-server</code>; the full recipe is at <a href=\"/auth.md\">auth.md</a>.")}></p>
+      <ol>
+        <li set:html={t("<code>POST /agent/identity</code> with <code>identity_type: \"anonymous\"</code> and <code>terms_accepted: true</code> returns a short-lived identity assertion (free tier, rate-capped).")}></li>
+        <li set:html={t("<code>POST /oauth2/token</code> exchanges that assertion (RFC 7523 JWT-bearer grant) for an opaque <code>n0at_</code> token, valid one hour.")}></li>
+        <li set:html={t("Send it as <code>Authorization: Bearer n0at_...</code> — it works everywhere an API key works, REST and MCP alike.")}></li>
+      </ol>
+      <p set:html={t("To act on a person&apos;s behalf and inherit their plan, use <code>identity_type: \"verified_email\"</code> instead: they approve once by email, and the token is issued for their account. Assertions are single-use, tokens expire in an hour, and <code>POST /oauth2/revoke</code> ends one early.")}></p>
     </div>
 
     <div class="card">
