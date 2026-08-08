@@ -1,5 +1,10 @@
 {
   "name": "com.n0brains/mcp",
+  "serverInfo": {
+    "name": "com.n0brains/mcp",
+    "title": "n0brains market intelligence",
+    "version": "1.2.0"
+  },
   "title": "n0brains market intelligence",
   "description": "52-tool MCP server for crypto + tokenized-equity market intelligence: pre-trade vetting (check_trade), actionable signals, positioning and crowding, liquidation maps, support/resistance levels, macro regime, options, sentiment, and a public audited win-rate. Every metric carries its own honesty metadata.",
   "website": "https://n0brains.com",
