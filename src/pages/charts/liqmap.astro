@@ -655,14 +655,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     }
 
     // ── cluster table ───────────────────────────────────────────────
-    const fmtUsd = (v) => {
-      v = +v || 0;
-      if (v >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
-      if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
-      if (v >= 1e3) return "$" + Math.round(v / 1e3) + "K";
-      return "$" + Math.round(v);
-    };
-
+    // (reuses the fmtUsd/fmtPx formatters declared above — redeclaring fmtUsd
+    // here threw "Identifier 'fmtUsd' has already been declared", which kills
+    // the WHOLE inline script at parse time and left the page stuck on
+    // "loading heatmap…". Astro does not parse is:inline scripts, so the build
+    // stayed green; only loading the page catches this.)
     async function renderClusters(c, v) {
       const host = $("lm-clusters"), body = $("lm-cl-body");
       if (!host || !body) return;
