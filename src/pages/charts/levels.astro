@@ -13,17 +13,30 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       <p class="kicker"><span class="live-dot"></span>Live levels · refreshed every 60s</p>
       <h1>SUPPORT &amp;<br /><span class="accent">RESISTANCE</span></h1>
       <p class="lede">
-        Order-book + pivot levels overlaid on live price. <strong>BTC and ETH are
-        free</strong>; <a href="/pricing">Pro</a> unlocks every coin we track.
+        Pivot levels detected on <strong>three timeframes</strong> — 15m, 4h and
+        1d — overlaid on live price. Thicker lines are higher-timeframe
+        structure. <strong>BTC and ETH are free</strong>;
+        <a href="/pricing">Pro</a> unlocks every coin we track.
       </p>
     </div>
 
+    <!-- Tabs are built from /charts/levels-coins so the page shows every coin
+         the engine tracks (31, not the 5 that used to be hardcoded here) and
+         can never drift from the roster again. The BTC/ETH seed keeps the page
+         useful with JS still loading or the roster call failing. -->
     <div class="coin-tabs" id="coin-tabs">
       <button class="coin-tab active" data-coin="BTC">BTC</button>
       <button class="coin-tab" data-coin="ETH">ETH</button>
-      <button class="coin-tab pro-coin" data-coin="SOL">SOL <span class="lk">🔒</span></button>
-      <button class="coin-tab pro-coin" data-coin="XRP">XRP <span class="lk">🔒</span></button>
-      <button class="coin-tab pro-coin" data-coin="DOGE">DOGE <span class="lk">🔒</span></button>
+    </div>
+
+    <!-- Range selector. The chart was locked to a 24h window because every
+         level the engine produced sat within ~1.5% of spot; now that 4h and 1d
+         structure exists, a 24h-only view hides most of the answer. -->
+    <div class="range-tabs" id="range-tabs">
+      <button class="range-tab" data-range="24h">24h</button>
+      <button class="range-tab active" data-range="7d">7d</button>
+      <button class="range-tab" data-range="90d">90d</button>
+      <button class="range-tab" data-range="1y">1y</button>
     </div>
 
     <div id="lv-banner" class="status-banner status-loading">
@@ -46,10 +59,19 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 <script is:inline>
 (function () {
   "use strict";
-  const PUB = "https://api.n0brains.com/charts/levels/";
-  const PRO = "https://api.n0brains.com/charts/pro/levels/";
-  const CG_ID = { BTC: "bitcoin", ETH: "ethereum", SOL: "solana", XRP: "ripple", DOGE: "dogecoin" };
-  let coin = "BTC", candles = [], timer = null, reqId = 0;
+  const API = "https://api.n0brains.com";
+  const PUB = API + "/charts/levels/";
+  const PRO = API + "/charts/pro/levels/";
+  // Range → (candle interval, hours). Each range is roughly 150-400 candles so
+  // the canvas stays readable at every zoom.
+  const RANGES = {
+    "24h": { interval: "15m", hours: 24,        xstep: 4 * 3600,        label: "24h · 15m candles" },
+    "7d":  { interval: "1h",  hours: 168,       xstep: 24 * 3600,       label: "7d · 1h candles" },
+    "90d": { interval: "4h",  hours: 90 * 24,   xstep: 14 * 86400,      label: "90d · 4h candles" },
+    "1y":  { interval: "1d",  hours: 365 * 24,  xstep: 60 * 86400,      label: "1y · 1d candles" },
+  };
+  let coin = "BTC", range = "7d", candles = [], timer = null, reqId = 0;
+  let freeCoins = ["BTC", "ETH"];
 
   const $ = (id) => document.getElementById(id);
   const jwt = () => localStorage.getItem("auth_token");
@@ -67,14 +89,34 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   }
 
   async function fetchCandles(c) {
-    // 24h window (30-min candles): the levels come from the CURRENT order
-    // book so they live within ~1.5% of spot — a 7d window crushed them into
-    // the top sliver of the panel (ops #86 root cause).
+    // Candles now come from OUR feed — the same Hyperliquid candles the levels
+    // are detected on. Previously CoinGecko, through a hardcoded coin→id map
+    // that capped this page at five coins and could disagree with the price
+    // the levels were computed from.
+    const R = RANGES[range] || RANGES["7d"];
     try {
-      const r = await fetch(`https://api.coingecko.com/api/v3/coins/${CG_ID[c]}/ohlc?vs_currency=usd&days=1`, { cache: "no-store" });
-      const raw = await r.json();
-      return raw.map((k) => ({ t: k[0] / 1000, o: k[1], h: k[2], l: k[3], c: k[4] }));
+      const r = await fetch(`${API}/charts/candles/${c}?interval=${R.interval}&hours=${R.hours}`, { cache: "no-store" });
+      if (!r.ok) return [];
+      const j = await r.json();
+      return (j.candles || []).map((k) => ({ t: k.t / 1000, o: k.o, h: k.h, l: k.l, c: k.c }));
     } catch (e) { return []; }
+  }
+
+  async function buildCoinTabs() {
+    // Roster from the engine, not a list typed into this file.
+    try {
+      const r = await fetch(API + "/charts/levels-coins", { cache: "no-store" });
+      if (!r.ok) return;
+      const j = await r.json();
+      if (!Array.isArray(j.coins) || !j.coins.length) return;
+      freeCoins = j.free_coins || freeCoins;
+      const host = $("coin-tabs");
+      host.innerHTML = j.coins.map((c) => {
+        const free = freeCoins.includes(c);
+        return `<button class="coin-tab${c === coin ? " active" : ""}${free ? "" : " pro-coin"}" data-coin="${c}">`
+          + c + (free ? "" : ` <span class="lk">🔒</span>`) + `</button>`;
+      }).join("");
+    } catch (e) { /* keep the server-rendered BTC/ETH seed */ }
   }
 
   async function fetchLevels(c) {
@@ -122,8 +164,23 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const PADL = 10, PADR = 96, PADT = 12, PADB = 30;
     // opaque plot floor — the page's background grid must not bleed through
     ctx.fillStyle = "#0a0d0a"; ctx.fillRect(0, 0, W, H);
-    const res = (data.all_resistance || []);
-    const sup = (data.all_support || []);
+    // Merge the near list with the higher-timeframe structure block, deduped by
+    // price. all_* is bounded to what is close to spot; `structure` carries the
+    // 4h/1d levels that are the whole point of zooming out — without this the
+    // 90d and 1y views would draw a wide candle window with only intraday
+    // levels on it.
+    const dedupe = (arr) => {
+      const out = [];
+      for (const l of arr) {
+        if (!l || !l.price) continue;
+        if (out.some((o) => Math.abs(o.price - l.price) / l.price < 0.0005)) continue;
+        out.push(l);
+      }
+      return out;
+    };
+    const struct = data.structure || {};
+    const res = dedupe([...(data.all_resistance || []), ...(struct.resistance || [])]);
+    const sup = dedupe([...(data.all_support || []), ...(struct.support || [])]);
     // measured outcome ledger (ops #87): show the raw record when the level
     // has enough completed tests — never a composite score
     const statTag = (l) => (l && l.win_rate != null && l.tests)
@@ -156,13 +213,21 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     if (candles.length) {
       const t0 = candles[0].t, t1 = candles[candles.length - 1].t;
       const X = (t) => PADL + ((t - t0) / (t1 - t0 || 1)) * (W - PADL - PADR);
-      const stepX = 4 * 3600; // 4h ticks across the 24h window
+      // tick spacing follows the selected range (was hardcoded to 4h, which on
+      // a 1y window would draw ~2200 gridlines)
+      const R = RANGES[range] || RANGES["7d"];
+      const stepX = R.xstep;
+      const intraday = R.hours <= 48;
       for (let t = Math.ceil(t0 / stepX) * stepX; t <= t1; t += stepX) {
         const x = X(t);
         ctx.strokeStyle = "rgba(255,255,255,0.045)";
         ctx.beginPath(); ctx.moveTo(x, PADT); ctx.lineTo(x, H - PADB); ctx.stroke();
         ctx.fillStyle = "rgba(255,255,255,0.38)"; ctx.textAlign = "center";
-        ctx.fillText(new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), x, H - PADB + 16);
+        const d = new Date(t * 1000);
+        ctx.fillText(
+          intraday ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                   : d.toLocaleDateString([], { month: "short", day: "numeric" }),
+          x, H - PADB + 16);
       }
       const cw = Math.max(2, (W - PADL - PADR) / candles.length - 2);
       ctx.lineWidth = 1.4;
@@ -178,19 +243,38 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     // levels + current price: dashed lines at true y, axis PILLS collision-
     // resolved down the right gutter (TradingView-style)
     ctx.font = "11px 'Space Mono', monospace";
+    // A level's timeframe is drawn, not just carried: higher-timeframe levels
+    // get a heavier, longer-dashed line and their tf on the stat line, because
+    // "1.0157 (15m, 4 tests)" and "1.12 (1d, 40 tests)" are not the same claim
+    // and must not look alike.
+    const TF_STYLE = {
+      "1d":  { dash: [10, 4], width: 2,   alpha: 0.85 },
+      "4h":  { dash: [7, 4],  width: 1.6, alpha: 0.7 },
+      "15m": { dash: [4, 4],  width: 1,   alpha: 0.45 },
+    };
+    const styleFor = (l) => TF_STYLE[l && l.timeframe] || TF_STYLE["15m"];
+    const tfTag = (l) => {
+      const parts = [];
+      if (l && l.timeframe) parts.push(l.timeframe);
+      const s = statTag(l);
+      if (s) parts.push(s);
+      return parts.join(" · ");
+    };
     const items = [
-      ...res.map((l) => ({ p: l.price, color: "#ef4444", stat: statTag(l) })),
-      ...sup.map((l) => ({ p: l.price, color: "#00ff41", stat: statTag(l) })),
+      ...res.map((l) => ({ p: l.price, color: "#ef4444", stat: tfTag(l), st: styleFor(l) })),
+      ...sup.map((l) => ({ p: l.price, color: "#00ff41", stat: tfTag(l), st: styleFor(l) })),
       { p: price, color: "#efefef", isPrice: true },
     ].filter((it) => it.p > lo && it.p < hi).sort((a, b) => Y(a.p) - Y(b.p));
     let lastY = -99;
     for (const it of items) { it.y = Math.max(Y(it.p), lastY + 16); lastY = it.y; }
     for (const it of items) {
       const y = Y(it.p);
-      ctx.strokeStyle = it.color; ctx.globalAlpha = it.isPrice ? 0.9 : 0.5;
-      ctx.setLineDash(it.isPrice ? [2, 3] : [5, 4]); ctx.lineWidth = 1;
+      ctx.strokeStyle = it.color;
+      ctx.globalAlpha = it.isPrice ? 0.9 : (it.st ? it.st.alpha : 0.5);
+      ctx.setLineDash(it.isPrice ? [2, 3] : (it.st ? it.st.dash : [5, 4]));
+      ctx.lineWidth = it.isPrice ? 1 : (it.st ? it.st.width : 1);
       ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
-      ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.lineWidth = 1;
       if (it.stat) {
         ctx.fillStyle = "rgba(255,255,255,0.5)";
         ctx.font = "9.5px 'Space Mono', monospace"; ctx.textAlign = "right";
@@ -206,11 +290,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ctx.fillText(label, W - PADR + 8, it.y + 4);
     }
 
+    const tfs = (data.timeframes || []).join(" · ");
     $("lv-legend").innerHTML =
       `<span class="lg"><span class="lg-line" style="background:#00ff41"></span>support</span>` +
       `<span class="lg"><span class="lg-line" style="background:#ef4444"></span>resistance</span>` +
       `<span class="lg"><span class="lg-line" style="background:#efefef"></span>price</span>` +
-      `<span class="lg muted">24h · 30m candles</span>` +
+      `<span class="lg muted">${(RANGES[range] || RANGES["7d"]).label}</span>` +
+      (tfs ? `<span class="lg muted">levels from ${tfs} — thicker line = higher timeframe</span>` : "") +
       (proVerified ? `<span class="lg pro-on">PRO ✓ all coins</span>` : `<span class="lg muted">BTC/ETH free · <a href="/pricing">Pro for all coins</a></span>`);
     if (data.disclaimer) $("lv-meta").textContent = data.disclaimer;
   }
@@ -242,8 +328,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     document.querySelectorAll(".coin-tab").forEach((t) => t.classList.remove("active"));
     b.classList.add("active"); coin = b.dataset.coin; load();
   });
+  document.getElementById("range-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest(".range-tab"); if (!b) return;
+    document.querySelectorAll(".range-tab").forEach((t) => t.classList.remove("active"));
+    b.classList.add("active"); range = b.dataset.range; load();
+  });
   addEventListener("resize", () => { clearTimeout(window._lvrz); window._lvrz = setTimeout(load, 200); });
-  load(); setInterval(load, 60000);
+  buildCoinTabs().then(load); setInterval(load, 60000);
 })();
 </script>
 
@@ -260,7 +351,14 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   .lede { font-size: 1rem; max-width: 660px; color: var(--text); }
   .lede a { color: var(--accent); }
 
-  .coin-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .coin-tabs { display: flex; gap: 0.5rem; margin-bottom: 0.7rem; flex-wrap: wrap; }
+  .range-tabs { display: flex; gap: 0.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .range-tab { font-family: var(--font-mono); font-size: 0.76rem; padding: 0.32rem 0.8rem;
+    background: transparent; color: var(--text-muted); border: 1px solid var(--border);
+    border-radius: 2px; cursor: pointer; }
+  .range-tab:hover { color: var(--text-heading); border-color: var(--border-accent); }
+  .range-tab.active { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+  @media (pointer: coarse) { .range-tab { min-height: 36px; } }
   .coin-tab { font-family: var(--font-mono); font-size: 0.84rem; padding: 0.45rem 1rem;
     background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
     border-radius: var(--radius-sm); cursor: pointer; transition: 0.15s; }

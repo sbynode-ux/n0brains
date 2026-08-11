@@ -65,6 +65,24 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     <p class="meta" id="lm-meta"></p>
     <p class="lm-disclaimer" id="lm-disclaimer"></p>
 
+    <!-- The heatmap shows WHERE the bands are; this shows what they are worth.
+         Reading a dollar figure off a colour ramp is guesswork, and "where are
+         the liq clusters" is a numbers question. -->
+    <div class="lm-clusters" id="lm-clusters" hidden>
+      <div class="lm-clusters-head">
+        <span class="lm-clusters-title">liquidation clusters · <span id="lm-cl-coin">BTC</span></span>
+        <span class="lm-clusters-sub" id="lm-cl-prov"></span>
+      </div>
+      <div class="lm-table-wrap">
+        <table class="lm-table">
+          <thead>
+            <tr><th>price</th><th>vs spot</th><th>long $</th><th>short $</th><th>total</th><th></th></tr>
+          </thead>
+          <tbody id="lm-cl-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="lm-upsell">
       <p>
         <strong>Want this data in your agent or bot?</strong> The liquidation map +
@@ -142,6 +160,25 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       color:#e3e6ee; line-height:1.5; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,0.5); }
     .lm-tip .lm-tip-k { color:#9aa0ad; } .lm-tip b { color:#fff; font-variant-numeric:tabular-nums; }
     .lm-disclaimer { font-size:.72rem; color:#6b7280; margin-top:.4rem; max-width:74ch; }
+    .lm-clusters { margin-top:1.6rem; border:1px solid var(--border); border-radius:3px; padding:.9rem 1rem 1rem; }
+    .lm-clusters-head { display:flex; flex-wrap:wrap; gap:.5rem 1rem; align-items:baseline; margin-bottom:.7rem; }
+    .lm-clusters-title { font-family:var(--font-mono); font-size:.78rem; text-transform:uppercase;
+      letter-spacing:.12em; color:var(--text-heading); }
+    .lm-clusters-sub { font-family:var(--font-mono); font-size:.7rem; color:#8b93a1; }
+    /* wide tables must scroll inside their own box, never the page body */
+    .lm-table-wrap { overflow-x:auto; }
+    .lm-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:.76rem; }
+    .lm-table th { text-align:right; font-weight:400; color:#6b7280; padding:.3rem .6rem;
+      border-bottom:1px solid var(--border); text-transform:uppercase; letter-spacing:.08em; font-size:.66rem; }
+    .lm-table th:last-child, .lm-table td.tag { text-align:left; }
+    .lm-table td { padding:.32rem .6rem; border-bottom:1px solid rgba(255,255,255,.045); white-space:nowrap; }
+    .lm-table td.num { text-align:right; color:var(--text-body); }
+    .lm-table td.strong { color:var(--text-heading); font-weight:700; }
+    .lm-table td.up { color:#ef4444; }
+    .lm-table td.down { color:#26d07c; }
+    .lm-table td.tag { font-size:.68rem; color:#8b93a1; }
+    .lm-table tr.above td.num:first-child { color:#ef4444; }
+    .lm-table tr.below td.num:first-child { color:#26d07c; }
     .lm-upsell { margin-top:2rem; padding:1.25rem 1.5rem; border:1px solid var(--border,#2a2a3a);
       border-radius:10px; background:rgba(91,140,255,0.05); max-width:74ch; }
     .lm-upsell p { margin:0 0 .6rem; font-size:.9rem; color:#cfd2dc; }
@@ -158,8 +195,11 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
   (function () {
     "use strict";
     const API = "https://api.n0brains.com";
-    const COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
-    const DEX_COINS = new Set(["BTC","ETH"]);
+    // Seeded, then replaced from /charts/liqmap-coins — hardcoding these meant
+    // the page could offer a coin the backend has no map for, or hide one it
+    // does, every time coverage changed.
+    let COINS = ["BTC","ETH","SOL","XRP","DOGE","BNB"];
+    let DEX_COINS = new Set(["BTC","ETH"]);
     const CG_ID = { BTC:"bitcoin", ETH:"ethereum", SOL:"solana", XRP:"ripple", DOGE:"dogecoin", BNB:"binancecoin" };
     let candleCache = {};   // coin:days -> [{t,o,h,l,c}]
     const REFRESH_MS = 120000;
@@ -229,6 +269,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         `<button data-coin="${c}" role="tab" class="${c===coin?'active':''}">${c}</button>`).join("");
       el.querySelectorAll("button").forEach((b) =>
         b.addEventListener("click", () => { coin = b.dataset.coin; syncTabs(); load(); }));
+    }
+
+    async function loadCoinRoster() {
+      try {
+        const r = await fetch(API + "/charts/liqmap-coins", { cache: "no-store" });
+        if (!r.ok) return;
+        const j = await r.json();
+        if (Array.isArray(j.coins) && j.coins.length) COINS = j.coins;
+        if (Array.isArray(j.dex_coins)) DEX_COINS = new Set(j.dex_coins);
+        buildCoinTabs();
+      } catch (e) { /* keep the seeded list */ }
     }
     function bindVenue() {
       document.querySelectorAll("#lm-venue button").forEach((b) =>
@@ -586,12 +637,67 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         data.candles = await fetchCandles(coin, data);
         if (my !== reqId) return;
         render(data);
+        renderClusters(coin, venue);
       } catch (e) {
         if (my !== reqId) return;
         // keep the previous chart on screen — a timed-out refresh must not
         // strand the user on a blank canvas or an eternal "loading…"
         banner("proof-error", "fetch failed" + (lastData ? " — showing previous data, retrying…" : " — retrying…"));
       }
+    }
+
+    // ── cluster table ───────────────────────────────────────────────
+    const fmtUsd = (v) => {
+      v = +v || 0;
+      if (v >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+      if (v >= 1e6) return "$" + (v / 1e6).toFixed(1) + "M";
+      if (v >= 1e3) return "$" + Math.round(v / 1e3) + "K";
+      return "$" + Math.round(v);
+    };
+
+    async function renderClusters(c, v) {
+      const host = $("lm-clusters"), body = $("lm-cl-body");
+      if (!host || !body) return;
+      const my = reqId;
+      try {
+        const r = await fetch(`${API}/charts/${v}-liqmap/${c}`, { cache: "no-store" });
+        if (!r.ok) { host.hidden = true; return; }
+        const d = await r.json();
+        if (my !== reqId) return;
+        const px = +d.current_price || 0;
+        const buckets = (d.buckets || [])
+          .map((b) => ({ price: +b.price, long: +b.long_usd || 0, short: +b.short_usd || 0 }))
+          .filter((b) => b.price > 0);
+        if (!px || !buckets.length) { host.hidden = true; return; }
+        for (const b of buckets) b.total = b.long + b.short;
+        const top = buckets.slice().sort((a, b) => b.total - a.total).slice(0, 12)
+          .sort((a, b) => b.price - a.price);
+        // nearest dense zone each side of spot — the two rows people actually
+        // want ("what's the magnet below me / above me")
+        const below = top.filter((b) => b.price < px)[0];
+        const above = top.filter((b) => b.price > px).slice(-1)[0];
+        body.innerHTML = top.map((b) => {
+          const dist = ((b.price - px) / px) * 100;
+          const side = b.long > b.short ? "long" : "short";
+          const tag = b === below ? "nearest below" : (b === above ? "nearest above" : "");
+          return `<tr class="${b.price > px ? "above" : "below"}">`
+            + `<td class="num">${fmtPx(b.price)}</td>`
+            + `<td class="num ${dist >= 0 ? "up" : "down"}">${dist >= 0 ? "+" : ""}${dist.toFixed(1)}%</td>`
+            + `<td class="num">${b.long ? fmtUsd(b.long) : "—"}</td>`
+            + `<td class="num">${b.short ? fmtUsd(b.short) : "—"}</td>`
+            + `<td class="num strong">${fmtUsd(b.total)}</td>`
+            + `<td class="tag ${side}">${tag}</td></tr>`;
+        }).join("");
+        // Provenance comes from the payload, never assumed: a CEX map is an
+        // OI model and must not be read as observed positions.
+        const prov = d.modeled === true
+          ? "MODELED from aggregate open interest — not per-position data"
+          : (d.observed === true ? "OBSERVED on-chain positions (Hyperliquid + GMX)"
+                                : (v === "cex" ? "modeled estimate" : "on-chain positions"));
+        $("lm-cl-coin").textContent = c;
+        $("lm-cl-prov").textContent = prov;
+        host.hidden = false;
+      } catch (e) { host.hidden = true; }
     }
 
     function bindThreshold() {
@@ -698,6 +804,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
     function start() {
       buildCoinTabs(); bindVenue(); bindRange(); bindZoom(); bindThreshold(); bindPalette(); bindHover(); syncTabs(); load();
+      loadCoinRoster();   // replaces the seeded tabs once the roster lands
       timer = setInterval(load, REFRESH_MS);
       document.addEventListener("visibilitychange", () => {
         if (document.hidden) { clearInterval(timer); timer = null; }
