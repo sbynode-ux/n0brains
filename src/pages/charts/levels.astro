@@ -265,8 +265,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ...sup.map((l) => ({ p: l.price, color: "#00ff41", stat: tfTag(l), st: styleFor(l) })),
       { p: price, color: "#efefef", isPrice: true },
     ].filter((it) => it.p > lo && it.p < hi).sort((a, b) => Y(a.p) - Y(b.p));
+    // Pills are pushed apart so they never overlap; the stat line sits ABOVE
+    // its pill, so it only gets drawn when the gap to the pill above actually
+    // leaves room for it. With one timeframe the levels were far enough apart
+    // that this never mattered; with three they cluster near spot and the
+    // stats printed on top of each other into an unreadable smear.
     let lastY = -99;
-    for (const it of items) { it.y = Math.max(Y(it.p), lastY + 16); lastY = it.y; }
+    for (const it of items) {
+      it.y = Math.max(Y(it.p), lastY + 16);
+      it.showStat = (it.y - lastY) >= 26;
+      lastY = it.y;
+    }
     for (const it of items) {
       const y = Y(it.p);
       ctx.strokeStyle = it.color;
@@ -275,10 +284,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       ctx.lineWidth = it.isPrice ? 1 : (it.st ? it.st.width : 1);
       ctx.beginPath(); ctx.moveTo(PADL, y); ctx.lineTo(W - PADR, y); ctx.stroke();
       ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.lineWidth = 1;
-      if (it.stat) {
+      if (it.stat && it.showStat) {
         ctx.fillStyle = "rgba(255,255,255,0.5)";
         ctx.font = "9.5px 'Space Mono', monospace"; ctx.textAlign = "right";
-        ctx.fillText(it.stat, W - PADR - 8, y - 5);
+        // anchor to the RESOLVED pill position, not the true y — otherwise the
+        // stat drifts away from the pill it describes as pills get pushed down
+        ctx.fillText(it.stat, W - PADR - 8, it.y - 5);
         ctx.font = "11px 'Space Mono', monospace";
       }
       const label = fmtPx(it.p), tw = ctx.measureText(label).width;
