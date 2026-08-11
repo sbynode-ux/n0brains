@@ -276,8 +276,16 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         const r = await fetch(API + "/charts/liqmap-coins", { cache: "no-store" });
         if (!r.ok) return;
         const j = await r.json();
-        if (Array.isArray(j.coins) && j.coins.length) COINS = j.coins;
-        if (Array.isArray(j.dex_coins)) DEX_COINS = new Set(j.dex_coins);
+        // A degraded roster (one venue's lookup failed server-side) must not
+        // silently REMOVE coins we were already offering — union with the seed
+        // instead of replacing it, so a backend hiccup can widen the list but
+        // never narrow it.
+        if (Array.isArray(j.coins) && j.coins.length) {
+          COINS = j.degraded ? [...new Set([...COINS, ...j.coins])] : j.coins;
+        }
+        if (Array.isArray(j.dex_coins) && (j.dex_coins.length || !j.degraded)) {
+          DEX_COINS = new Set(j.dex_coins);
+        }
         buildCoinTabs();
       } catch (e) { /* keep the seeded list */ }
     }
