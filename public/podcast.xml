@@ -19,7 +19,20 @@
     <itunes:explicit>false</itunes:explicit>
     <itunes:category text="Technology"/>
     <itunes:type>episodic</itunes:type>
-                    <item>
+                        <item>
+      <title>Ep 8: Market Moves &amp; AI: The New Trading Frontier</title>
+      <description>This episode unpacks recent crypto market shifts, key economic calendar events, and the growing impact of agentic AI on trading strategies. We discuss how n0brains helps you navigate these complex interconnections by grading the calls we make and the trades you make.</description>
+      <itunes:summary>This episode unpacks recent crypto market shifts, key economic calendar events, and the growing impact of agentic AI on trading strategies. We discuss how n0brains helps you navigate these complex interconnections by grading the calls we make and the trades you make.</itunes:summary>
+      <pubDate>Sun, 16 Aug 2026 12:00:00 GMT</pubDate>
+      <guid isPermaLink="false">n0brains-ep-08</guid>
+      <enclosure url="https://n0brains.com/podcast/ep-08-market-moves-ai-the-new-trading-frontier.mp3" length="8807853" type="audio/mpeg"/>
+      <itunes:duration>9:10</itunes:duration>
+      <itunes:episode>8</itunes:episode>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:author>n0brains</itunes:author>
+    </item>
+
+    <item>
       <title>Ep 7: Market Shifts, Macro Signals, and Agentic AI Trading Evolution</title>
       <description>This episode navigates significant market movements, crucial economic calendar events impacting crypto, and the latest in AI advancements shaping agentic AI trading. We discuss institutional blockchain adoption, regulatory shifts, exchange consolidation, and high-impact USD economic announcements that directly influence risk assets.</description>
       <itunes:summary>This episode navigates significant market movements, crucial economic calendar events impacting crypto, and the latest in AI advancements shaping agentic AI trading. We discuss institutional blockchain adoption, regulatory shifts, exchange consolidation, and high-impact USD economic announcements that directly influence risk assets.</itunes:summary>
