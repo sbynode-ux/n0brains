@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — August 20, 2026"
-description: "Macro regime: risk-off. BTC bias: neutral (0.45 conviction). 2 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: range. BTC bias: bearish (0.65 conviction). 3 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-08-20
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -10,14 +10,15 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **neutral** at **0.45 conviction**. Smart money is defensive — favoring BTC over altcoins in this risk-off environment.
+The n0brains Macro Pulse calls the regime **range** with BTC bias **bearish** at **0.65 conviction**. Smart money is range-bound — waiting for a catalyst before committing directionally.
 
 ## Whale & Sentiment Signals
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| 🟢 | ONDO | sentiment | Ondo Perps OI exceeds $100M, ranking top 3 in RWA perps; Ondo Stocks h | N/A | 0.1 | 55% |
-| 🔴 | BTC | sentiment | Farcaster user predicts upcoming dump for BTC and ETH despite current  | N/A | 0.2 | 43% |
+| 🟢 | SOL | whale | Solmate increases SOL holdings by 1000 tokens. | N/A | 0.2 | 52% |
+| 🟢 | TSM | whale | Yuan Lipen — 🟢 INSIDER BUY TSM: $174,023 open-market (2,350 sh) by VP. | N/A | 0.2 | 52% |
+| 🔴 | OP | whale | Optimism-funded team moves $49M in OP tokens. | N/A | 0.2 | 41% |
 
 ## High-Conviction Signals (≥85% confidence)
 
@@ -27,15 +28,16 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **neutral**
 
 ## Macro Context
 
-- **Regime**: risk-off — Negative net liquidity and high real yields (z=2.26) driving a deterministic risk-off environment.
-- **BTC Bias**: neutral at 0.45 conviction
-- **ETH Bias**: bearish at 0.55 conviction
-- **Key Calendar Risks**: FOMC Meeting Minutes (High Impact) - potential volatility spike
+- **Regime**: range — Negative net liquidity and high real yields (z=2.09) anchor a range regime despite stable VIX.
+- **BTC Bias**: bearish at 0.65 conviction
+- **ETH Bias**: bearish at 0.6 conviction
+- **Key Calendar Risks**: Residual FOMC Minutes volatility/interpretation
 
 ## Key Takeaways
 
-1. **Sentiment on ONDO**: Ondo Perps OI exceeds $100M, ranking top 3 in RWA perps; Ondo Stocks holders > 270k.
-2. **Sentiment on BTC**: Farcaster user predicts upcoming dump for BTC and ETH despite current pump.
+1. **Whale on SOL**: Solmate increases SOL holdings by 1000 tokens.
+2. **Whale on TSM**: Yuan Lipen — 🟢 INSIDER BUY TSM: $174,023 open-market (2,350 sh) by VP. SEC Form 4 (code P).
+3. **Whale on OP**: Optimism-funded team moves $49M in OP tokens.
 
 ## Track Smart Money in Real-Time
 
@@ -49,4 +51,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on August 20, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on August 20, 2026.
