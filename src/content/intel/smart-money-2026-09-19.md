@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — September 19, 2026"
-description: "Macro regime: squeeze. BTC bias: neutral (0.55 conviction). 0 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: squeeze. BTC bias: bullish (0.55 conviction). 1 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-09-19
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -10,13 +10,13 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse calls the regime **squeeze** with BTC bias **neutral** at **0.55 conviction**. Smart money is range-bound — waiting for a catalyst before committing directionally.
+The n0brains Macro Pulse calls the regime **squeeze** with BTC bias **bullish** at **0.55 conviction**. Smart money is range-bound — waiting for a catalyst before committing directionally.
 
 ## Whale & Sentiment Signals
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| — | — | — | No whale/sentiment signals active | — | — | — |
+| 🟢 | BTC | sentiment | Michael Saylor defends Bitcoin against venture capitalist's bearish ob | N/A | 0.1 | 51% |
 
 ## High-Conviction Signals (≥85% confidence)
 
@@ -26,14 +26,14 @@ The n0brains Macro Pulse calls the regime **squeeze** with BTC bias **neutral** 
 
 ## Macro Context
 
-- **Regime**: squeeze — High real yields and hawkish FOMC clash with liquidity, creating a volatile equilibrium.
-- **BTC Bias**: neutral at 0.55 conviction
-- **ETH Bias**: bullish at 0.6 conviction
-- **Key Calendar Risks**: No high-impact USD events scheduled for the week, Monitor BTC options expiry for gamma flips, Watch for unexpected regulatory enforcement news
+- **Regime**: squeeze — Composite score 0.098 confirms squeeze; high real yields cap upside, low VIX invites volatility expansion.
+- **BTC Bias**: bullish at 0.55 conviction
+- **ETH Bias**: bullish at 0.5 conviction
+- **Key Calendar Risks**: No high-impact USD events scheduled for the week., Monitor BTC options expiry (Oct 2) for gamma exposure shifts., Watch for unexpected regulatory headlines or hack-related risk-off flows.
 
 ## Key Takeaways
 
-1. No whale or sentiment signals active — smart money is sitting on its hands.
+1. **Sentiment on BTC**: Michael Saylor defends Bitcoin against venture capitalist's bearish obituary.
 
 ## Track Smart Money in Real-Time
 
@@ -47,4 +47,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on September 19, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on September 19, 2026.
