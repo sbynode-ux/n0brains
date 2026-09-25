@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — September 25, 2026"
-description: "Macro regime: risk-off. BTC bias: bearish (0.65 conviction). 0 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: risk-off. BTC bias: bearish (0.65 conviction). 1 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-09-25
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -16,7 +16,7 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| — | — | — | No whale/sentiment signals active | — | — | — |
+| 🟢 | BTC | sentiment | Shorted stocks rally despite rising rates and geopolitical risks. | N/A | 0.4 | 51% |
 
 ## High-Conviction Signals (≥85% confidence)
 
@@ -26,14 +26,14 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 
 ## Macro Context
 
-- **Regime**: risk-off — Real yields +2.35z and steepening curve anchor risk-off; DXY strength confirms.
+- **Regime**: risk-off — High real yields and steepening curve anchor macro headwinds.
 - **BTC Bias**: bearish at 0.65 conviction
-- **ETH Bias**: neutral at 0.55 conviction
-- **Key Calendar Risks**: No high-impact USD events scheduled for the upcoming week., Monitor bond market reactions to Indonesian/Global debt news.
+- **ETH Bias**: bearish at 0.6 conviction
+- **Key Calendar Risks**: No high-impact USD events scheduled for the upcoming week.
 
 ## Key Takeaways
 
-1. No whale or sentiment signals active — smart money is sitting on its hands.
+1. **Sentiment on BTC**: Shorted stocks rally despite rising rates and geopolitical risks.
 
 ## Track Smart Money in Real-Time
 
@@ -47,4 +47,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on September 25, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on September 25, 2026.
