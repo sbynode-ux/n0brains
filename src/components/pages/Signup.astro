@@ -55,6 +55,11 @@ const jsT = {
         <button class="btn btn-secondary" id="copy-btn" onclick="copyKey()">{t("copy")}</button>
       </div>
       <p class="auth-subtle">{t("Free tier: 60 req/min, 15-min delay. Manage your account, keys, and billing from your dashboard.")}</p>
+      <!-- Filled by the script when /billing/checkout answers 409 (ops #225):
+           the account already holds a subscription, so no second checkout is
+           started. Left in English on purpose — the copy is the single
+           constant in src/scripts/billing.js, shared with the account page. -->
+      <p class="auth-subtle" id="billing-notice" style="display:none;"></p>
       <a href="/dashboard" class="btn btn-primary" style="margin-top:1rem; display:inline-block;">{t("Go to Dashboard")}</a>
     </div>
 
@@ -254,6 +259,8 @@ const jsT = {
 </style>
 
 <script>
+  import { classifyCheckoutResponse, ALREADY_SUBSCRIBED_NOTICE } from '../../scripts/billing.js';
+
   // Already signed in — no second account push; go to the dashboard.
   try {
     if (localStorage.getItem('auth_token')) window.location.replace('/dashboard');
@@ -316,10 +323,22 @@ const jsT = {
             headers: { 'Content-Type': 'application/json', 'X-API-Key': data.api_key },
             body: JSON.stringify({ price_id: tier }),
           });
-          const checkoutData = await checkoutResp.json();
-          if (checkoutData.url) {
-            window.location.href = checkoutData.url;
+          let checkoutData = null;
+          try { checkoutData = await checkoutResp.json(); } catch (_) {}
+          const outcome = classifyCheckoutResponse(checkoutResp.status, checkoutData);
+          if (outcome.kind === 'redirect') {
+            window.location.href = outcome.url;
             return;
+          }
+          if (outcome.kind === 'already-subscribed') {
+            // 409: this account already holds an entitling subscription, so the
+            // API refused to start a second one (ops #225). Say so on the panel
+            // — do NOT navigate away, the API key above is shown only once.
+            const notice = document.getElementById('billing-notice');
+            if (notice) {
+              notice.textContent = ALREADY_SUBSCRIBED_NOTICE;
+              notice.style.display = 'block';
+            }
           }
         } catch (e) {
           // Checkout failed — show the API key panel instead, user can upgrade later
