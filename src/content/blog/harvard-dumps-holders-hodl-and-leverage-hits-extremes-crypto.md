@@ -1,5 +1,5 @@
 ---
-title: "Harvard dumps, holders hodl, and leverage hits extremes: Crypto's trilenma"
+title: "Harvard dumps, holders hodl, and leverage hits extremes: Crypto's trilemma"
 description: "Long-term holders just pushed supply above 15M BTC, snapping up the coins Harvard and other institutions are dumping."
 pubDate: 2026-05-21
 ---
