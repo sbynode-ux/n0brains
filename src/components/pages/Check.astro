@@ -8,7 +8,7 @@ const canonicalURL = new URL(Astro.url.pathname, "https://n0brains.com").href;
 
 /* Strings the client script writes at runtime (textContent/innerHTML). Server
    t() can't reach JS-created text, so they ride along as a JSON blob the script
-   reads. Grades (A/B+/D/F), signal_type tokens, tickers, numbers, endpoints and
+   reads. Grades (A/B/C/D/F), signal_type tokens, tickers, numbers, endpoints and
    API-returned notes stay literal in the script — only static label words move. */
 const jsT = {
   // auth / signed state
@@ -183,10 +183,10 @@ const jsT = {
             <div class="ck-headline" id="ck-headline">{t("conditions")}</div>
             <div class="ck-verdict" id="ck-verdict"></div>
             <div class="ck-meter" id="ck-meter" aria-hidden="true">
-              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
+              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="A">A</span>
             </div>
             <div class="ck-scale" id="ck-scale" hidden>
-              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="B+">B+</span><span data-g="A">A</span>
+              <span data-g="F">F</span><span data-g="D">D</span><span data-g="C">C</span><span data-g="B">B</span><span data-g="A">A</span>
             </div>
             <div class="ck-score" id="ck-score"></div>
           </div>
@@ -570,8 +570,14 @@ const jsT = {
       }
     });
 
+    // ACTIVE grade set = F/D/C/B/A. `B+` was retired at check engine v3.0 and the
+    // live CheckResponse contract never emits it (openapi CheckResponse.grade enum =
+    // A/B/C/D/F), so it must NOT appear in the grade meter — that advertises a band
+    // the engine cannot serve. It stays in GRADE_COLOR only because stored history
+    // rows keep their grade exactly as given (CheckHistoryRow.grade enum still
+    // includes B+) and historyRow() colours those chips from this same map.
     const GRADE_COLOR = { "A": "#2ecc71", "B+": "#7ac943", "B": "#c9b843", "C": "#e0983a", "D": "#e0663a", "F": "#e03a3a" };
-    const GRADE_IDX = { "F": 0, "D": 1, "C": 2, "B": 3, "B+": 4, "A": 5 };
+    const GRADE_IDX = { "F": 0, "D": 1, "C": 2, "B": 3, "A": 4 };
     function render(d) {
       lastResult = d;
       const gc = GRADE_COLOR[d.grade] || "#d0d7de";
