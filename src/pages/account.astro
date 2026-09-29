@@ -249,6 +249,12 @@ import DashShell from "../components/DashShell.astro";
 </style>
 
 <script>
+  import {
+    classifyCheckoutResponse,
+    classifyPortalResponse,
+    PORTAL_UNAVAILABLE_MESSAGE,
+  } from '../scripts/billing.js';
+
   const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
     ? 'http://127.0.0.1:8000'
     : 'https://api.n0brains.com';
@@ -361,17 +367,40 @@ import DashShell from "../components/DashShell.astro";
       $('upgrade-btn').style.display = 'inline-flex';
     }
   }
+  async function readJson(resp) {
+    try { return await resp.json(); } catch { return null; }
+  }
+
+  // Returns true if it navigated to the Stripe portal.
+  async function openBillingPortal(failMessage) {
+    const resp = await api('/billing/portal', { method: 'POST', body: '{}' });
+    const outcome = classifyPortalResponse(resp.status, await readJson(resp));
+    if (outcome.kind === 'redirect') { window.location.href = outcome.url; return true; }
+    alert(failMessage || outcome.message);
+    return false;
+  }
+
   $('upgrade-btn').addEventListener('click', async () => {
     const resp = await api('/billing/checkout', { method: 'POST', body: JSON.stringify({ price_id: PRO_PRICE_ID }) });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else alert(data.detail || 'Checkout failed');
+    const outcome = classifyCheckoutResponse(resp.status, await readJson(resp));
+
+    if (outcome.kind === 'already-subscribed') {
+      // 409 from the API: this account already holds an entitling subscription,
+      // so a second checkout is a double charge (ops #225, 2026-09-04). Say so,
+      // correct the plan label the user is looking at, and open the portal —
+      // never retry checkout.
+      alert(outcome.message);
+      $('b-plan').textContent = 'Pro';
+      $('upgrade-btn').style.display = 'none';
+      $('portal-btn').style.display = 'inline-flex';
+      await openBillingPortal(PORTAL_UNAVAILABLE_MESSAGE);
+      return;
+    }
+    if (outcome.kind === 'redirect') { window.location.href = outcome.url; return; }
+    alert(outcome.message);
   });
   $('portal-btn').addEventListener('click', async () => {
-    const resp = await api('/billing/portal', { method: 'POST', body: '{}' });
-    const data = await resp.json();
-    if (data.url) window.location.href = data.url;
-    else alert(data.detail || 'Could not open billing portal');
+    await openBillingPortal();
   });
 
   // ── Usage ───────────────────────────────────────────────────────
