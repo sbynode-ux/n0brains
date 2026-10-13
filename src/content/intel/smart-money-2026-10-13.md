@@ -29,7 +29,7 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 - **Regime**: risk-off — High DXY/Real Yields dominate; CPI/PPI data risk further tightening.
 - **BTC Bias**: bearish at 0.65 conviction
 - **ETH Bias**: bearish at 0.6 conviction
-- **Key Calendar Risks**: Oct 14 CPI/PPI: Hot print reinforces risk-off regime., Oct 15 Retail Sales: Weakness could offset inflation fears., Oct 16 Fed Chair Warsh: Hawkish tone sustains DXY strength.
+- **Key Calendar Risks**: Oct 14 CPI/PPI: Hot print strengthens DXY, pressures crypto., Oct 15 Retail Sales: Weak data may ease rates, supporting risk assets., Oct 16 Fed Chair Warsh: Tone on inflation path critical for regime shift.
 
 ## Key Takeaways
 
@@ -47,4 +47,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on October 13, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on October 13, 2026.
