@@ -1,6 +1,6 @@
 ---
 title: "Smart Money & Whale Watch — October 19, 2026"
-description: "Macro regime: risk-off. BTC bias: bearish (0.55 conviction). 1 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
+description: "Macro regime: risk-off. BTC bias: bearish (0.65 conviction). 0 whale/sentiment signals, 0 high-conviction signals. Data from n0brains.com Signals Pro."
 pubDate: 2026-10-19
 question: "Where is smart money moving in crypto markets right now?"
 category: "smart-money"
@@ -10,13 +10,13 @@ dataSources:
 
 ## The Short Answer
 
-The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish** at **0.55 conviction**. Smart money is defensive — favoring BTC over altcoins in this risk-off environment.
+The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish** at **0.65 conviction**. Smart money is defensive — favoring BTC over altcoins in this risk-off environment.
 
 ## Whale & Sentiment Signals
 
 | Dir | Asset | Type | Summary | Entry | Score | Conf |
 |-----|-------|------|---------|-------|-------|------|
-| ⚪ | SOL | sentiment | DexScreener boost campaign for Solana ecosystem coins with AI narrativ | N/A | 0.0 | 51% |
+| — | — | — | No whale/sentiment signals active | — | — | — |
 
 ## High-Conviction Signals (≥85% confidence)
 
@@ -26,14 +26,14 @@ The n0brains Macro Pulse calls the regime **risk-off** with BTC bias **bearish**
 
 ## Macro Context
 
-- **Regime**: risk-off — Strong USD, high real yields, and liquidity contraction anchor risk-off.
-- **BTC Bias**: bearish at 0.55 conviction
-- **ETH Bias**: bearish at 0.5 conviction
-- **Key Calendar Risks**: FOMC Rate Decision (Oct 28) - Potential volatility spike, Unpublished post-Oct 25 events - High uncertainty
+- **Regime**: risk-off — DXY at 121.6, real yields +2.78%, and net liquidity contraction anchor risk-off.
+- **BTC Bias**: bearish at 0.65 conviction
+- **ETH Bias**: bearish at 0.7 conviction
+- **Key Calendar Risks**: No high-impact USD events in covered window; calendar beyond 10/25 unknown., Potential geopolitical escalation from Russia strikes on Kiev.
 
 ## Key Takeaways
 
-1. **Sentiment on SOL**: DexScreener boost campaign for Solana ecosystem coins with AI narrative
+1. No whale or sentiment signals active — smart money is sitting on its hands.
 
 ## Track Smart Money in Real-Time
 
@@ -47,4 +47,4 @@ Start free at [n0brains.com](https://n0brains.com). Pro tier ($39.99/month) adds
 
 ## Methodology
 
-Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 00:00 UTC on October 19, 2026.
+Whale and sentiment signals sourced from the n0brains.com Signals Pro API (`/signals`). Whale tracking covers Hyperliquid leaderboard consensus, SOL whale wallets, and on-chain flow detection. Macro context from the n0brains Macro Pulse. Data pulled at approximately 13:00 UTC on October 19, 2026.
